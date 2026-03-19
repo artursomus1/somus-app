@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+*.tmp
+email_preview.html
+Mesa Produtos/Fluxo RF/PDFs/
+Mesa Produtos/Organizador/ORGANIZADO/
+Mesa Produtos/Consolidador/PDFs/
+Mesa Produtos/Envio Saldos/SAIDA SALDOS/
+Corporate/Simulador/PDFs/
