@@ -152,24 +152,33 @@ if exist "%UPDATE_ZIP%"  del "%UPDATE_ZIP%"  >nul 2>&1
 if exist "%UPDATE_DIR%"  rd /s /q "%UPDATE_DIR%" >nul 2>&1
 if exist "%TEMP%\somus_latest_version.txt" del "%TEMP%\somus_latest_version.txt" >nul 2>&1
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "try { ^
-     $api = Invoke-RestMethod -Uri '%GITHUB_API%' -UseBasicParsing -TimeoutSec 12; ^
-     $latest = $api.tag_name.TrimStart('v'); ^
-     $local  = '%BUNDLE_VERSION%'; ^
-     if ([version]$latest -gt [version]$local) { ^
-       $url = ($api.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1).browser_download_url; ^
-       Write-Host '         Nova versao encontrada: v'$latest' (este pacote: v'$local')'; ^
-       Write-Host '         Baixando do GitHub...'; ^
-       Invoke-WebRequest -Uri $url -OutFile '%UPDATE_ZIP%' -UseBasicParsing; ^
-       Expand-Archive -Path '%UPDATE_ZIP%' -DestinationPath '%UPDATE_DIR%' -Force; ^
-       Set-Content -Path '%TEMP%\somus_latest_version.txt' -Value $latest ^
-     } else { ^
-       Write-Host '         Pacote ja esta na versao mais recente (v'$local').' ^
-     } ^
-   } catch { ^
-     Write-Host '         GitHub indisponivel. Instalando versao local (v%BUNDLE_VERSION%).' ^
-   }" 2>&1
+set "PS_UPDATE=%TEMP%\somus_check_update.ps1"
+(
+echo $bundleVersion = '__VERSION__'
+echo $githubApi     = 'https://api.github.com/repos/artursomus1/somus-app/releases/latest'
+echo $updateZip     = '%UPDATE_ZIP%'
+echo $updateDir     = '%UPDATE_DIR%'
+echo $flagFile      = '%TEMP%\somus_latest_version.txt'
+echo try {
+echo     $api    = Invoke-RestMethod -Uri $githubApi -UseBasicParsing -TimeoutSec 12
+echo     $latest = $api.tag_name.TrimStart('v'^)
+echo     if ([version]$latest -gt [version]$bundleVersion^) {
+echo         $asset = $api.assets ^| Where-Object { $_.name -like '*.zip' } ^| Select-Object -First 1
+echo         Write-Host "         Nova versao encontrada: v$latest ^(este pacote: v$bundleVersion^)"
+echo         Write-Host "         Baixando do GitHub..."
+echo         Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $updateZip -UseBasicParsing
+echo         Expand-Archive -Path $updateZip -DestinationPath $updateDir -Force
+echo         Set-Content -Path $flagFile -Value $latest
+echo     } else {
+echo         Write-Host "         Pacote ja esta na versao mais recente ^(v$bundleVersion^)."
+echo     }
+echo } catch {
+echo     Write-Host "         GitHub indisponivel. Instalando versao local ^(v$bundleVersion^)."
+echo }
+) > "%PS_UPDATE%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_UPDATE%" 2>&1
+del "%PS_UPDATE%" >nul 2>&1
 
 :: Usar arquivos do GitHub se foram baixados
 if exist "%TEMP%\somus_latest_version.txt" (
