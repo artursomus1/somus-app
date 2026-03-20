@@ -10,6 +10,9 @@ import threading
 from datetime import datetime
 from version import VERSION
 from updater import verificar_atualizacao, baixar_e_instalar, reiniciar_app
+from nasa_engine import (calcular_fluxo_consorcio, calcular_vpl_hd,
+                         calcular_financiamento, comparar_consorcio_financiamento,
+                         _annual_from_monthly, _monthly_from_annual)
 from collections import defaultdict
 
 import customtkinter as ctk
@@ -650,6 +653,8 @@ class App(ctk.CTk):
         cs_nav_items = [
             ("corp_dashboard", "Dashboard", "\u25a3"),
             ("simulador", "Simulador", "\u2630"),
+            ("comparativo_vpl", "Comparativo VPL", "\u25b2"),
+            ("consorcio_vs_financ", "Cons. vs Financ.", "\u21c4"),
         ]
         for i, (key, label, icon) in enumerate(cs_nav_items):
             btn = ctk.CTkButton(
@@ -829,6 +834,8 @@ class App(ctk.CTk):
         # Corporate: apenas modulo Corporate
         self.pages["consorcio"] = self._build_consorcio_page()
         self.pages["corp_dashboard"] = self._build_corp_dashboard_page()
+        self.pages["comparativo_vpl"] = self._build_comparativo_vpl_page()
+        self.pages["consorcio_vs_financ"] = self._build_consorcio_vs_financ_page()
 
         if self.role == "corporate":
             return
@@ -872,6 +879,8 @@ class App(ctk.CTk):
             "operations": "fluxo_rf",
             "corp_dashboard": "corp_dashboard",
             "consorcio": "simulador",
+            "comparativo_vpl": "comparativo_vpl",
+            "consorcio_vs_financ": "consorcio_vs_financ",
             "seg_renovacoes": "seg_renovacoes",
         }
         self._update_sidebar_active(nav_map.get(page_key, page_key))
@@ -5651,52 +5660,85 @@ class App(ctk.CTk):
         content.pack(fill="x", padx=28, pady=20)
 
         # Banner
-        banner = ctk.CTkFrame(content, fg_color=ACCENT_GREEN, corner_radius=10, height=44)
+        banner = ctk.CTkFrame(content, fg_color=ACCENT_GREEN, corner_radius=10, height=50)
         banner.pack(fill="x", pady=(0, 18))
         banner.pack_propagate(False)
 
         ctk.CTkLabel(
-            banner, text="  Corporate - Em breve",
-            font=("Segoe UI", 12), text_color=TEXT_WHITE, anchor="w"
+            banner, text="  Corporate - Motor NASA HD",
+            font=("Segoe UI", 13, "bold"), text_color=TEXT_WHITE, anchor="w"
         ).pack(side="left", padx=18, pady=10)
 
-        # KPI placeholders
-        kpi_frame = ctk.CTkFrame(content, fg_color="transparent")
-        kpi_frame.pack(fill="x", pady=(0, 18))
-        kpi_frame.columnconfigure((0, 1, 2, 3), weight=1)
+        ctk.CTkLabel(
+            banner, text=f"v{VERSION}",
+            font=("Segoe UI", 10), text_color="#b0e0c8", anchor="e"
+        ).pack(side="right", padx=18, pady=10)
 
-        placeholders = [
-            ("Operações", "--", ACCENT_GREEN),
-            ("Clientes", "--", ACCENT_BLUE),
-            ("Volume Total", "--", ACCENT_ORANGE),
-            ("Receita", "--", ACCENT_PURPLE),
+        # Cards de ferramentas disponiveis
+        tools_frame = ctk.CTkFrame(content, fg_color="transparent")
+        tools_frame.pack(fill="x", pady=(0, 18))
+        tools_frame.columnconfigure((0, 1, 2), weight=1)
+
+        tools = [
+            ("Simulador de Consórcio", "Calcule parcelas, fases, lances e custo efetivo",
+             ACCENT_GREEN, "\u2630", lambda: self._on_nav("consorcio")),
+            ("Comparativo de VPL", "Análise NASA HD: Delta VPL, break-even, TIR/CET",
+             ACCENT_BLUE, "\u25b2", lambda: self._on_nav("comparativo_vpl")),
+            ("Cons. vs Financiamento", "Compare consórcio e financiamento lado a lado",
+             ACCENT_ORANGE, "\u21c4", lambda: self._on_nav("consorcio_vs_financ")),
         ]
-        for col, (label, val, color) in enumerate(placeholders):
-            self._make_kpi_card(kpi_frame, label, val, color, col)
 
-        # Card vazio central
-        empty_card = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
-                                  border_width=1, border_color=BORDER_CARD)
-        empty_card.pack(fill="x", pady=(0, 18))
+        for col, (title, desc, color, icon, cmd) in enumerate(tools):
+            card = ctk.CTkFrame(tools_frame, fg_color=BG_CARD, corner_radius=12,
+                                border_width=1, border_color=BORDER_CARD)
+            card.grid(row=0, column=col, sticky="nsew", padx=6, pady=4)
 
-        empty_inner = ctk.CTkFrame(empty_card, fg_color="transparent")
-        empty_inner.pack(fill="both", padx=24, pady=40)
+            inner = ctk.CTkFrame(card, fg_color="transparent")
+            inner.pack(fill="both", padx=18, pady=18)
 
-        ctk.CTkLabel(
-            empty_inner, text="\u25a3",
-            font=("Segoe UI", 48), text_color=BORDER_CARD
-        ).pack()
+            icon_bar = ctk.CTkFrame(inner, fg_color=color, corner_radius=8, width=40, height=40)
+            icon_bar.pack(anchor="w", pady=(0, 10))
+            icon_bar.pack_propagate(False)
+            ctk.CTkLabel(icon_bar, text=icon, font=("Segoe UI", 18),
+                         text_color=TEXT_WHITE).pack(expand=True)
 
-        ctk.CTkLabel(
-            empty_inner, text="Dashboard Corporate",
-            font=("Segoe UI", 18, "bold"), text_color=TEXT_SECONDARY
-        ).pack(pady=(8, 4))
+            ctk.CTkLabel(inner, text=title, font=("Segoe UI", 13, "bold"),
+                         text_color=TEXT_PRIMARY, anchor="w").pack(fill="x")
+            ctk.CTkLabel(inner, text=desc, font=("Segoe UI", 10),
+                         text_color=TEXT_SECONDARY, anchor="w", wraplength=200).pack(fill="x", pady=(4, 10))
 
-        ctk.CTkLabel(
-            empty_inner, text="Os dados serão exibidos aqui quando disponíveis.\nEm breve: operações, clientes, volume e receita.",
-            font=("Segoe UI", 12), text_color=TEXT_TERTIARY,
-            justify="center"
-        ).pack()
+            ctk.CTkButton(
+                inner, text="Abrir", font=("Segoe UI", 11, "bold"),
+                fg_color=color, hover_color=self._darken(color),
+                height=32, corner_radius=8, command=cmd,
+            ).pack(anchor="w")
+
+        # Conceitos rapidos
+        info_card = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
+                                 border_width=1, border_color=BORDER_CARD)
+        info_card.pack(fill="x", pady=(0, 18))
+
+        info_inner = ctk.CTkFrame(info_card, fg_color="transparent")
+        info_inner.pack(fill="x", padx=24, pady=18)
+
+        ctk.CTkLabel(info_inner, text="Conceitos NASA HD",
+                     font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w").pack(fill="x", pady=(0, 10))
+
+        conceitos = [
+            ("Delta VPL", "Diferença entre o valor presente do crédito e o valor presente de todos os pagamentos. Se positivo, a operação cria valor."),
+            ("ALM (CDI Líquido)", "Custo de oportunidade — taxa usada para descontar fluxos pré-contemplação."),
+            ("Hurdle Rate", "Retorno mínimo exigido — taxa usada para descontar parcelas pós-contemplação."),
+            ("Break-even Lance", "Percentual de lance livre que zera o Delta VPL. Acima desse valor, a operação passa a não criar valor."),
+            ("CET (Custo Efetivo Total)", "Taxa equivalente anual que representa o custo real da operação, incluindo todas as taxas e encargos."),
+            ("TIR", "Taxa Interna de Retorno — taxa que zera o VPL do fluxo de caixa completo."),
+        ]
+        for title, desc in conceitos:
+            row = ctk.CTkFrame(info_inner, fg_color="transparent")
+            row.pack(fill="x", pady=3)
+            ctk.CTkLabel(row, text=f"\u25cf  {title}:", font=("Segoe UI", 10, "bold"),
+                         text_color=ACCENT_GREEN).pack(side="left")
+            ctk.CTkLabel(row, text=f"  {desc}", font=("Segoe UI", 10),
+                         text_color=TEXT_SECONDARY, wraplength=600, anchor="w").pack(side="left", fill="x", expand=True)
 
         return page
 
@@ -5988,6 +6030,326 @@ class App(ctk.CTk):
             font=("Segoe UI", 12), text_color=TEXT_TERTIARY
         )
         self.cs_result_placeholder.pack(pady=20)
+
+        return page
+
+    # -----------------------------------------------------------------
+    #  PAGE: CORPORATE - COMPARATIVO DE VPL (NASA HD)
+    # -----------------------------------------------------------------
+    def _build_comparativo_vpl_page(self):
+        page = ctk.CTkFrame(self, fg_color=BG_PRIMARY, corner_radius=0)
+
+        self._make_topbar(page, "Comparativo de VPL", subtitle="Corporate - Análise NASA HD")
+
+        scroll = ctk.CTkScrollableFrame(page, fg_color=BG_PRIMARY, corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=0, pady=0)
+
+        content = ctk.CTkFrame(scroll, fg_color="transparent")
+        content.pack(fill="x", padx=28, pady=20)
+
+        # ========== PARAMETROS DO CONSORCIO ==========
+        ctk.CTkLabel(
+            content, text="Parâmetros do Consórcio",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        p1_card = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
+                               border_width=1, border_color=BORDER_CARD)
+        p1_card.pack(fill="x", pady=(0, 16))
+
+        p1 = ctk.CTkFrame(p1_card, fg_color="transparent")
+        p1.pack(fill="x", padx=20, pady=16)
+        p1.columnconfigure((0, 1, 2), weight=1)
+
+        # Row 0-1: Valor da Carta + Prazo + Contemplacao
+        ctk.CTkLabel(p1, text="Valor da Carta (R$)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self.vpl_valor_carta = ctk.CTkEntry(p1, placeholder_text="Ex: 3600000", height=38,
+                                            corner_radius=8, fg_color=BG_INPUT,
+                                            border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_valor_carta.grid(row=1, column=0, sticky="ew", padx=(0, 10), pady=(2, 8))
+
+        ctk.CTkLabel(p1, text="Prazo (meses)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=0, column=1, sticky="w", padx=(10, 10))
+        self.vpl_prazo = ctk.CTkEntry(p1, placeholder_text="Ex: 200", height=38,
+                                      corner_radius=8, fg_color=BG_INPUT,
+                                      border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_prazo.grid(row=1, column=1, sticky="ew", padx=(10, 10), pady=(2, 8))
+        self.vpl_prazo.insert(0, "200")
+
+        ctk.CTkLabel(p1, text="Mês Contemplação", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=0, column=2, sticky="w", padx=(10, 0))
+        self.vpl_contemp = ctk.CTkEntry(p1, placeholder_text="Ex: 11", height=38,
+                                        corner_radius=8, fg_color=BG_INPUT,
+                                        border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_contemp.grid(row=1, column=2, sticky="ew", padx=(10, 0), pady=(2, 8))
+        self.vpl_contemp.insert(0, "11")
+
+        # Row 2-3: Taxas
+        ctk.CTkLabel(p1, text="Taxa Admin. (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=2, column=0, sticky="w", padx=(0, 10))
+        self.vpl_taxa_adm = ctk.CTkEntry(p1, placeholder_text="20", height=38,
+                                         corner_radius=8, fg_color=BG_INPUT,
+                                         border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_taxa_adm.grid(row=3, column=0, sticky="ew", padx=(0, 10), pady=(2, 8))
+        self.vpl_taxa_adm.insert(0, "20")
+
+        ctk.CTkLabel(p1, text="Fundo Reserva (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=2, column=1, sticky="w", padx=(10, 10))
+        self.vpl_fundo_res = ctk.CTkEntry(p1, placeholder_text="3", height=38,
+                                          corner_radius=8, fg_color=BG_INPUT,
+                                          border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_fundo_res.grid(row=3, column=1, sticky="ew", padx=(10, 10), pady=(2, 8))
+        self.vpl_fundo_res.insert(0, "3")
+
+        ctk.CTkLabel(p1, text="Seguro (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=2, column=2, sticky="w", padx=(10, 0))
+        self.vpl_seguro = ctk.CTkEntry(p1, placeholder_text="0", height=38,
+                                       corner_radius=8, fg_color=BG_INPUT,
+                                       border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_seguro.grid(row=3, column=2, sticky="ew", padx=(10, 0), pady=(2, 8))
+        self.vpl_seguro.insert(0, "0")
+
+        # Row 4-5: Lances + Reducao
+        ctk.CTkLabel(p1, text="Lance Embutido (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=4, column=0, sticky="w", padx=(0, 10))
+        self.vpl_lance_emb = ctk.CTkEntry(p1, placeholder_text="30", height=38,
+                                          corner_radius=8, fg_color=BG_INPUT,
+                                          border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_lance_emb.grid(row=5, column=0, sticky="ew", padx=(0, 10), pady=(2, 8))
+        self.vpl_lance_emb.insert(0, "30")
+
+        ctk.CTkLabel(p1, text="Lance Livre (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=4, column=1, sticky="w", padx=(10, 10))
+        self.vpl_lance_livre = ctk.CTkEntry(p1, placeholder_text="47", height=38,
+                                            corner_radius=8, fg_color=BG_INPUT,
+                                            border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_lance_livre.grid(row=5, column=1, sticky="ew", padx=(10, 10), pady=(2, 8))
+        self.vpl_lance_livre.insert(0, "0")
+
+        ctk.CTkLabel(p1, text="Parcela Reduzida (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=4, column=2, sticky="w", padx=(10, 0))
+        self.vpl_red_pct = ctk.CTkEntry(p1, placeholder_text="70", height=38,
+                                        corner_radius=8, fg_color=BG_INPUT,
+                                        border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_red_pct.grid(row=5, column=2, sticky="ew", padx=(10, 0), pady=(2, 8))
+        self.vpl_red_pct.insert(0, "70")
+
+        # Row 6-7: Correcao + ALM + Hurdle
+        ctk.CTkLabel(p1, text="Correção Anual (%)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=6, column=0, sticky="w", padx=(0, 10))
+        self.vpl_correcao = ctk.CTkEntry(p1, placeholder_text="3", height=38,
+                                         corner_radius=8, fg_color=BG_INPUT,
+                                         border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_correcao.grid(row=7, column=0, sticky="ew", padx=(0, 10), pady=(2, 8))
+        self.vpl_correcao.insert(0, "3")
+
+        ctk.CTkLabel(p1, text="CDI Líquido / ALM (% a.a.)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=6, column=1, sticky="w", padx=(10, 10))
+        self.vpl_alm = ctk.CTkEntry(p1, placeholder_text="12", height=38,
+                                    corner_radius=8, fg_color=BG_INPUT,
+                                    border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_alm.grid(row=7, column=1, sticky="ew", padx=(10, 10), pady=(2, 8))
+        self.vpl_alm.insert(0, "12")
+
+        ctk.CTkLabel(p1, text="Hurdle Rate (% a.a.)", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).grid(row=6, column=2, sticky="w", padx=(10, 0))
+        self.vpl_hurdle = ctk.CTkEntry(p1, placeholder_text="12", height=38,
+                                       corner_radius=8, fg_color=BG_INPUT,
+                                       border_width=1, border_color=BORDER_LIGHT)
+        self.vpl_hurdle.grid(row=7, column=2, sticky="ew", padx=(10, 0), pady=(2, 8))
+        self.vpl_hurdle.insert(0, "12")
+
+        ctk.CTkLabel(p1, text="ALM: custo de oportunidade (CDI líquido de IR)  |  Hurdle: retorno mínimo exigido pós-contemplação",
+                     font=("Segoe UI", 8), text_color=TEXT_TERTIARY
+                     ).grid(row=8, column=0, columnspan=3, sticky="w", pady=(0, 0))
+
+        # ========== BOTAO ==========
+        btn_frame = ctk.CTkFrame(content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(4, 16))
+
+        ctk.CTkButton(
+            btn_frame, text="  Analisar VPL",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_GREEN,
+            hover_color=self._darken(ACCENT_GREEN), height=44, corner_radius=10,
+            command=self._on_calcular_vpl,
+        ).pack(side="left", padx=(0, 10))
+
+        self.vpl_btn_pdf = ctk.CTkButton(
+            btn_frame, text="  Gerar PDF VPL",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_BLUE,
+            hover_color=self._darken(ACCENT_BLUE), height=44, corner_radius=10,
+            command=self._on_gerar_pdf_vpl, state="disabled",
+        )
+        self.vpl_btn_pdf.pack(side="left", padx=(10, 10))
+
+        ctk.CTkButton(
+            btn_frame, text="  Limpar",
+            font=("Segoe UI", 12), fg_color="#6b7280",
+            hover_color="#555d6a", height=44, corner_radius=10,
+            command=lambda: self._on_limpar_vpl(),
+        ).pack(side="left", padx=(10, 0))
+
+        # ========== RESULTADO ==========
+        ctk.CTkLabel(
+            content, text="Resultado da Análise",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        self.vpl_result_frame = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
+                                             border_width=1, border_color=BORDER_CARD)
+        self.vpl_result_frame.pack(fill="x", pady=(0, 16))
+
+        self.vpl_result_inner = ctk.CTkFrame(self.vpl_result_frame, fg_color="transparent")
+        self.vpl_result_inner.pack(fill="x", padx=20, pady=16)
+
+        self.vpl_result_placeholder = ctk.CTkLabel(
+            self.vpl_result_inner,
+            text="Preencha os parâmetros e clique em 'Analisar VPL'",
+            font=("Segoe UI", 12), text_color=TEXT_TERTIARY
+        )
+        self.vpl_result_placeholder.pack(pady=20)
+
+        return page
+
+    # -----------------------------------------------------------------
+    #  PAGE: CORPORATE - CONSÓRCIO VS FINANCIAMENTO
+    # -----------------------------------------------------------------
+    def _build_consorcio_vs_financ_page(self):
+        page = ctk.CTkFrame(self, fg_color=BG_PRIMARY, corner_radius=0)
+
+        self._make_topbar(page, "Consórcio vs Financiamento", subtitle="Corporate - Comparativo")
+
+        scroll = ctk.CTkScrollableFrame(page, fg_color=BG_PRIMARY, corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=0, pady=0)
+
+        content = ctk.CTkFrame(scroll, fg_color="transparent")
+        content.pack(fill="x", padx=28, pady=20)
+
+        # Layout: dois cards lado a lado
+        cols_frame = ctk.CTkFrame(content, fg_color="transparent")
+        cols_frame.pack(fill="x", pady=(0, 16))
+        cols_frame.columnconfigure((0, 1), weight=1)
+
+        # ========== COLUNA ESQUERDA: CONSORCIO ==========
+        ctk.CTkLabel(
+            cols_frame, text="Consórcio",
+            font=("Segoe UI", 14, "bold"), text_color=ACCENT_GREEN, anchor="w"
+        ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 8))
+
+        c_card = ctk.CTkFrame(cols_frame, fg_color=BG_CARD, corner_radius=12,
+                              border_width=1, border_color=BORDER_CARD)
+        c_card.grid(row=1, column=0, sticky="nsew", padx=(0, 8))
+
+        ci = ctk.CTkFrame(c_card, fg_color="transparent")
+        ci.pack(fill="x", padx=16, pady=14)
+        ci.columnconfigure((0, 1), weight=1)
+
+        # Consorcio inputs
+        _cf_labels = [
+            ("Valor da Carta (R$)", "cf_c_valor", "300000"),
+            ("Prazo (meses)", "cf_c_prazo", "120"),
+            ("Taxa Admin. (%)", "cf_c_taxa", "18"),
+            ("Fundo Reserva (%)", "cf_c_fres", "2"),
+            ("Seguro (%)", "cf_c_seg", "0"),
+            ("Mês Contemplação", "cf_c_contemp", "60"),
+            ("Lance Embutido (%)", "cf_c_lemb", "0"),
+            ("Lance Livre (%)", "cf_c_lliv", "0"),
+            ("Parcela Reduzida (%)", "cf_c_red", "100"),
+            ("Correção Anual (%)", "cf_c_corr", "0"),
+            ("CDI Líq./ALM (% a.a.)", "cf_c_alm", "12"),
+        ]
+        for i, (label, attr, default) in enumerate(_cf_labels):
+            col = i % 2
+            row = (i // 2) * 2
+            ctk.CTkLabel(ci, text=label, font=("Segoe UI", 9, "bold"),
+                         text_color=TEXT_SECONDARY).grid(row=row, column=col, sticky="w", padx=4)
+            e = ctk.CTkEntry(ci, placeholder_text=default, height=34,
+                             corner_radius=8, fg_color=BG_INPUT,
+                             border_width=1, border_color=BORDER_LIGHT,
+                             font=("Segoe UI", 10))
+            e.grid(row=row + 1, column=col, sticky="ew", padx=4, pady=(2, 6))
+            e.insert(0, default)
+            setattr(self, attr, e)
+
+        # ========== COLUNA DIREITA: FINANCIAMENTO ==========
+        ctk.CTkLabel(
+            cols_frame, text="Financiamento",
+            font=("Segoe UI", 14, "bold"), text_color=ACCENT_BLUE, anchor="w"
+        ).grid(row=0, column=1, sticky="w", padx=(10, 0), pady=(0, 8))
+
+        f_card = ctk.CTkFrame(cols_frame, fg_color=BG_CARD, corner_radius=12,
+                              border_width=1, border_color=BORDER_CARD)
+        f_card.grid(row=1, column=1, sticky="nsew", padx=(8, 0))
+
+        fi = ctk.CTkFrame(f_card, fg_color="transparent")
+        fi.pack(fill="x", padx=16, pady=14)
+        fi.columnconfigure((0, 1), weight=1)
+
+        _ff_labels = [
+            ("Valor Financiado (R$)", "cf_f_valor", "300000"),
+            ("Prazo (meses)", "cf_f_prazo", "120"),
+            ("Taxa Mensal (%)", "cf_f_taxa", "1.0"),
+            ("Método", "cf_f_metodo", None),
+        ]
+        for i, (label, attr, default) in enumerate(_ff_labels):
+            col = i % 2
+            row = (i // 2) * 2
+            ctk.CTkLabel(fi, text=label, font=("Segoe UI", 9, "bold"),
+                         text_color=TEXT_SECONDARY).grid(row=row, column=col, sticky="w", padx=4)
+            if attr == "cf_f_metodo":
+                e = ctk.CTkOptionMenu(
+                    fi, values=["Price", "SAC"],
+                    height=34, corner_radius=8, fg_color=BG_INPUT,
+                    button_color=ACCENT_BLUE, button_hover_color="#1555bb",
+                    text_color=TEXT_PRIMARY, font=("Segoe UI", 10),
+                )
+                e.set("Price")
+            else:
+                e = ctk.CTkEntry(fi, placeholder_text=default, height=34,
+                                 corner_radius=8, fg_color=BG_INPUT,
+                                 border_width=1, border_color=BORDER_LIGHT,
+                                 font=("Segoe UI", 10))
+                e.insert(0, default)
+            e.grid(row=row + 1, column=col, sticky="ew", padx=4, pady=(2, 6))
+            setattr(self, attr, e)
+
+        # ========== BOTAO ==========
+        btn_frame = ctk.CTkFrame(content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(4, 16))
+
+        ctk.CTkButton(
+            btn_frame, text="  Comparar",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_GREEN,
+            hover_color=self._darken(ACCENT_GREEN), height=44, corner_radius=10,
+            command=self._on_comparar_consorcio_financ,
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkButton(
+            btn_frame, text="  Limpar",
+            font=("Segoe UI", 12), fg_color="#6b7280",
+            hover_color="#555d6a", height=44, corner_radius=10,
+            command=lambda: self._on_limpar_cf(),
+        ).pack(side="left", padx=(10, 0))
+
+        # ========== RESULTADO ==========
+        ctk.CTkLabel(
+            content, text="Resultado Comparativo",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        self.cf_result_frame = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
+                                            border_width=1, border_color=BORDER_CARD)
+        self.cf_result_frame.pack(fill="x", pady=(0, 16))
+
+        self.cf_result_inner = ctk.CTkFrame(self.cf_result_frame, fg_color="transparent")
+        self.cf_result_inner.pack(fill="x", padx=20, pady=16)
+
+        ctk.CTkLabel(
+            self.cf_result_inner,
+            text="Preencha ambos os lados e clique em 'Comparar'",
+            font=("Segoe UI", 12), text_color=TEXT_TERTIARY
+        ).pack(pady=20)
 
         return page
 
@@ -8500,6 +8862,377 @@ class App(ctk.CTk):
     def _on_abrir_pasta_consorcio(self):
         os.makedirs(CONSÓRCIO_OUTPUT_DIR, exist_ok=True)
         os.startfile(CONSÓRCIO_OUTPUT_DIR)
+
+    # =================================================================
+    #  HANDLERS: COMPARATIVO DE VPL (NASA HD)
+    # =================================================================
+    def _on_calcular_vpl(self):
+        try:
+            params = {
+                "valor_carta": self._parse_number(self.vpl_valor_carta.get()),
+                "prazo_meses": int(self._parse_number(self.vpl_prazo.get())),
+                "taxa_adm": self._parse_number(self.vpl_taxa_adm.get()),
+                "fundo_reserva": self._parse_number(self.vpl_fundo_res.get()),
+                "seguro": self._parse_number(self.vpl_seguro.get()),
+                "prazo_contemp": int(self._parse_number(self.vpl_contemp.get())),
+                "lance_embutido_pct": self._parse_number(self.vpl_lance_emb.get()),
+                "lance_livre_pct": self._parse_number(self.vpl_lance_livre.get()),
+                "parcela_red_pct": self._parse_number(self.vpl_red_pct.get()),
+                "correcao_anual": self._parse_number(self.vpl_correcao.get()),
+                "alm_anual": self._parse_number(self.vpl_alm.get()),
+                "hurdle_anual": self._parse_number(self.vpl_hurdle.get()),
+            }
+        except (ValueError, AttributeError):
+            messagebox.showerror("Erro", "Preencha todos os campos corretamente.")
+            return
+
+        if params["valor_carta"] <= 0 or params["prazo_meses"] <= 0:
+            messagebox.showerror("Erro", "Valor e prazo devem ser maiores que zero.")
+            return
+
+        # Calcular
+        fluxo_r = calcular_fluxo_consorcio(params)
+        vpl_r = calcular_vpl_hd(params, fluxo_r)
+
+        # Salvar para PDF
+        self._vpl_result = {**params, **vpl_r, **fluxo_r}
+
+        # ======== Mostrar resultado ========
+        for w in self.vpl_result_inner.winfo_children():
+            w.destroy()
+
+        def _row(parent, label, value, color=TEXT_PRIMARY, bold=False):
+            r = ctk.CTkFrame(parent, fg_color="transparent")
+            r.pack(fill="x", pady=1)
+            ctk.CTkLabel(r, text=label, font=("Segoe UI", 10),
+                         text_color=TEXT_SECONDARY).pack(side="left")
+            f = ("Segoe UI", 11, "bold") if bold else ("Segoe UI", 11)
+            ctk.CTkLabel(r, text=value, font=f, text_color=color).pack(side="right")
+
+        def _sep(parent):
+            ctk.CTkFrame(parent, fg_color=BORDER_LIGHT, height=1).pack(fill="x", pady=8)
+
+        vc = params["valor_carta"]
+        delta = vpl_r["delta_vpl"]
+        cria = vpl_r["cria_valor"]
+
+        # Banner principal
+        banner_color = ACCENT_GREEN if cria else ACCENT_RED
+        banner_text = "CRIA VALOR" if cria else "NÃO CRIA VALOR"
+        banner_icon = "\u2714" if cria else "\u2718"
+
+        banner = ctk.CTkFrame(self.vpl_result_inner, fg_color=banner_color, corner_radius=12)
+        banner.pack(fill="x", pady=(0, 10))
+        bi = ctk.CTkFrame(banner, fg_color="transparent")
+        bi.pack(fill="x", padx=24, pady=16)
+        ctk.CTkLabel(bi, text=f"{banner_icon}  {banner_text}",
+                     font=("Segoe UI", 22, "bold"), text_color=TEXT_WHITE).pack(anchor="w")
+        ctk.CTkLabel(bi, text=f"Delta VPL: {fmt_currency(delta)}",
+                     font=("Segoe UI", 14, "bold"), text_color="#ffffffcc").pack(anchor="w", pady=(4, 0))
+        ctk.CTkLabel(bi, text=f"Break-even lance livre: {fmt_pct(vpl_r['break_even_lance'])}",
+                     font=("Segoe UI", 11), text_color="#ffffffaa").pack(anchor="w", pady=(2, 0))
+
+        # Detalhes
+        _sep(self.vpl_result_inner)
+
+        ctk.CTkLabel(self.vpl_result_inner, text="DECOMPOSIÇÃO DO VPL",
+                     font=("Segoe UI", 11, "bold"), text_color=TEXT_PRIMARY, anchor="w").pack(fill="x")
+
+        _row(self.vpl_result_inner, "B0 — PV do Crédito (a taxa ALM)", fmt_currency(vpl_r["b0"]), ACCENT_GREEN, True)
+        _row(self.vpl_result_inner, "H0 — PV dos Pagamentos pré-T", fmt_currency(vpl_r["h0"]), ACCENT_ORANGE, True)
+        _row(self.vpl_result_inner, "D0 — Valor criado (B0 − H0)", fmt_currency(vpl_r["d0"]),
+             ACCENT_GREEN if vpl_r["d0"] >= 0 else ACCENT_RED, True)
+        _row(self.vpl_result_inner, "PV Parcelas pós-T (a taxa Hurdle)", fmt_currency(vpl_r["pv_pos_t"]), ACCENT_BLUE, True)
+        _row(self.vpl_result_inner, "Delta VPL (D0 − PV pós-T)", fmt_currency(delta),
+             ACCENT_GREEN if cria else ACCENT_RED, True)
+
+        _sep(self.vpl_result_inner)
+
+        ctk.CTkLabel(self.vpl_result_inner, text="CUSTOS E TAXAS",
+                     font=("Segoe UI", 11, "bold"), text_color=TEXT_PRIMARY, anchor="w").pack(fill="x")
+
+        tir_a = vpl_r["tir_anual"] * 100
+        tir_m = vpl_r["tir_mensal"] * 100
+        cet_a = vpl_r["cet_anual"] * 100
+
+        _row(self.vpl_result_inner, "TIR Mensal", f"{tir_m:.3f}%".replace(".", ","))
+        _row(self.vpl_result_inner, "TIR Anual", f"{tir_a:.2f}%".replace(".", ","))
+        _row(self.vpl_result_inner, "CET Anual", f"{cet_a:.2f}%".replace(".", ","))
+        _row(self.vpl_result_inner, "VPL Total (a taxa ALM)", fmt_currency(vpl_r["vpl_total"]))
+
+        _sep(self.vpl_result_inner)
+
+        ctk.CTkLabel(self.vpl_result_inner, text="DADOS DA OPERAÇÃO",
+                     font=("Segoe UI", 11, "bold"), text_color=TEXT_PRIMARY, anchor="w").pack(fill="x")
+
+        _row(self.vpl_result_inner, "Carta de Crédito", fmt_currency(vc))
+        _row(self.vpl_result_inner, "Carta Líquida", fmt_currency(fluxo_r["carta_liquida"]), ACCENT_GREEN, True)
+        _row(self.vpl_result_inner, "Total Desembolsado", fmt_currency(fluxo_r["total_pago"]))
+        _row(self.vpl_result_inner, "Parcela Fase 1 (base)", fmt_currency(fluxo_r["parcela_f1_base"]))
+        _row(self.vpl_result_inner, "Parcela Fase 2 (base)", fmt_currency(fluxo_r["parcela_f2_base"]))
+        _row(self.vpl_result_inner, "Lance Embutido", fmt_currency(fluxo_r["lance_embutido_valor"]))
+        _row(self.vpl_result_inner, "Lance Livre", fmt_currency(fluxo_r["lance_livre_valor"]))
+
+        # Habilitar PDF
+        self.vpl_btn_pdf.configure(state="normal")
+
+    def _on_gerar_pdf_vpl(self):
+        if not hasattr(self, '_vpl_result') or not self._vpl_result:
+            messagebox.showwarning("Aviso", "Execute a análise VPL primeiro.")
+            return
+        try:
+            from fpdf import FPDF
+            r = self._vpl_result
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_auto_page_break(auto=True, margin=15)
+
+            # Header
+            pdf.set_font("Helvetica", "B", 18)
+            pdf.cell(0, 12, "SOMUS CAPITAL - Analise VPL (NASA HD)", ln=True, align="C")
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(0, 8, f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align="C")
+            pdf.ln(8)
+
+            # Status
+            cria = r["cria_valor"]
+            status_text = "CRIA VALOR" if cria else "NAO CRIA VALOR"
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.set_text_color(0, 128, 0) if cria else pdf.set_text_color(200, 0, 0)
+            pdf.cell(0, 12, status_text, ln=True, align="C")
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(4)
+
+            # Delta VPL
+            pdf.set_font("Helvetica", "B", 14)
+            delta_str = f"R$ {r['delta_vpl']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            pdf.cell(0, 10, f"Delta VPL: {delta_str}", ln=True, align="C")
+            be_str = f"{r['break_even_lance']:.2f}%".replace(".", ",")
+            pdf.set_font("Helvetica", "", 11)
+            pdf.cell(0, 8, f"Break-even Lance Livre: {be_str}", ln=True, align="C")
+            pdf.ln(6)
+
+            # Tabela de decomposicao
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(0, 8, "Decomposicao do VPL", ln=True)
+            pdf.set_font("Helvetica", "", 10)
+
+            def _add_row(label, val):
+                val_str = f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                pdf.cell(100, 7, f"  {label}", border=0)
+                pdf.cell(0, 7, val_str, ln=True, align="R")
+
+            _add_row("B0 - PV do Credito (ALM)", r["b0"])
+            _add_row("H0 - PV Pagamentos pre-T", r["h0"])
+            _add_row("D0 - Valor criado (B0 - H0)", r["d0"])
+            _add_row("PV Parcelas pos-T (Hurdle)", r["pv_pos_t"])
+            _add_row("Delta VPL (D0 - PV pos-T)", r["delta_vpl"])
+            pdf.ln(4)
+
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(0, 8, "Custos e Taxas", ln=True)
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(100, 7, "  TIR Mensal"); pdf.cell(0, 7, f"{r['tir_mensal']*100:.3f}%".replace(".", ","), ln=True, align="R")
+            pdf.cell(100, 7, "  TIR Anual"); pdf.cell(0, 7, f"{r['tir_anual']*100:.2f}%".replace(".", ","), ln=True, align="R")
+            pdf.cell(100, 7, "  CET Anual"); pdf.cell(0, 7, f"{r['cet_anual']*100:.2f}%".replace(".", ","), ln=True, align="R")
+            pdf.ln(4)
+
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(0, 8, "Dados da Operacao", ln=True)
+            pdf.set_font("Helvetica", "", 10)
+            _add_row("Carta de Credito", r["valor_carta"])
+            _add_row("Carta Liquida", r["carta_liquida"])
+            _add_row("Total Desembolsado", r["total_pago"])
+            _add_row("Parcela Fase 1 (base)", r["parcela_f1_base"])
+            _add_row("Parcela Fase 2 (base)", r["parcela_f2_base"])
+            _add_row("Lance Embutido", r["lance_embutido_valor"])
+            _add_row("Lance Livre", r["lance_livre_valor"])
+
+            pdf.ln(10)
+            pdf.set_font("Helvetica", "I", 8)
+            pdf.cell(0, 5, "Analise gerada pelo motor NASA HD - Somus Capital", ln=True, align="C")
+            pdf.cell(0, 5, "Valores sujeitos a variacao. Simulacao nao constitui oferta.", ln=True, align="C")
+
+            os.makedirs(CONSÓRCIO_OUTPUT_DIR, exist_ok=True)
+            nome = f"VPL_NASA_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            path = os.path.join(CONSÓRCIO_OUTPUT_DIR, nome)
+            pdf.output(path)
+            messagebox.showinfo("PDF Gerado", f"PDF VPL salvo!\n\n{nome}")
+            os.startfile(path)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar PDF VPL:\n{e}")
+
+    def _on_limpar_vpl(self):
+        defaults = {
+            "vpl_valor_carta": "", "vpl_prazo": "200", "vpl_contemp": "11",
+            "vpl_taxa_adm": "20", "vpl_fundo_res": "3", "vpl_seguro": "0",
+            "vpl_lance_emb": "30", "vpl_lance_livre": "0", "vpl_red_pct": "70",
+            "vpl_correcao": "3", "vpl_alm": "12", "vpl_hurdle": "12",
+        }
+        for attr, val in defaults.items():
+            w = getattr(self, attr)
+            w.delete(0, "end")
+            if val:
+                w.insert(0, val)
+        for w in self.vpl_result_inner.winfo_children():
+            w.destroy()
+        ctk.CTkLabel(
+            self.vpl_result_inner,
+            text="Preencha os parâmetros e clique em 'Analisar VPL'",
+            font=("Segoe UI", 12), text_color=TEXT_TERTIARY
+        ).pack(pady=20)
+        self.vpl_btn_pdf.configure(state="disabled")
+        self._vpl_result = None
+
+    # =================================================================
+    #  HANDLERS: CONSÓRCIO VS FINANCIAMENTO
+    # =================================================================
+    def _on_comparar_consorcio_financ(self):
+        try:
+            params_c = {
+                "valor_carta": self._parse_number(self.cf_c_valor.get()),
+                "prazo_meses": int(self._parse_number(self.cf_c_prazo.get())),
+                "taxa_adm": self._parse_number(self.cf_c_taxa.get()),
+                "fundo_reserva": self._parse_number(self.cf_c_fres.get()),
+                "seguro": self._parse_number(self.cf_c_seg.get()),
+                "prazo_contemp": int(self._parse_number(self.cf_c_contemp.get())),
+                "lance_embutido_pct": self._parse_number(self.cf_c_lemb.get()),
+                "lance_livre_pct": self._parse_number(self.cf_c_lliv.get()),
+                "parcela_red_pct": self._parse_number(self.cf_c_red.get()),
+                "correcao_anual": self._parse_number(self.cf_c_corr.get()),
+                "alm_anual": self._parse_number(self.cf_c_alm.get()),
+            }
+            params_f = {
+                "valor": self._parse_number(self.cf_f_valor.get()),
+                "prazo_meses": int(self._parse_number(self.cf_f_prazo.get())),
+                "taxa_mensal_pct": self._parse_number(self.cf_f_taxa.get()),
+                "metodo": self.cf_f_metodo.get().lower(),
+            }
+        except (ValueError, AttributeError):
+            messagebox.showerror("Erro", "Preencha todos os campos corretamente.")
+            return
+
+        if params_c["valor_carta"] <= 0 or params_f["valor"] <= 0:
+            messagebox.showerror("Erro", "Valores devem ser maiores que zero.")
+            return
+
+        # Calcular
+        result = comparar_consorcio_financiamento(params_c, params_f)
+
+        # ======== Mostrar resultado ========
+        for w in self.cf_result_inner.winfo_children():
+            w.destroy()
+
+        def _row(parent, label, value, color=TEXT_PRIMARY, bold=False):
+            r = ctk.CTkFrame(parent, fg_color="transparent")
+            r.pack(fill="x", pady=1)
+            ctk.CTkLabel(r, text=label, font=("Segoe UI", 10),
+                         text_color=TEXT_SECONDARY).pack(side="left")
+            f = ("Segoe UI", 11, "bold") if bold else ("Segoe UI", 11)
+            ctk.CTkLabel(r, text=value, font=f, text_color=color).pack(side="right")
+
+        def _sep(parent):
+            ctk.CTkFrame(parent, fg_color=BORDER_LIGHT, height=1).pack(fill="x", pady=8)
+
+        # Cards lado a lado para resultado
+        cols = ctk.CTkFrame(self.cf_result_inner, fg_color="transparent")
+        cols.pack(fill="x", pady=(0, 10))
+        cols.columnconfigure((0, 1), weight=1)
+
+        # -- Card Consorcio --
+        cc = ctk.CTkFrame(cols, fg_color=ACCENT_GREEN, corner_radius=12)
+        cc.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        cci = ctk.CTkFrame(cc, fg_color="transparent")
+        cci.pack(fill="x", padx=18, pady=14)
+        ctk.CTkLabel(cci, text="CONSÓRCIO", font=("Segoe UI", 10, "bold"),
+                     text_color="#80c0a0").pack(anchor="w")
+        ctk.CTkLabel(cci, text=fmt_currency(result["consorcio"]["total_pago"]),
+                     font=("Segoe UI", 18, "bold"), text_color=TEXT_WHITE).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(cci, text="total desembolsado",
+                     font=("Segoe UI", 9), text_color="#b0e0c8").pack(anchor="w")
+
+        tir_c_a = result["tir_consorcio_anual"] * 100
+        ctk.CTkLabel(cci, text=f"TIR: {tir_c_a:.2f}% a.a.".replace(".", ","),
+                     font=("Segoe UI", 11, "bold"), text_color=TEXT_WHITE).pack(anchor="w", pady=(6, 0))
+        ctk.CTkLabel(cci, text=f"Relação custo/crédito: {result['razao_vpl_consorcio']:.2f}x".replace(".", ","),
+                     font=("Segoe UI", 10), text_color="#b0e0c8").pack(anchor="w")
+
+        # -- Card Financiamento --
+        fc = ctk.CTkFrame(cols, fg_color=ACCENT_BLUE, corner_radius=12)
+        fc.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        fci = ctk.CTkFrame(fc, fg_color="transparent")
+        fci.pack(fill="x", padx=18, pady=14)
+        ctk.CTkLabel(fci, text="FINANCIAMENTO", font=("Segoe UI", 10, "bold"),
+                     text_color="#a0c0f0").pack(anchor="w")
+        ctk.CTkLabel(fci, text=fmt_currency(result["financiamento"]["total_pago"]),
+                     font=("Segoe UI", 18, "bold"), text_color=TEXT_WHITE).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(fci, text="total desembolsado",
+                     font=("Segoe UI", 9), text_color="#c0d8f8").pack(anchor="w")
+
+        tir_f_a = result["tir_financ_anual"] * 100
+        ctk.CTkLabel(fci, text=f"TIR: {tir_f_a:.2f}% a.a.".replace(".", ","),
+                     font=("Segoe UI", 11, "bold"), text_color=TEXT_WHITE).pack(anchor="w", pady=(6, 0))
+        ctk.CTkLabel(fci, text=f"Relação custo/crédito: {result['razao_vpl_financ']:.2f}x".replace(".", ","),
+                     font=("Segoe UI", 10), text_color="#c0d8f8").pack(anchor="w")
+
+        _sep(self.cf_result_inner)
+
+        # Resultado comparativo
+        eco = result["economia_vpl"]
+        vantagem = "Consórcio" if eco > 0 else "Financiamento"
+        eco_color = ACCENT_GREEN if eco > 0 else ACCENT_BLUE
+
+        result_banner = ctk.CTkFrame(self.cf_result_inner, fg_color=eco_color, corner_radius=12)
+        result_banner.pack(fill="x", pady=(0, 10))
+        rbi = ctk.CTkFrame(result_banner, fg_color="transparent")
+        rbi.pack(fill="x", padx=24, pady=14)
+        ctk.CTkLabel(rbi, text=f"Vantagem: {vantagem}",
+                     font=("Segoe UI", 16, "bold"), text_color=TEXT_WHITE).pack(anchor="w")
+        ctk.CTkLabel(rbi, text=f"Economia VPL: {fmt_currency(abs(eco))}",
+                     font=("Segoe UI", 12, "bold"), text_color="#ffffffcc").pack(anchor="w", pady=(2, 0))
+
+        _sep(self.cf_result_inner)
+
+        # VPLs
+        _row(self.cf_result_inner, "VPL Consórcio (a taxa ALM)", fmt_currency(result["vpl_consorcio"]), ACCENT_GREEN, True)
+        _row(self.cf_result_inner, "VPL Financiamento (a taxa ALM)", fmt_currency(result["vpl_financiamento"]), ACCENT_BLUE, True)
+        _row(self.cf_result_inner, "Economia VPL (Cons. − Financ.)", fmt_currency(eco), eco_color, True)
+
+        _sep(self.cf_result_inner)
+
+        # Detalhes
+        cons = result["consorcio"]
+        fin = result["financiamento"]
+        _row(self.cf_result_inner, "Crédito Líquido (Consórcio)", fmt_currency(cons["carta_liquida"]))
+        _row(self.cf_result_inner, "Valor Financiado", fmt_currency(fin["valor"]))
+        _row(self.cf_result_inner, "Total Juros (Financiamento)", fmt_currency(fin["total_juros"]), ACCENT_RED)
+        _row(self.cf_result_inner, "Parcela F1 Consórcio (base)", fmt_currency(cons["parcela_f1_base"]))
+        _row(self.cf_result_inner, "Parcela F2 Consórcio (base)", fmt_currency(cons["parcela_f2_base"]))
+        if fin["parcelas"]:
+            _row(self.cf_result_inner, "Parcela Financiamento (1a)", fmt_currency(fin["parcelas"][0]["parcela"]))
+
+    def _on_limpar_cf(self):
+        defaults_c = {
+            "cf_c_valor": "300000", "cf_c_prazo": "120", "cf_c_taxa": "18",
+            "cf_c_fres": "2", "cf_c_seg": "0", "cf_c_contemp": "60",
+            "cf_c_lemb": "0", "cf_c_lliv": "0", "cf_c_red": "100",
+            "cf_c_corr": "0", "cf_c_alm": "12",
+        }
+        defaults_f = {
+            "cf_f_valor": "300000", "cf_f_prazo": "120", "cf_f_taxa": "1.0",
+        }
+        for attr, val in {**defaults_c, **defaults_f}.items():
+            w = getattr(self, attr)
+            w.delete(0, "end")
+            w.insert(0, val)
+        self.cf_f_metodo.set("Price")
+        for w in self.cf_result_inner.winfo_children():
+            w.destroy()
+        ctk.CTkLabel(
+            self.cf_result_inner,
+            text="Preencha ambos os lados e clique em 'Comparar'",
+            font=("Segoe UI", 12), text_color=TEXT_TERTIARY
+        ).pack(pady=20)
 
     # =================================================================
     #  DATA LOADING
