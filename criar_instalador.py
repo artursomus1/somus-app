@@ -9,7 +9,6 @@ import subprocess
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Ler versao atual do version.py
 def _get_version():
     vpath = os.path.join(BASE_DIR, "version.py")
     with open(vpath, encoding="utf-8") as f:
@@ -45,11 +44,11 @@ def _get_desktop():
 
 OUTPUT_ZIP = os.path.join(_get_desktop(), "SomusCapital_Instalador.zip")
 
-EXCLUIR_DIRS  = {"__pycache__", ".git", ".vscode", ".idea", ".mypy_cache", ".pytest_cache", "node_modules", "historico"}
+EXCLUIR_DIRS     = {"__pycache__", ".git", ".vscode", ".idea", ".mypy_cache", ".pytest_cache", "node_modules", "historico"}
 EXCLUIR_ARQUIVOS = {"criar_instalador.py", ".env", "email_preview.html", "test_preview_A38675.html"}
-EXCLUIR_EXT   = {".pyc", ".pyo", ".log", ".tmp"}
+EXCLUIR_EXT      = {".pyc", ".pyo", ".log", ".tmp"}
 EXCLUIR_PREFIXOS = {"Codigo_"}
-PASTAS_SAIDA  = {
+PASTAS_SAIDA     = {
     os.path.join("Mesa Produtos", "Fluxo RF", "PDFs"),
     os.path.join("Mesa Produtos", "Organizador", "ORGANIZADO"),
     os.path.join("Mesa Produtos", "Consolidador", "PDFs"),
@@ -98,9 +97,6 @@ def deve_incluir(rel_path):
     return True
 
 
-# ===========================================================================
-# INSTALAR.bat — versao injetada dinamicamente pelo criar_instalador.py
-# ===========================================================================
 INSTALAR_BAT_TEMPLATE = r"""@echo off
 :: Auto-relaunch em modo /k para janela nao fechar em erros
 if "%~1"=="--keep" goto :main
@@ -112,8 +108,6 @@ chcp 65001 >nul 2>&1
 color 0A
 
 set "BUNDLE_VERSION=__VERSION__"
-set "GITHUB_REPO=artursomus1/somus-app"
-set "GITHUB_API=https://api.github.com/repos/%GITHUB_REPO%/releases/latest"
 set "UPDATE_ZIP=%TEMP%\somus_latest.zip"
 set "UPDATE_DIR=%TEMP%\somus_latest"
 set "INSTALL_SOURCE=%~dp0APP SOMUS"
@@ -148,42 +142,42 @@ echo.
 :: -----------------------------------------
 echo  [2/4] Verificando atualizacoes no GitHub...
 
-if exist "%UPDATE_ZIP%"  del "%UPDATE_ZIP%"  >nul 2>&1
-if exist "%UPDATE_DIR%"  rd /s /q "%UPDATE_DIR%" >nul 2>&1
-if exist "%TEMP%\somus_latest_version.txt" del "%TEMP%\somus_latest_version.txt" >nul 2>&1
+if exist "%UPDATE_ZIP%" del "%UPDATE_ZIP%" >nul 2>&1
+if exist "%UPDATE_DIR%" rd /s /q "%UPDATE_DIR%" >nul 2>&1
+if exist "%TEMP%\somus_ver.txt" del "%TEMP%\somus_ver.txt" >nul 2>&1
 
 set "PS_UPDATE=%TEMP%\somus_check_update.ps1"
 (
 echo $bundleVersion = '__VERSION__'
 echo $githubApi     = 'https://api.github.com/repos/artursomus1/somus-app/releases/latest'
-echo $updateZip     = '%UPDATE_ZIP%'
-echo $updateDir     = '%UPDATE_DIR%'
-echo $flagFile      = '%TEMP%\somus_latest_version.txt'
+echo $updateZip     = [System.IO.Path]::Combine($env:TEMP, 'somus_latest.zip'^)
+echo $updateDir     = [System.IO.Path]::Combine($env:TEMP, 'somus_latest'^)
+echo $flagFile      = [System.IO.Path]::Combine($env:TEMP, 'somus_ver.txt'^)
 echo try {
 echo     $api    = Invoke-RestMethod -Uri $githubApi -UseBasicParsing -TimeoutSec 12
 echo     $latest = $api.tag_name.TrimStart('v'^)
 echo     if ([version]$latest -gt [version]$bundleVersion^) {
 echo         $asset = $api.assets ^| Where-Object { $_.name -like '*.zip' } ^| Select-Object -First 1
-echo         Write-Host "         Nova versao encontrada: v$latest ^(este pacote: v$bundleVersion^)"
+echo         Write-Host "         Nova versao encontrada: v$latest (este pacote: v$bundleVersion)"
 echo         Write-Host "         Baixando do GitHub..."
 echo         Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $updateZip -UseBasicParsing
 echo         Expand-Archive -Path $updateZip -DestinationPath $updateDir -Force
 echo         Set-Content -Path $flagFile -Value $latest
 echo     } else {
-echo         Write-Host "         Pacote ja esta na versao mais recente ^(v$bundleVersion^)."
+echo         Write-Host "         Pacote ja esta na versao mais recente (v$bundleVersion)."
 echo     }
 echo } catch {
-echo     Write-Host "         GitHub indisponivel. Instalando versao local ^(v$bundleVersion^)."
+echo     Write-Host "         GitHub indisponivel. Instalando versao local (v$bundleVersion)."
 echo }
 ) > "%PS_UPDATE%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_UPDATE%" 2>&1
 del "%PS_UPDATE%" >nul 2>&1
 
-:: Usar arquivos do GitHub se foram baixados
-if exist "%TEMP%\somus_latest_version.txt" (
-    set /p LATEST_VERSION=<"%TEMP%\somus_latest_version.txt"
-    del "%TEMP%\somus_latest_version.txt" >nul 2>&1
+:: Usar GitHub se disponivel
+if exist "%TEMP%\somus_ver.txt" (
+    set /p LATEST_VERSION=<"%TEMP%\somus_ver.txt"
+    del "%TEMP%\somus_ver.txt" >nul 2>&1
     set "INSTALL_SOURCE=%UPDATE_DIR%\SomusCapital_Instalador\APP SOMUS"
     echo         Instalando versao v%LATEST_VERSION% baixada do GitHub.
 ) else (
@@ -191,9 +185,9 @@ if exist "%TEMP%\somus_latest_version.txt" (
 )
 echo.
 
-:: Verificar source
-if not exist "%INSTALL_SOURCE%\" (
-    echo  [ERRO] Pasta de instalacao nao encontrada: %INSTALL_SOURCE%
+:: Verificar source — usar executar.py como sentinela (evita problema de \"  no CMD)
+if not exist "%INSTALL_SOURCE%\executar.py" (
+    echo  [ERRO] Arquivos de instalacao nao encontrados!
     echo         Extraia o ZIP completo antes de executar este arquivo.
     echo.
     pause
@@ -220,7 +214,7 @@ if exist "%DEST%\executar.py" (
 
     echo         Removendo versao anterior...
     rd /s /q "%DEST%" >nul 2>&1
-    if exist "%DEST%" (
+    if exist "%DEST%\executar.py" (
         echo  [ERRO] Nao foi possivel remover a pasta anterior.
         echo         Feche o aplicativo e tente novamente.
         pause
@@ -230,7 +224,7 @@ if exist "%DEST%\executar.py" (
 
 echo  [3/4] Instalando arquivos em %DEST%...
 mkdir "%DEST%"
-xcopy /E /I /Y /Q "%INSTALL_SOURCE%\*" "%DEST%\"
+xcopy /E /I /Y /Q "%INSTALL_SOURCE%" "%DEST%"
 if %errorlevel% neq 0 (
     echo  [ERRO] Falha ao copiar arquivos!
     pause
@@ -243,9 +237,8 @@ if exist "%ENV_BACKUP%" (
     echo         Configuracoes ^(.env^) restauradas.
 )
 
-:: Limpar temporarios do GitHub
-if exist "%UPDATE_ZIP%"  del "%UPDATE_ZIP%"  >nul 2>&1
-if exist "%UPDATE_DIR%"  rd /s /q "%UPDATE_DIR%" >nul 2>&1
+if exist "%UPDATE_ZIP%" del "%UPDATE_ZIP%" >nul 2>&1
+if exist "%UPDATE_DIR%" rd /s /q "%UPDATE_DIR%" >nul 2>&1
 
 echo         Arquivos instalados com sucesso!
 echo.
@@ -258,10 +251,7 @@ echo.
 
 python -m pip install --quiet --upgrade pip >nul 2>&1
 pip install --quiet "customtkinter>=5.2.0" "openpyxl>=3.1.0" "Pillow>=10.0.0" "matplotlib>=3.8.0" "pywin32>=306" "fpdf2>=2.7.0" "requests>=2.31.0" >nul 2>&1
-
-if exist "%DEST%\requirements.txt" (
-    pip install --quiet -r "%DEST%\requirements.txt" >nul 2>&1
-)
+if exist "%DEST%\requirements.txt" pip install --quiet -r "%DEST%\requirements.txt" >nul 2>&1
 echo         Dependencias instaladas!
 
 for /f "delims=" %%p in ('python -c "import sys,os; print(os.path.join(os.path.dirname(sys.executable), 'pythonw.exe'))"') do set PYTHONW=%%p
@@ -311,10 +301,7 @@ echo if (-not (Test-Path $lnkDesktop^)^) { exit 1 }
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
 set PS_RESULT=%errorlevel%
 del "%PS_SCRIPT%" >nul 2>&1
-
-if %PS_RESULT% neq 0 (
-    python "%DEST%\criar_atalho.py"
-)
+if %PS_RESULT% neq 0 python "%DEST%\criar_atalho.py"
 
 echo.
 echo  ============================================
@@ -332,7 +319,6 @@ pause
 
 def criar_zip():
     version = _get_version()
-
     print("=" * 60)
     print(f"  SOMUS CAPITAL - CRIADOR DE INSTALADOR v5.3")
     print(f"  Versao do app: {version}")
@@ -346,10 +332,9 @@ def criar_zip():
     if os.path.exists(OUTPUT_ZIP):
         os.remove(OUTPUT_ZIP)
 
-    total_arquivos = 0
     arcnames_vistos = set()
+    total_arquivos  = 0
 
-    # Injetar versao no BAT
     bat_content = INSTALAR_BAT_TEMPLATE.replace("__VERSION__", version)
     bat_content = bat_content.lstrip("\n").replace("\r\n", "\n").replace("\n", "\r\n")
 
@@ -386,8 +371,7 @@ def criar_zip():
     size_mb = os.path.getsize(OUTPUT_ZIP) / (1024 * 1024)
     print()
     print(f"  ZIP CRIADO: {OUTPUT_ZIP}")
-    print(f"  Versao    : v{version}")
-    print(f"  Tamanho   : {size_mb:.1f} MB ({total_arquivos} arquivos)")
+    print(f"  Versao    : v{version}  |  Tamanho: {size_mb:.1f} MB  |  Arquivos: {total_arquivos}")
     return OUTPUT_ZIP
 
 
