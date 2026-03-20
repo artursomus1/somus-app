@@ -655,6 +655,7 @@ class App(ctk.CTk):
             ("simulador", "Simulador", "\u2630"),
             ("comparativo_vpl", "Comparativo VPL", "\u25b2"),
             ("consorcio_vs_financ", "Cons. vs Financ.", "\u21c4"),
+            ("fluxo_receitas", "Fluxo de Receitas", "\u25b6"),
         ]
         for i, (key, label, icon) in enumerate(cs_nav_items):
             btn = ctk.CTkButton(
@@ -836,6 +837,7 @@ class App(ctk.CTk):
         self.pages["corp_dashboard"] = self._build_corp_dashboard_page()
         self.pages["comparativo_vpl"] = self._build_comparativo_vpl_page()
         self.pages["consorcio_vs_financ"] = self._build_consorcio_vs_financ_page()
+        self.pages["fluxo_receitas"] = self._build_fluxo_receitas_page()
 
         if self.role == "corporate":
             return
@@ -881,6 +883,7 @@ class App(ctk.CTk):
             "consorcio": "simulador",
             "comparativo_vpl": "comparativo_vpl",
             "consorcio_vs_financ": "consorcio_vs_financ",
+            "fluxo_receitas": "fluxo_receitas",
             "seg_renovacoes": "seg_renovacoes",
         }
         self._update_sidebar_active(nav_map.get(page_key, page_key))
@@ -5677,7 +5680,7 @@ class App(ctk.CTk):
         # Cards de ferramentas disponiveis
         tools_frame = ctk.CTkFrame(content, fg_color="transparent")
         tools_frame.pack(fill="x", pady=(0, 18))
-        tools_frame.columnconfigure((0, 1, 2), weight=1)
+        tools_frame.columnconfigure((0, 1, 2, 3), weight=1)
 
         tools = [
             ("Simulador de Consórcio", "Calcule parcelas, fases, lances e custo efetivo",
@@ -5686,6 +5689,8 @@ class App(ctk.CTk):
              ACCENT_BLUE, "\u25b2", lambda: self._on_nav("comparativo_vpl")),
             ("Cons. vs Financiamento", "Compare consórcio e financiamento lado a lado",
              ACCENT_ORANGE, "\u21c4", lambda: self._on_nav("consorcio_vs_financ")),
+            ("Fluxo de Receitas", "Acompanhe operações, pagamentos e receitas",
+             ACCENT_PURPLE, "\u25b6", lambda: self._on_nav("fluxo_receitas")),
         ]
 
         for col, (title, desc, color, icon, cmd) in enumerate(tools):
@@ -6352,6 +6357,689 @@ class App(ctk.CTk):
         ).pack(pady=20)
 
         return page
+
+    # -----------------------------------------------------------------
+    #  PAGE: CORPORATE - FLUXO DE RECEITAS
+    # -----------------------------------------------------------------
+    _FR_FILE = os.path.join(BASE_DIR, "Corporate", "operacoes.json")
+
+    def _fr_load(self):
+        import json
+        if os.path.exists(self._FR_FILE):
+            try:
+                with open(self._FR_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return []
+
+    def _fr_save(self, ops):
+        import json
+        os.makedirs(os.path.dirname(self._FR_FILE), exist_ok=True)
+        with open(self._FR_FILE, "w", encoding="utf-8") as f:
+            json.dump(ops, f, ensure_ascii=False, indent=2)
+
+    def _build_fluxo_receitas_page(self):
+        page = ctk.CTkFrame(self, fg_color=BG_PRIMARY, corner_radius=0)
+
+        self._make_topbar(page, "Fluxo de Receitas", subtitle="Corporate - Operações e Pagamentos")
+
+        scroll = ctk.CTkScrollableFrame(page, fg_color=BG_PRIMARY, corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=0, pady=0)
+
+        content = ctk.CTkFrame(scroll, fg_color="transparent")
+        content.pack(fill="x", padx=28, pady=20)
+
+        # ========== KPIs ==========
+        kpi_frame = ctk.CTkFrame(content, fg_color="transparent")
+        kpi_frame.pack(fill="x", pady=(0, 18))
+        kpi_frame.columnconfigure((0, 1, 2, 3), weight=1)
+
+        self._fr_kpi_ops = self._make_kpi_card(kpi_frame, "Operações Ativas", "--", ACCENT_GREEN, 0)
+        self._fr_kpi_receita = self._make_kpi_card(kpi_frame, "Receita Total", "--", ACCENT_BLUE, 1)
+        self._fr_kpi_recebido = self._make_kpi_card(kpi_frame, "Recebido", "--", ACCENT_TEAL, 2)
+        self._fr_kpi_pendente = self._make_kpi_card(kpi_frame, "Pendente", "--", ACCENT_ORANGE, 3)
+
+        # ========== BOTOES ==========
+        btn_frame = ctk.CTkFrame(content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(0, 16))
+
+        ctk.CTkButton(
+            btn_frame, text="  + Nova Operação",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_GREEN,
+            hover_color=self._darken(ACCENT_GREEN), height=42, corner_radius=10,
+            command=self._fr_nova_operacao,
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkButton(
+            btn_frame, text="  Exportar Excel",
+            font=("Segoe UI", 12), fg_color=ACCENT_BLUE,
+            hover_color=self._darken(ACCENT_BLUE), height=42, corner_radius=10,
+            command=self._fr_exportar_excel,
+        ).pack(side="left", padx=(0, 10))
+
+        # Filtro de status
+        self._fr_filtro = ctk.CTkSegmentedButton(
+            btn_frame, values=["Todos", "Ativo", "Contemplado", "Encerrado"],
+            font=("Segoe UI", 10, "bold"), fg_color=BG_INPUT,
+            selected_color=ACCENT_GREEN, selected_hover_color=BG_SIDEBAR_HOVER,
+            unselected_color="#e0e3e8", unselected_hover_color="#d0d3d8",
+            text_color=TEXT_PRIMARY, corner_radius=8, height=38,
+            command=lambda v: self._fr_refresh(),
+        )
+        self._fr_filtro.set("Todos")
+        self._fr_filtro.pack(side="right")
+
+        # ========== LISTA DE OPERAÇÕES ==========
+        ctk.CTkLabel(
+            content, text="Operações",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        self._fr_list_frame = ctk.CTkFrame(content, fg_color="transparent")
+        self._fr_list_frame.pack(fill="x", pady=(0, 16))
+
+        # Carregar dados
+        self.after(200, self._fr_refresh)
+
+        return page
+
+    def _fr_refresh(self):
+        ops = self._fr_load()
+        filtro = self._fr_filtro.get() if hasattr(self, '_fr_filtro') else "Todos"
+
+        # Filtrar
+        if filtro != "Todos":
+            ops_vis = [o for o in ops if o.get("status") == filtro]
+        else:
+            ops_vis = ops
+
+        # KPIs
+        ativos = sum(1 for o in ops if o.get("status") in ("Ativo", "Contemplado"))
+        receita_total = sum(p.get("valor", 0) for o in ops for p in o.get("pagamentos", []))
+        recebido = sum(p.get("valor", 0) for o in ops for p in o.get("pagamentos", []) if p.get("pago"))
+        pendente = receita_total - recebido
+
+        self._fr_kpi_ops.configure(text=str(ativos))
+        self._fr_kpi_receita.configure(text=fmt_currency(receita_total))
+        self._fr_kpi_recebido.configure(text=fmt_currency(recebido))
+        self._fr_kpi_pendente.configure(text=fmt_currency(pendente))
+
+        # Limpar lista
+        for w in self._fr_list_frame.winfo_children():
+            w.destroy()
+
+        if not ops_vis:
+            ctk.CTkLabel(
+                self._fr_list_frame,
+                text="Nenhuma operação encontrada. Clique em '+ Nova Operação' para adicionar.",
+                font=("Segoe UI", 12), text_color=TEXT_TERTIARY
+            ).pack(pady=20)
+            return
+
+        # Renderizar cards
+        _STATUS_CORES = {
+            "Ativo": ACCENT_GREEN,
+            "Contemplado": ACCENT_BLUE,
+            "Encerrado": "#6b7280",
+        }
+
+        for op in ops_vis:
+            self._fr_render_card(op, _STATUS_CORES)
+
+    def _fr_render_card(self, op, status_cores):
+        oid = op.get("id", "")
+        status = op.get("status", "Ativo")
+        cor = status_cores.get(status, ACCENT_GREEN)
+        pagamentos = op.get("pagamentos", [])
+        total_parcelas = len(pagamentos)
+        pagas = sum(1 for p in pagamentos if p.get("pago"))
+        pendentes = total_parcelas - pagas
+        valor_recebido = sum(p.get("valor", 0) for p in pagamentos if p.get("pago"))
+        valor_pendente = sum(p.get("valor", 0) for p in pagamentos if not p.get("pago"))
+
+        # Proximo vencimento
+        from datetime import datetime as dt
+        hoje = dt.now()
+        prox_venc = None
+        prox_valor = 0
+        vencidas = 0
+        for p in pagamentos:
+            if not p.get("pago"):
+                try:
+                    dv = dt.strptime(p["data_venc"], "%Y-%m-%d")
+                    if dv < hoje:
+                        vencidas += 1
+                    if prox_venc is None or dv < prox_venc:
+                        prox_venc = dv
+                        prox_valor = p.get("valor", 0)
+                except Exception:
+                    pass
+
+        # Card
+        card = ctk.CTkFrame(self._fr_list_frame, fg_color=BG_CARD, corner_radius=12,
+                            border_width=1, border_color=BORDER_CARD)
+        card.pack(fill="x", pady=4)
+
+        # Barra lateral colorida
+        inner = ctk.CTkFrame(card, fg_color="transparent")
+        inner.pack(fill="x", padx=0, pady=0)
+
+        color_bar = ctk.CTkFrame(inner, fg_color=cor, width=5, corner_radius=0)
+        color_bar.pack(side="left", fill="y")
+
+        body = ctk.CTkFrame(inner, fg_color="transparent")
+        body.pack(side="left", fill="x", expand=True, padx=14, pady=12)
+
+        # Header row
+        hdr = ctk.CTkFrame(body, fg_color="transparent")
+        hdr.pack(fill="x")
+
+        ctk.CTkLabel(hdr, text=op.get("cliente", "—"),
+                     font=("Segoe UI", 13, "bold"), text_color=TEXT_PRIMARY).pack(side="left")
+
+        # Status badge
+        badge = ctk.CTkFrame(hdr, fg_color=cor, corner_radius=6)
+        badge.pack(side="left", padx=(10, 0))
+        ctk.CTkLabel(badge, text=f" {status} ", font=("Segoe UI", 9, "bold"),
+                     text_color=TEXT_WHITE).pack(padx=6, pady=2)
+
+        if vencidas > 0:
+            venc_badge = ctk.CTkFrame(hdr, fg_color=ACCENT_RED, corner_radius=6)
+            venc_badge.pack(side="left", padx=(6, 0))
+            ctk.CTkLabel(venc_badge, text=f" {vencidas} vencida{'s' if vencidas > 1 else ''} ",
+                         font=("Segoe UI", 9, "bold"), text_color=TEXT_WHITE).pack(padx=6, pady=2)
+
+        # Botoes (direita)
+        btn_box = ctk.CTkFrame(hdr, fg_color="transparent")
+        btn_box.pack(side="right")
+
+        ctk.CTkButton(btn_box, text="\u270e", width=32, height=28, fg_color=BG_INPUT,
+                      hover_color=BORDER_LIGHT, text_color=TEXT_PRIMARY,
+                      font=("Segoe UI", 13), corner_radius=6,
+                      command=lambda o=op: self._fr_editar_operacao(o)).pack(side="left", padx=2)
+        ctk.CTkButton(btn_box, text="\u2715", width=32, height=28, fg_color=BG_INPUT,
+                      hover_color="#ffdddd", text_color=ACCENT_RED,
+                      font=("Segoe UI", 13), corner_radius=6,
+                      command=lambda o=op: self._fr_excluir_operacao(o)).pack(side="left", padx=2)
+
+        # Info row
+        info = ctk.CTkFrame(body, fg_color="transparent")
+        info.pack(fill="x", pady=(4, 0))
+
+        details = [
+            f"Carta: {fmt_currency(op.get('valor_carta', 0))}",
+            f"Adm: {op.get('administradora', '—')}",
+            f"Prazo: {op.get('prazo_meses', 0)}m",
+            f"Início: {op.get('data_inicio', '—')}",
+        ]
+        ctk.CTkLabel(info, text="  |  ".join(details), font=("Segoe UI", 10),
+                     text_color=TEXT_SECONDARY).pack(side="left")
+
+        # Progress row
+        prog = ctk.CTkFrame(body, fg_color="transparent")
+        prog.pack(fill="x", pady=(6, 0))
+
+        pct = pagas / total_parcelas if total_parcelas > 0 else 0
+        pbar = ctk.CTkProgressBar(prog, width=200, height=8, fg_color=BG_INPUT,
+                                  progress_color=cor, corner_radius=4)
+        pbar.set(pct)
+        pbar.pack(side="left", padx=(0, 10))
+
+        ctk.CTkLabel(prog, text=f"{pagas}/{total_parcelas} parcelas pagas ({pct:.0%})",
+                     font=("Segoe UI", 10), text_color=TEXT_SECONDARY).pack(side="left")
+
+        ctk.CTkLabel(prog, text=f"Recebido: {fmt_currency(valor_recebido)}",
+                     font=("Segoe UI", 10, "bold"), text_color=ACCENT_TEAL).pack(side="right")
+
+        if prox_venc and status != "Encerrado":
+            prox_str = prox_venc.strftime("%d/%m/%Y")
+            prox_color = ACCENT_RED if prox_venc < hoje else ACCENT_ORANGE
+            ctk.CTkLabel(prog, text=f"Próx: {prox_str} ({fmt_currency(prox_valor)})",
+                         font=("Segoe UI", 10, "bold"), text_color=prox_color).pack(side="right", padx=(0, 16))
+
+        # Botao expandir pagamentos
+        expand_btn = ctk.CTkButton(
+            body, text="  Ver Pagamentos ▼",
+            font=("Segoe UI", 10), fg_color="transparent",
+            hover_color=BG_INPUT, text_color=ACCENT_GREEN,
+            height=28, corner_radius=6, anchor="w",
+            command=lambda c=card, o=op, b=body: self._fr_toggle_pagamentos(c, o, b),
+        )
+        expand_btn.pack(anchor="w", pady=(4, 0))
+
+    def _fr_toggle_pagamentos(self, card, op, body):
+        # Se ja tem frame de pagamentos, remove (toggle)
+        tag = f"_fr_pag_{op['id']}"
+        existing = getattr(self, tag, None)
+        if existing and existing.winfo_exists():
+            existing.destroy()
+            setattr(self, tag, None)
+            return
+
+        # Criar frame de pagamentos
+        pag_frame = ctk.CTkFrame(body, fg_color=BG_INPUT, corner_radius=8)
+        pag_frame.pack(fill="x", pady=(6, 0))
+        setattr(self, tag, pag_frame)
+
+        pagamentos = op.get("pagamentos", [])
+        if not pagamentos:
+            ctk.CTkLabel(pag_frame, text="Nenhum pagamento registrado.",
+                         font=("Segoe UI", 10), text_color=TEXT_TERTIARY).pack(pady=10)
+            return
+
+        # Header
+        hdr = ctk.CTkFrame(pag_frame, fg_color="transparent")
+        hdr.pack(fill="x", padx=12, pady=(8, 4))
+        for txt, w in [("Mês", 50), ("Vencimento", 100), ("Valor", 110), ("Status", 80), ("Data Pgto", 100), ("Ação", 60)]:
+            ctk.CTkLabel(hdr, text=txt, font=("Segoe UI", 9, "bold"),
+                         text_color=TEXT_SECONDARY, width=w).pack(side="left", padx=2)
+
+        ctk.CTkFrame(pag_frame, fg_color=BORDER_LIGHT, height=1).pack(fill="x", padx=12)
+
+        from datetime import datetime as dt
+        hoje = dt.now()
+
+        for p in pagamentos:
+            row = ctk.CTkFrame(pag_frame, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=1)
+
+            pago = p.get("pago", False)
+            try:
+                dv = dt.strptime(p["data_venc"], "%Y-%m-%d")
+                venc_str = dv.strftime("%d/%m/%Y")
+                vencido = not pago and dv < hoje
+            except Exception:
+                venc_str = p.get("data_venc", "—")
+                vencido = False
+
+            # Mes
+            ctk.CTkLabel(row, text=str(p.get("mes", "")), font=("Segoe UI", 10),
+                         text_color=TEXT_PRIMARY, width=50).pack(side="left", padx=2)
+            # Vencimento
+            venc_color = ACCENT_RED if vencido else TEXT_PRIMARY
+            ctk.CTkLabel(row, text=venc_str, font=("Segoe UI", 10),
+                         text_color=venc_color, width=100).pack(side="left", padx=2)
+            # Valor
+            ctk.CTkLabel(row, text=fmt_currency(p.get("valor", 0)), font=("Segoe UI", 10),
+                         text_color=TEXT_PRIMARY, width=110).pack(side="left", padx=2)
+            # Status
+            if pago:
+                st_text, st_color = "Pago", ACCENT_TEAL
+            elif vencido:
+                st_text, st_color = "Vencido", ACCENT_RED
+            else:
+                st_text, st_color = "Pendente", ACCENT_ORANGE
+            ctk.CTkLabel(row, text=st_text, font=("Segoe UI", 10, "bold"),
+                         text_color=st_color, width=80).pack(side="left", padx=2)
+            # Data pagamento
+            dp = p.get("data_pag", "—") or "—"
+            if dp != "—":
+                try:
+                    dp = dt.strptime(dp, "%Y-%m-%d").strftime("%d/%m/%Y")
+                except Exception:
+                    pass
+            ctk.CTkLabel(row, text=dp, font=("Segoe UI", 10),
+                         text_color=TEXT_PRIMARY, width=100).pack(side="left", padx=2)
+            # Ação
+            if not pago:
+                ctk.CTkButton(
+                    row, text="✓", width=30, height=24, fg_color=ACCENT_TEAL,
+                    hover_color=self._darken(ACCENT_TEAL), text_color=TEXT_WHITE,
+                    font=("Segoe UI", 12, "bold"), corner_radius=4,
+                    command=lambda o=op, pm=p: self._fr_marcar_pago(o, pm),
+                ).pack(side="left", padx=2)
+            else:
+                ctk.CTkButton(
+                    row, text="↩", width=30, height=24, fg_color="#6b7280",
+                    hover_color="#555d6a", text_color=TEXT_WHITE,
+                    font=("Segoe UI", 12), corner_radius=4,
+                    command=lambda o=op, pm=p: self._fr_desmarcar_pago(o, pm),
+                ).pack(side="left", padx=2)
+
+        # Botao marcar proximas como pagas
+        pendentes = [p for p in pagamentos if not p.get("pago")]
+        if pendentes:
+            btn_bar = ctk.CTkFrame(pag_frame, fg_color="transparent")
+            btn_bar.pack(fill="x", padx=12, pady=(6, 8))
+            ctk.CTkButton(
+                btn_bar, text="  Pagar Próxima Parcela",
+                font=("Segoe UI", 10, "bold"), fg_color=ACCENT_GREEN,
+                hover_color=self._darken(ACCENT_GREEN), height=30, corner_radius=6,
+                command=lambda o=op, pn=pendentes[0]: self._fr_marcar_pago(o, pn),
+            ).pack(side="left", padx=(0, 8))
+
+            ctk.CTkButton(
+                btn_bar, text="  Pagar Todas Vencidas",
+                font=("Segoe UI", 10, "bold"), fg_color=ACCENT_ORANGE,
+                hover_color="#c96f1f", height=30, corner_radius=6,
+                command=lambda o=op: self._fr_pagar_vencidas(o),
+            ).pack(side="left")
+
+    def _fr_marcar_pago(self, op, pagamento):
+        from datetime import datetime as dt
+        ops = self._fr_load()
+        for o in ops:
+            if o["id"] == op["id"]:
+                for p in o.get("pagamentos", []):
+                    if p["mes"] == pagamento["mes"]:
+                        p["pago"] = True
+                        p["data_pag"] = dt.now().strftime("%Y-%m-%d")
+                        break
+                break
+        self._fr_save(ops)
+        self._fr_refresh()
+
+    def _fr_desmarcar_pago(self, op, pagamento):
+        ops = self._fr_load()
+        for o in ops:
+            if o["id"] == op["id"]:
+                for p in o.get("pagamentos", []):
+                    if p["mes"] == pagamento["mes"]:
+                        p["pago"] = False
+                        p["data_pag"] = None
+                        break
+                break
+        self._fr_save(ops)
+        self._fr_refresh()
+
+    def _fr_pagar_vencidas(self, op):
+        from datetime import datetime as dt
+        hoje = dt.now()
+        ops = self._fr_load()
+        count = 0
+        for o in ops:
+            if o["id"] == op["id"]:
+                for p in o.get("pagamentos", []):
+                    if not p.get("pago"):
+                        try:
+                            dv = dt.strptime(p["data_venc"], "%Y-%m-%d")
+                            if dv < hoje:
+                                p["pago"] = True
+                                p["data_pag"] = hoje.strftime("%Y-%m-%d")
+                                count += 1
+                        except Exception:
+                            pass
+                break
+        self._fr_save(ops)
+        self._fr_refresh()
+        if count > 0:
+            messagebox.showinfo("Pagamentos", f"{count} parcela(s) marcada(s) como paga(s).")
+
+    def _fr_nova_operacao(self, edit_op=None):
+        from datetime import datetime as dt
+        import uuid
+
+        win = ctk.CTkToplevel(self)
+        win.title("Editar Operação" if edit_op else "Nova Operação")
+        win.geometry("560x620")
+        win.resizable(False, False)
+        win.grab_set()
+        win.configure(fg_color=BG_SECONDARY)
+        win.after(200, win.lift)
+
+        scroll = ctk.CTkScrollableFrame(win, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=20, pady=10)
+
+        fields = {}
+
+        def _add_field(label, key, default="", placeholder=""):
+            ctk.CTkLabel(scroll, text=label, font=("Segoe UI", 10, "bold"),
+                         text_color=TEXT_SECONDARY).pack(anchor="w", pady=(6, 2))
+            e = ctk.CTkEntry(scroll, placeholder_text=placeholder, height=36,
+                             corner_radius=8, fg_color=BG_INPUT,
+                             border_width=1, border_color=BORDER_LIGHT)
+            e.pack(fill="x", pady=(0, 4))
+            if default:
+                e.insert(0, str(default))
+            fields[key] = e
+
+        _add_field("Nome do Cliente *", "cliente",
+                   edit_op.get("cliente", "") if edit_op else "", "Ex: João Silva")
+        _add_field("Assessor", "assessor",
+                   edit_op.get("assessor", "") if edit_op else "", "Ex: Maria Santos")
+        _add_field("Administradora", "administradora",
+                   edit_op.get("administradora", "") if edit_op else "", "Ex: Porto Seguro")
+        _add_field("Valor da Carta (R$) *", "valor_carta",
+                   edit_op.get("valor_carta", "") if edit_op else "", "Ex: 300000")
+        _add_field("Prazo (meses) *", "prazo_meses",
+                   edit_op.get("prazo_meses", "") if edit_op else "", "Ex: 120")
+        _add_field("Mês Contemplação *", "prazo_contemp",
+                   edit_op.get("prazo_contemp", "") if edit_op else "", "Ex: 60")
+        _add_field("Parcela Fase 1 (R$) *", "parcela_f1",
+                   edit_op.get("parcela_f1", "") if edit_op else "", "Use Simulador para calcular")
+        _add_field("Parcela Fase 2 (R$)", "parcela_f2",
+                   edit_op.get("parcela_f2", "") if edit_op else "", "Parcela pós-contemplação")
+        _add_field("Data Início (DD/MM/AAAA) *", "data_inicio",
+                   edit_op.get("data_inicio", "") if edit_op else dt.now().strftime("%d/%m/%Y"),
+                   "Ex: 15/01/2026")
+
+        # Status
+        ctk.CTkLabel(scroll, text="Status", font=("Segoe UI", 10, "bold"),
+                     text_color=TEXT_SECONDARY).pack(anchor="w", pady=(6, 2))
+        status_var = ctk.CTkSegmentedButton(
+            scroll, values=["Ativo", "Contemplado", "Encerrado"],
+            font=("Segoe UI", 10, "bold"), fg_color=BG_INPUT,
+            selected_color=ACCENT_GREEN, selected_hover_color=BG_SIDEBAR_HOVER,
+            unselected_color="#e0e3e8", unselected_hover_color="#d0d3d8",
+            text_color=TEXT_PRIMARY, corner_radius=8, height=36,
+        )
+        status_var.set(edit_op.get("status", "Ativo") if edit_op else "Ativo")
+        status_var.pack(fill="x", pady=(0, 4))
+
+        # Botoes
+        btn_frame = ctk.CTkFrame(scroll, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(12, 4))
+
+        def _salvar():
+            try:
+                cliente = fields["cliente"].get().strip()
+                if not cliente:
+                    messagebox.showerror("Erro", "Nome do cliente é obrigatório.", parent=win)
+                    return
+
+                vc = self._parse_number(fields["valor_carta"].get())
+                prazo = int(self._parse_number(fields["prazo_meses"].get()))
+                contemp = int(self._parse_number(fields["prazo_contemp"].get()))
+                p_f1 = self._parse_number(fields["parcela_f1"].get())
+                p_f2_str = fields["parcela_f2"].get().strip()
+                p_f2 = self._parse_number(p_f2_str) if p_f2_str else p_f1
+                data_str = fields["data_inicio"].get().strip()
+
+                # Parse data
+                try:
+                    data_dt = dt.strptime(data_str, "%d/%m/%Y")
+                except Exception:
+                    messagebox.showerror("Erro", "Data inválida. Use DD/MM/AAAA.", parent=win)
+                    return
+
+                ops = self._fr_load()
+
+                if edit_op:
+                    # Atualizar existente
+                    for o in ops:
+                        if o["id"] == edit_op["id"]:
+                            o["cliente"] = cliente
+                            o["assessor"] = fields["assessor"].get().strip()
+                            o["administradora"] = fields["administradora"].get().strip()
+                            o["valor_carta"] = vc
+                            o["prazo_meses"] = prazo
+                            o["prazo_contemp"] = contemp
+                            o["parcela_f1"] = p_f1
+                            o["parcela_f2"] = p_f2
+                            o["data_inicio"] = data_str
+                            o["status"] = status_var.get()
+                            # Regenerar pagamentos se prazo mudou
+                            if len(o.get("pagamentos", [])) != prazo:
+                                o["pagamentos"] = self._fr_gerar_pagamentos(
+                                    prazo, contemp, p_f1, p_f2, data_dt)
+                            break
+                else:
+                    # Nova operacao
+                    pagamentos = self._fr_gerar_pagamentos(prazo, contemp, p_f1, p_f2, data_dt)
+                    nova = {
+                        "id": str(uuid.uuid4())[:8],
+                        "cliente": cliente,
+                        "assessor": fields["assessor"].get().strip(),
+                        "administradora": fields["administradora"].get().strip(),
+                        "valor_carta": vc,
+                        "prazo_meses": prazo,
+                        "prazo_contemp": contemp,
+                        "parcela_f1": p_f1,
+                        "parcela_f2": p_f2,
+                        "data_inicio": data_str,
+                        "status": status_var.get(),
+                        "pagamentos": pagamentos,
+                    }
+                    ops.append(nova)
+
+                self._fr_save(ops)
+                win.destroy()
+                self._fr_refresh()
+
+            except (ValueError, AttributeError) as e:
+                messagebox.showerror("Erro", f"Preencha os campos corretamente.\n{e}", parent=win)
+
+        ctk.CTkButton(
+            btn_frame, text="  Salvar",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_GREEN,
+            hover_color=self._darken(ACCENT_GREEN), height=42, corner_radius=10,
+            command=_salvar,
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkButton(
+            btn_frame, text="  Cancelar",
+            font=("Segoe UI", 12), fg_color="#6b7280",
+            hover_color="#555d6a", height=42, corner_radius=10,
+            command=win.destroy,
+        ).pack(side="left")
+
+    def _fr_gerar_pagamentos(self, prazo, contemp, parcela_f1, parcela_f2, data_inicio):
+        from datetime import datetime as dt
+        from datetime import timedelta
+        pagamentos = []
+        for mes in range(1, prazo + 1):
+            # Data de vencimento: data_inicio + mes meses
+            ano = data_inicio.year + (data_inicio.month + mes - 1) // 12
+            m = (data_inicio.month + mes - 1) % 12 + 1
+            dia = min(data_inicio.day, 28)  # Seguro para fevereiro
+            data_venc = dt(ano, m, dia)
+
+            valor = parcela_f1 if mes <= contemp else parcela_f2
+            pagamentos.append({
+                "mes": mes,
+                "data_venc": data_venc.strftime("%Y-%m-%d"),
+                "valor": round(valor, 2),
+                "pago": False,
+                "data_pag": None,
+            })
+        return pagamentos
+
+    def _fr_editar_operacao(self, op):
+        self._fr_nova_operacao(edit_op=op)
+
+    def _fr_excluir_operacao(self, op):
+        if not messagebox.askyesno("Confirmar", f"Excluir operação de {op.get('cliente', '—')}?"):
+            return
+        ops = self._fr_load()
+        ops = [o for o in ops if o["id"] != op["id"]]
+        self._fr_save(ops)
+        self._fr_refresh()
+
+    def _fr_exportar_excel(self):
+        from datetime import datetime as dt
+        ops = self._fr_load()
+        if not ops:
+            messagebox.showinfo("Exportar", "Nenhuma operação para exportar.")
+            return
+
+        try:
+            wb = openpyxl.Workbook()
+
+            # Aba 1: Resumo das operacoes
+            ws = wb.active
+            ws.title = "Operacoes"
+            headers = ["Cliente", "Assessor", "Administradora", "Valor Carta",
+                       "Prazo", "Contemplacao", "Parcela F1", "Parcela F2",
+                       "Data Inicio", "Status", "Parcelas Pagas", "Total Pago", "Total Pendente"]
+            for c, h in enumerate(headers, 1):
+                ws.cell(1, c, h)
+                ws.cell(1, c).font = openpyxl.styles.Font(bold=True)
+
+            for r, op in enumerate(ops, 2):
+                pagamentos = op.get("pagamentos", [])
+                pagas = sum(1 for p in pagamentos if p.get("pago"))
+                pago = sum(p.get("valor", 0) for p in pagamentos if p.get("pago"))
+                pend = sum(p.get("valor", 0) for p in pagamentos if not p.get("pago"))
+                vals = [
+                    op.get("cliente", ""), op.get("assessor", ""),
+                    op.get("administradora", ""), op.get("valor_carta", 0),
+                    op.get("prazo_meses", 0), op.get("prazo_contemp", 0),
+                    op.get("parcela_f1", 0), op.get("parcela_f2", 0),
+                    op.get("data_inicio", ""), op.get("status", ""),
+                    f"{pagas}/{len(pagamentos)}", pago, pend,
+                ]
+                for c, v in enumerate(vals, 1):
+                    ws.cell(r, c, v)
+
+            # Aba 2: Todos os pagamentos detalhados
+            ws2 = wb.create_sheet("Pagamentos")
+            hdrs2 = ["Cliente", "Mes", "Vencimento", "Valor", "Status", "Data Pagamento"]
+            for c, h in enumerate(hdrs2, 1):
+                ws2.cell(1, c, h)
+                ws2.cell(1, c).font = openpyxl.styles.Font(bold=True)
+
+            row = 2
+            for op in ops:
+                for p in op.get("pagamentos", []):
+                    ws2.cell(row, 1, op.get("cliente", ""))
+                    ws2.cell(row, 2, p.get("mes", 0))
+                    ws2.cell(row, 3, p.get("data_venc", ""))
+                    ws2.cell(row, 4, p.get("valor", 0))
+                    ws2.cell(row, 5, "Pago" if p.get("pago") else "Pendente")
+                    ws2.cell(row, 6, p.get("data_pag", "") or "")
+                    row += 1
+
+            # Aba 3: Fluxo mensal (receitas por mes)
+            ws3 = wb.create_sheet("Fluxo Mensal")
+            ws3.cell(1, 1, "Mes/Ano")
+            ws3.cell(1, 2, "Receita Prevista")
+            ws3.cell(1, 3, "Receita Recebida")
+            ws3.cell(1, 1).font = openpyxl.styles.Font(bold=True)
+            ws3.cell(1, 2).font = openpyxl.styles.Font(bold=True)
+            ws3.cell(1, 3).font = openpyxl.styles.Font(bold=True)
+
+            # Agrupar por mes
+            fluxo = {}
+            for op in ops:
+                for p in op.get("pagamentos", []):
+                    try:
+                        dv = dt.strptime(p["data_venc"], "%Y-%m-%d")
+                        key = dv.strftime("%Y-%m")
+                    except Exception:
+                        continue
+                    if key not in fluxo:
+                        fluxo[key] = {"previsto": 0, "recebido": 0}
+                    fluxo[key]["previsto"] += p.get("valor", 0)
+                    if p.get("pago"):
+                        fluxo[key]["recebido"] += p.get("valor", 0)
+
+            for r, (mes, vals) in enumerate(sorted(fluxo.items()), 2):
+                ws3.cell(r, 1, mes)
+                ws3.cell(r, 2, vals["previsto"])
+                ws3.cell(r, 3, vals["recebido"])
+
+            # Salvar
+            os.makedirs(CONSÓRCIO_OUTPUT_DIR, exist_ok=True)
+            nome = f"Fluxo_Receitas_{dt.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            path = os.path.join(CONSÓRCIO_OUTPUT_DIR, nome)
+            wb.save(path)
+            wb.close()
+            messagebox.showinfo("Exportado", f"Planilha salva!\n\n{nome}")
+            os.startfile(path)
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao exportar:\n{e}")
 
     # -----------------------------------------------------------------
     #  PAGE: CONSOLIDADOR DE CARTEIRAS
