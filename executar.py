@@ -6418,6 +6418,13 @@ class App(ctk.CTk):
             command=self._fr_exportar_excel,
         ).pack(side="left", padx=(0, 10))
 
+        ctk.CTkButton(
+            btn_frame, text="  Importar Excel",
+            font=("Segoe UI", 12), fg_color=ACCENT_ORANGE,
+            hover_color="#c96f1f", height=42, corner_radius=10,
+            command=self._fr_importar_excel,
+        ).pack(side="left", padx=(0, 10))
+
         # Filtro de status
         self._fr_filtro = ctk.CTkSegmentedButton(
             btn_frame, values=["Todos", "Ativo", "Contemplado", "Encerrado"],
@@ -7040,6 +7047,187 @@ class App(ctk.CTk):
 
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao exportar:\n{e}")
+
+    def _fr_importar_excel(self):
+        from datetime import datetime as dt
+        import uuid
+
+        path = filedialog.askopenfilename(
+            title="Selecionar planilha de operações",
+            filetypes=[("Excel", "*.xlsx *.xls"), ("Todos", "*.*")],
+        )
+        if not path:
+            return
+
+        try:
+            wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível abrir o arquivo:\n{e}")
+            return
+
+        # Verificar se tem as abas esperadas
+        tem_operacoes = "Operacoes" in wb.sheetnames
+        tem_pagamentos = "Pagamentos" in wb.sheetnames
+
+        if not tem_operacoes:
+            messagebox.showerror("Erro",
+                "Aba 'Operacoes' não encontrada na planilha.\n"
+                "Use o mesmo formato gerado por 'Exportar Excel'.")
+            wb.close()
+            return
+
+        # --- Ler aba Operacoes ---
+        ws_ops = wb["Operacoes"]
+        ops_importadas = []
+        clientes_map = {}  # cliente -> op dict (para vincular pagamentos)
+
+        for row in ws_ops.iter_rows(min_row=2, values_only=True):
+            if not row or not row[0]:
+                continue
+            # Colunas: Cliente, Assessor, Administradora, Valor Carta,
+            #          Prazo, Contemplacao, Parcela F1, Parcela F2,
+            #          Data Inicio, Status, Parcelas Pagas, Total Pago, Total Pendente
+            cliente = str(row[0] or "").strip()
+            if not cliente:
+                continue
+
+            assessor = str(row[1] or "").strip()
+            administradora = str(row[2] or "").strip()
+            valor_carta = float(row[3] or 0)
+            prazo = int(row[4] or 0)
+            contemp = int(row[5] or 0)
+            parcela_f1 = float(row[6] or 0)
+            parcela_f2 = float(row[7] or 0)
+            data_inicio = str(row[8] or "").strip()
+            status = str(row[9] or "Ativo").strip()
+
+            if status not in ("Ativo", "Contemplado", "Encerrado"):
+                status = "Ativo"
+
+            op = {
+                "id": str(uuid.uuid4())[:8],
+                "cliente": cliente,
+                "assessor": assessor,
+                "administradora": administradora,
+                "valor_carta": valor_carta,
+                "prazo_meses": prazo,
+                "prazo_contemp": contemp,
+                "parcela_f1": parcela_f1,
+                "parcela_f2": parcela_f2,
+                "data_inicio": data_inicio,
+                "status": status,
+                "pagamentos": [],
+            }
+            ops_importadas.append(op)
+            clientes_map[cliente] = op
+
+        if not ops_importadas:
+            messagebox.showwarning("Aviso", "Nenhuma operação encontrada na planilha.")
+            wb.close()
+            return
+
+        # --- Ler aba Pagamentos (se existir) ---
+        if tem_pagamentos:
+            ws_pag = wb["Pagamentos"]
+            for row in ws_pag.iter_rows(min_row=2, values_only=True):
+                if not row or not row[0]:
+                    continue
+                # Colunas: Cliente, Mes, Vencimento, Valor, Status, Data Pagamento
+                cliente = str(row[0] or "").strip()
+                mes = int(row[1] or 0)
+
+                # Vencimento: pode vir como string YYYY-MM-DD ou datetime
+                venc_raw = row[2]
+                if isinstance(venc_raw, dt):
+                    data_venc = venc_raw.strftime("%Y-%m-%d")
+                else:
+                    data_venc = str(venc_raw or "").strip()
+                    # Tentar converter DD/MM/YYYY -> YYYY-MM-DD
+                    if "/" in data_venc and len(data_venc) == 10 and data_venc[2] == "/":
+                        try:
+                            data_venc = dt.strptime(data_venc, "%d/%m/%Y").strftime("%Y-%m-%d")
+                        except Exception:
+                            pass
+
+                valor = float(row[3] or 0)
+                status_pag = str(row[4] or "").strip()
+                pago = status_pag.lower() in ("pago", "sim", "true", "1")
+
+                # Data pagamento
+                dp_raw = row[5]
+                if isinstance(dp_raw, dt):
+                    data_pag = dp_raw.strftime("%Y-%m-%d")
+                elif dp_raw:
+                    data_pag = str(dp_raw).strip()
+                    if "/" in data_pag and len(data_pag) == 10 and data_pag[2] == "/":
+                        try:
+                            data_pag = dt.strptime(data_pag, "%d/%m/%Y").strftime("%Y-%m-%d")
+                        except Exception:
+                            pass
+                else:
+                    data_pag = None
+
+                if not data_pag or data_pag in ("", "—", "None"):
+                    data_pag = None
+
+                pagamento = {
+                    "mes": mes,
+                    "data_venc": data_venc,
+                    "valor": round(valor, 2),
+                    "pago": pago,
+                    "data_pag": data_pag,
+                }
+
+                # Vincular ao cliente
+                if cliente in clientes_map:
+                    clientes_map[cliente]["pagamentos"].append(pagamento)
+
+        wb.close()
+
+        # Para operacoes sem pagamentos importados, gerar automaticamente
+        for op in ops_importadas:
+            if not op["pagamentos"] and op["prazo_meses"] > 0 and op["parcela_f1"] > 0:
+                try:
+                    data_str = op["data_inicio"]
+                    # Tentar DD/MM/YYYY
+                    try:
+                        data_dt = dt.strptime(data_str, "%d/%m/%Y")
+                    except Exception:
+                        data_dt = dt.strptime(data_str, "%Y-%m-%d")
+                    op["pagamentos"] = self._fr_gerar_pagamentos(
+                        op["prazo_meses"], op["prazo_contemp"],
+                        op["parcela_f1"], op["parcela_f2"], data_dt
+                    )
+                except Exception:
+                    pass
+
+        # Perguntar se quer substituir ou adicionar
+        ops_existentes = self._fr_load()
+        if ops_existentes:
+            resp = messagebox.askyesnocancel(
+                "Importar",
+                f"Encontradas {len(ops_importadas)} operação(ões) na planilha.\n\n"
+                f"Você já tem {len(ops_existentes)} operação(ões) cadastrada(s).\n\n"
+                "SIM = Substituir tudo\n"
+                "NÃO = Adicionar às existentes\n"
+                "CANCELAR = Cancelar importação",
+            )
+            if resp is None:
+                return
+            if resp:
+                # Substituir
+                self._fr_save(ops_importadas)
+            else:
+                # Adicionar
+                ops_existentes.extend(ops_importadas)
+                self._fr_save(ops_existentes)
+        else:
+            self._fr_save(ops_importadas)
+
+        self._fr_refresh()
+        messagebox.showinfo("Importado",
+            f"{len(ops_importadas)} operação(ões) importada(s) com sucesso!\n"
+            f"Total de parcelas: {sum(len(o['pagamentos']) for o in ops_importadas)}")
 
     # -----------------------------------------------------------------
     #  PAGE: CONSOLIDADOR DE CARTEIRAS
