@@ -426,16 +426,17 @@ td.lb{{color:#666;width:55%}}td.vl{{font-weight:bold;color:#2d2d2d}}
 # =====================================================================
 
 class App(ctk.CTk):
-    def __init__(self):
+    def __init__(self, role="admin"):
         super().__init__()
+        self.role = role
         self.title("Somus Capital")
         self.geometry("1100x720")
         self.minsize(1000, 650)
         self.configure(fg_color=BG_PRIMARY)
         self._set_icon()
 
-        self.current_page = "dashboard"
-        self.current_module = "Mesa Produtos"
+        self.current_page = "corp_dashboard" if role == "corporate" else "dashboard"
+        self.current_module = "Corporate" if role == "corporate" else "Mesa Produtos"
         self.sidebar_buttons = {}
         self.mp_nav_keys = []
         self.cs_nav_keys = []
@@ -448,12 +449,17 @@ class App(ctk.CTk):
 
         self._build_sidebar()
         self._build_pages()
-        self._show_page("dashboard")
-        self._load_data_async()
-        # Force initial module state after UI is ready
-        self.after(50, lambda: self._on_module_change("Mesa Produtos"))
 
-        # Verificar atualizacoes em background (4s de delay para nao travar o carregamento)
+        if role == "corporate":
+            self._show_page("corp_dashboard")
+            self._load_data_async()
+            self.after(50, lambda: self._on_module_change("Corporate"))
+        else:
+            self._show_page("dashboard")
+            self._load_data_async()
+            self.after(50, lambda: self._on_module_change("Mesa Produtos"))
+
+        # Verificar atualizacoes em background (4s de delay)
         self.after(4000, self._checar_atualizacao)
 
     def _set_icon(self):
@@ -577,9 +583,10 @@ class App(ctk.CTk):
             font=("Segoe UI", 9, "bold"), text_color="#5a9a7a", anchor="w"
         ).pack(fill="x", padx=4, pady=(0, 4))
 
+        _module_values = ["Corporate"] if self.role == "corporate" else ["Mesa Produtos", "Corporate", "Seguros"]
         self.module_selector = ctk.CTkOptionMenu(
             selector_frame,
-            values=["Mesa Produtos", "Corporate", "Seguros"],
+            values=_module_values,
             font=("Segoe UI", 12, "bold"),
             fg_color="#003d2b",
             button_color=ACCENT_BLUE,
@@ -594,7 +601,7 @@ class App(ctk.CTk):
             command=self._on_module_change,
         )
         self.module_selector.pack(fill="x")
-        self.module_selector.set("Mesa Produtos")
+        self.module_selector.set("Corporate" if self.role == "corporate" else "Mesa Produtos")
 
         # Separador 2 (row 3)
         ctk.CTkFrame(sidebar, fg_color="#006644", height=1, corner_radius=0).grid(
@@ -607,8 +614,8 @@ class App(ctk.CTk):
             text_color="#5a9a7a", anchor="w"
         ).grid(row=4, column=0, sticky="w", padx=24, pady=(12, 6))
 
-        # === MESA PRODUTOS nav buttons (rows 5-7) ===
-        mp_nav_items = [
+        # === MESA PRODUTOS nav buttons (rows 5-7) — oculto para corporate ===
+        mp_nav_items = [] if self.role == "corporate" else [
             ("dashboard", "Dashboard", "\u25a3"),
             ("fluxo_rf", "FLUXO - RF", "\u2913"),
             ("informativo", "Informativo", "\u2709"),
@@ -621,7 +628,7 @@ class App(ctk.CTk):
             ("envio_mesa", "Envio Mesa", "\u2709"),
             ("envio_aniversarios", "Envio Aniversários", "\u2605"),
             ("tarefas", "Tarefas", "\u2611"),
-        ]
+        ] if self.role != "corporate" else []
         for i, (key, label, icon) in enumerate(mp_nav_items):
             btn = ctk.CTkButton(
                 sidebar,
@@ -662,8 +669,8 @@ class App(ctk.CTk):
             self.sidebar_buttons[key] = btn
             self.cs_nav_keys.append(key)
 
-        # === SEGUROS nav buttons (rows 5+, ocultos inicialmente) ===
-        sg_nav_items = [
+        # === SEGUROS nav buttons (rows 5+, ocultos para corporate) ===
+        sg_nav_items = [] if self.role == "corporate" else [
             ("seg_renovacoes", "Renovações Anuais", "\u26e8"),
         ]
         for i, (key, label, icon) in enumerate(sg_nav_items):
@@ -819,14 +826,20 @@ class App(ctk.CTk):
     #  PAGES
     # =================================================================
     def _build_pages(self):
+        # Corporate: apenas modulo Corporate
+        self.pages["consorcio"] = self._build_consorcio_page()
+        self.pages["corp_dashboard"] = self._build_corp_dashboard_page()
+
+        if self.role == "corporate":
+            return
+
+        # Admin: todos os modulos
         self.pages["dashboard"] = self._build_receita_dashboard_page()
         self.pages["fluxo_rf"] = self._build_dashboard_page()
         self.pages["operations"] = self._build_operations_page()
         self.pages["informativo"] = self._build_informativo_page()
         self.pages["info_agio"] = self._build_info_agio_page()
         self.pages["envio_ordens"] = self._build_envio_ordens_page()
-        self.pages["consorcio"] = self._build_consorcio_page()
-        self.pages["corp_dashboard"] = self._build_corp_dashboard_page()
         self.pages["ctrl_receita"] = self._build_ctrl_receita_page()
         self.pages["organizador"] = self._build_organizador_page()
         self.pages["consolidador"] = self._build_consolidador_page()
@@ -8492,6 +8505,8 @@ class App(ctk.CTk):
     #  DATA LOADING
     # =================================================================
     def _load_data_async(self):
+        if self.role == "corporate":
+            return  # Corporate nao carrega dados de Mesa Produtos
         self.after(500, lambda: threading.Thread(target=self._do_load_data, daemon=True).start())
 
     def _do_load_data(self):
@@ -8992,7 +9007,10 @@ _LOGIN_ACCENT = "#00b876"
 class LoginWindow(ctk.CTkToplevel):
     """Tela de login com senha fixa - visual premium Somus Capital."""
 
-    APP_PASSWORD = "@Produtos1"
+    PASSWORDS = {
+        "@Produtos1": "admin",
+        "Corporate1": "corporate",
+    }
 
     def __init__(self, master, on_success):
         super().__init__(master)
@@ -9121,10 +9139,11 @@ class LoginWindow(ctk.CTkToplevel):
 
     def _try_login(self):
         senha = self.password_entry.get()
-        if senha == self.APP_PASSWORD:
+        role = self.PASSWORDS.get(senha)
+        if role:
             self.grab_release()
             self.destroy()
-            self.on_success()
+            self.on_success(role)
         else:
             self.error_label.configure(text="Senha incorreta. Tente novamente.")
             self.password_entry.delete(0, "end")
@@ -9167,9 +9186,11 @@ def main():
         pass
 
     login_ok = [False]
+    login_role = [None]
 
-    def on_login_success():
+    def on_login_success(role):
         login_ok[0] = True
+        login_role[0] = role
         root.quit()
 
     login = LoginWindow(root, on_login_success)
@@ -9178,7 +9199,7 @@ def main():
     # Apos login bem-sucedido, destruir root e criar o app em novo mainloop
     if login_ok[0]:
         root.destroy()
-        app = App()
+        app = App(role=login_role[0])
         app.mainloop()
 
 
