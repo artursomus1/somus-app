@@ -551,14 +551,16 @@ class App(ctk.CTk):
         sidebar = ctk.CTkFrame(self, fg_color=BG_SIDEBAR, width=245, corner_radius=0)
         sidebar.grid(row=0, column=0, sticky="nsew")
         sidebar.grid_propagate(False)
-        sidebar.grid_columnconfigure(0, weight=1)
-        sidebar.grid_rowconfigure(20, weight=1)
         self._sidebar = sidebar  # prevent GC
 
-        # Logo (row 0)
-        logo_frame = ctk.CTkFrame(sidebar, fg_color="transparent", height=78)
-        logo_frame.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
-        logo_frame.grid_propagate(False)
+        # === HEADER FIXO (topo) ===
+        header = ctk.CTkFrame(sidebar, fg_color="transparent")
+        header.pack(fill="x", side="top")
+
+        # Logo
+        logo_frame = ctk.CTkFrame(header, fg_color="transparent", height=78)
+        logo_frame.pack(fill="x")
+        logo_frame.pack_propagate(False)
         self._logo_frame = logo_frame  # prevent GC
 
         try:
@@ -571,14 +573,12 @@ class App(ctk.CTk):
                 font=("Segoe UI", 16, "bold"), text_color=TEXT_WHITE
             ).place(relx=0.5, rely=0.5, anchor="center")
 
-        # Separador (row 1)
-        ctk.CTkFrame(sidebar, fg_color="#006644", height=1, corner_radius=0).grid(
-            row=1, column=0, sticky="ew", padx=18
-        )
+        # Separador
+        ctk.CTkFrame(header, fg_color="#006644", height=1, corner_radius=0).pack(fill="x", padx=18)
 
-        # ---- SELETOR DE MODULO (row 2) ----
-        selector_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
-        selector_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=(12, 10))
+        # Seletor de modulo
+        selector_frame = ctk.CTkFrame(header, fg_color="transparent")
+        selector_frame.pack(fill="x", padx=10, pady=(12, 10))
         self._selector_frame = selector_frame  # prevent GC
 
         ctk.CTkLabel(
@@ -606,107 +606,23 @@ class App(ctk.CTk):
         self.module_selector.pack(fill="x")
         self.module_selector.set("Corporate" if self.role == "corporate" else "Mesa Produtos")
 
-        # Separador 2 (row 3)
-        ctk.CTkFrame(sidebar, fg_color="#006644", height=1, corner_radius=0).grid(
-            row=3, column=0, sticky="ew", padx=18
-        )
+        # Separador 2
+        ctk.CTkFrame(header, fg_color="#006644", height=1, corner_radius=0).pack(fill="x", padx=18)
 
-        # Secao label (row 4)
+        # Label MENU
         ctk.CTkLabel(
-            sidebar, text="MENU", font=("Segoe UI", 9, "bold"),
+            header, text="MENU", font=("Segoe UI", 9, "bold"),
             text_color="#5a9a7a", anchor="w"
-        ).grid(row=4, column=0, sticky="w", padx=24, pady=(12, 6))
+        ).pack(fill="x", padx=24, pady=(12, 6))
 
-        # === MESA PRODUTOS nav buttons (rows 5-7) — oculto para corporate ===
-        mp_nav_items = [] if self.role == "corporate" else [
-            ("dashboard", "Dashboard", "\u25a3"),
-            ("fluxo_rf", "FLUXO - RF", "\u2913"),
-            ("informativo", "Informativo", "\u2709"),
-            ("info_agio", "Info - Agio", "\u25b2"),
-            ("envio_ordens", "Envio de Ordens", "\u2191"),
-            ("ctrl_receita", "Ctrl Receita", "$"),
-            ("organizador", "Organizador", "\u25a6"),
-            ("consolidador", "Consolidador", "\u229a"),
-            ("saldos", "Envio Saldos", "\u21c6"),
-            ("envio_mesa", "Envio Mesa", "\u2709"),
-            ("envio_aniversarios", "Envio Aniversários", "\u2605"),
-            ("tarefas", "Tarefas", "\u2611"),
-        ] if self.role != "corporate" else []
-        for i, (key, label, icon) in enumerate(mp_nav_items):
-            btn = ctk.CTkButton(
-                sidebar,
-                text=f"  {icon}    {label}",
-                font=("Segoe UI", 13),
-                fg_color="transparent",
-                hover_color=BG_SIDEBAR_HOVER,
-                text_color=TEXT_SIDEBAR,
-                anchor="w",
-                height=42,
-                corner_radius=8,
-                command=lambda k=key: self._on_nav(k),
-            )
-            btn.grid(row=5 + i, column=0, sticky="ew", padx=12, pady=2)
-            self.sidebar_buttons[key] = btn
-            self.mp_nav_keys.append(key)
+        # === FOOTER FIXO (base) — declarar ANTES do scroll para pack order ===
+        footer = ctk.CTkFrame(sidebar, fg_color="transparent")
+        footer.pack(fill="x", side="bottom")
 
-        # === CORPORATE nav buttons (rows 5-6, ocultos inicialmente) ===
-        cs_nav_items = [
-            ("corp_dashboard", "Dashboard", "\u25a3"),
-            ("simulador", "Simulador", "\u2630"),
-            ("comparativo_vpl", "Comparativo VPL", "\u25b2"),
-            ("consorcio_vs_financ", "Cons. vs Financ.", "\u21c4"),
-            ("fluxo_receitas", "Fluxo de Receitas", "\u25b6"),
-        ]
-        for i, (key, label, icon) in enumerate(cs_nav_items):
-            btn = ctk.CTkButton(
-                sidebar,
-                text=f"  {icon}    {label}",
-                font=("Segoe UI", 13),
-                fg_color="transparent",
-                hover_color=BG_SIDEBAR_HOVER,
-                text_color=TEXT_SIDEBAR,
-                anchor="w",
-                height=42,
-                corner_radius=8,
-                command=lambda k=key: self._on_nav(k),
-            )
-            btn.grid(row=5 + i, column=0, sticky="ew", padx=12, pady=2)
-            btn.grid_remove()
-            self.sidebar_buttons[key] = btn
-            self.cs_nav_keys.append(key)
+        ctk.CTkFrame(footer, fg_color="#006644", height=1, corner_radius=0).pack(fill="x", padx=18)
 
-        # === SEGUROS nav buttons (rows 5+, ocultos para corporate) ===
-        sg_nav_items = [] if self.role == "corporate" else [
-            ("seg_renovacoes", "Renovações Anuais", "\u26e8"),
-        ]
-        for i, (key, label, icon) in enumerate(sg_nav_items):
-            btn = ctk.CTkButton(
-                sidebar,
-                text=f"  {icon}    {label}",
-                font=("Segoe UI", 13),
-                fg_color="transparent",
-                hover_color=BG_SIDEBAR_HOVER,
-                text_color=TEXT_SIDEBAR,
-                anchor="w",
-                height=42,
-                corner_radius=8,
-                command=lambda k=key: self._on_nav(k),
-            )
-            btn.grid(row=5 + i, column=0, sticky="ew", padx=12, pady=2)
-            btn.grid_remove()
-            self.sidebar_buttons[key] = btn
-            self.sg_nav_keys.append(key)
-
-        # Spacer (row 20 tem weight=1)
-
-        # Separator inferior (row 21)
-        ctk.CTkFrame(sidebar, fg_color="#006644", height=1, corner_radius=0).grid(
-            row=21, column=0, sticky="ew", padx=18, pady=(0, 0)
-        )
-
-        # Reportar Erro (row 22) - visivel em ambos os modulos
         ctk.CTkButton(
-            sidebar,
+            footer,
             text="  \u26a0    Reportar Erro",
             font=("Segoe UI", 11),
             fg_color="transparent",
@@ -716,13 +632,103 @@ class App(ctk.CTk):
             height=36,
             corner_radius=8,
             command=self._on_reportar_erro,
-        ).grid(row=22, column=0, sticky="ew", padx=12, pady=(8, 4))
+        ).pack(fill="x", padx=12, pady=(8, 4))
 
-        # Versao (row 23)
         ctk.CTkLabel(
-            sidebar, text="SomusApp - BETA",
+            footer, text="SomusApp - BETA",
             font=("Segoe UI", 8), text_color="#3a6a50"
-        ).grid(row=23, column=0, pady=(4, 14))
+        ).pack(pady=(4, 14))
+
+        # === AREA SCROLLAVEL para botoes de navegacao ===
+        nav_scroll = ctk.CTkScrollableFrame(
+            sidebar, fg_color="transparent",
+            scrollbar_button_color=BG_SIDEBAR_HOVER,
+            scrollbar_button_hover_color=BG_SIDEBAR_ACTIVE,
+        )
+        nav_scroll.pack(fill="both", expand=True, padx=0, pady=0)
+        self._nav_scroll = nav_scroll  # prevent GC
+
+        # === MESA PRODUTOS nav buttons — oculto para corporate ===
+        mp_nav_items = [] if self.role == "corporate" else [
+            ("dashboard", "Dashboard", "\u25a3"),
+            ("fluxo_rf", "FLUXO - RF", "\u2913"),
+            ("informativo", "Informativo", "\u2709"),
+            ("info_agio", "Info - Agio", "\u25b2"),
+            ("envio_ordens", "Envio de Ordens", "\u2191"),
+            ("ordem_massa", "Ordem MASSA", "\u21c8"),
+            ("ctrl_receita", "Ctrl Receita", "$"),
+            ("organizador", "Organizador", "\u25a6"),
+            ("consolidador", "Consolidador", "\u229a"),
+            ("saldos", "Envio Saldos", "\u21c6"),
+            ("envio_mesa", "Envio Mesa", "\u2709"),
+            ("envio_aniversarios", "Envio Aniversários", "\u2605"),
+            ("tarefas", "Tarefas", "\u2611"),
+            ("top_picks", "Top Picks", "\u2605"),
+        ] if self.role != "corporate" else []
+        for key, label, icon in mp_nav_items:
+            btn = ctk.CTkButton(
+                nav_scroll,
+                text=f"  {icon}    {label}",
+                font=("Segoe UI", 13),
+                fg_color="transparent",
+                hover_color=BG_SIDEBAR_HOVER,
+                text_color=TEXT_SIDEBAR,
+                anchor="w",
+                height=42,
+                corner_radius=8,
+                command=lambda k=key: self._on_nav(k),
+            )
+            btn.pack(fill="x", padx=12, pady=2)
+            self.sidebar_buttons[key] = btn
+            self.mp_nav_keys.append(key)
+
+        # === CORPORATE nav buttons (ocultos inicialmente) ===
+        cs_nav_items = [
+            ("corp_dashboard", "Dashboard", "\u25a3"),
+            ("simulador", "Simulador", "\u2630"),
+            ("comparativo_vpl", "Comparativo VPL", "\u25b2"),
+            ("consorcio_vs_financ", "Cons. vs Financ.", "\u21c4"),
+            ("fluxo_receitas", "Fluxo de Receitas", "\u25b6"),
+        ]
+        for key, label, icon in cs_nav_items:
+            btn = ctk.CTkButton(
+                nav_scroll,
+                text=f"  {icon}    {label}",
+                font=("Segoe UI", 13),
+                fg_color="transparent",
+                hover_color=BG_SIDEBAR_HOVER,
+                text_color=TEXT_SIDEBAR,
+                anchor="w",
+                height=42,
+                corner_radius=8,
+                command=lambda k=key: self._on_nav(k),
+            )
+            btn.pack(fill="x", padx=12, pady=2)
+            btn.pack_forget()
+            self.sidebar_buttons[key] = btn
+            self.cs_nav_keys.append(key)
+
+        # === SEGUROS nav buttons (ocultos para corporate) ===
+        sg_nav_items = [] if self.role == "corporate" else [
+            ("seg_renovacoes", "Renovações Anuais", "\u26e8"),
+        ]
+        for key, label, icon in sg_nav_items:
+            btn = ctk.CTkButton(
+                nav_scroll,
+                text=f"  {icon}    {label}",
+                font=("Segoe UI", 13),
+                fg_color="transparent",
+                hover_color=BG_SIDEBAR_HOVER,
+                text_color=TEXT_SIDEBAR,
+                anchor="w",
+                height=42,
+                corner_radius=8,
+                command=lambda k=key: self._on_nav(k),
+            )
+            btn.pack(fill="x", padx=12, pady=2)
+            btn.pack_forget()
+            self.sidebar_buttons[key] = btn
+            self.sg_nav_keys.append(key)
 
     def _on_nav(self, page_key):
         if page_key == "simulador":
@@ -744,10 +750,10 @@ class App(ctk.CTk):
         for keys, module, default_page in all_nav:
             if value == module:
                 for key in keys:
-                    self.sidebar_buttons[key].grid()
+                    self.sidebar_buttons[key].pack(fill="x", padx=12, pady=2)
             else:
                 for key in keys:
-                    self.sidebar_buttons[key].grid_remove()
+                    self.sidebar_buttons[key].pack_forget()
         default_pages = {"Mesa Produtos": "dashboard", "Corporate": "corp_dashboard", "Seguros": "seg_renovacoes"}
         self._show_page(default_pages.get(value, "dashboard"))
 
@@ -849,6 +855,7 @@ class App(ctk.CTk):
         self.pages["informativo"] = self._build_informativo_page()
         self.pages["info_agio"] = self._build_info_agio_page()
         self.pages["envio_ordens"] = self._build_envio_ordens_page()
+        self.pages["ordem_massa"] = self._build_ordem_massa_page()
         self.pages["ctrl_receita"] = self._build_ctrl_receita_page()
         self.pages["organizador"] = self._build_organizador_page()
         self.pages["consolidador"] = self._build_consolidador_page()
@@ -857,6 +864,7 @@ class App(ctk.CTk):
         self.pages["envio_aniversarios"] = self._build_envio_aniversarios_page()
         self.pages["tarefas"] = self._build_tarefas_page()
         self.pages["seg_renovacoes"] = self._build_renovacoes_page()
+        self.pages["top_picks"] = self._build_top_picks_page()
 
     def _show_page(self, page_key):
         for key, frame in self.pages.items():
@@ -3623,9 +3631,9 @@ class App(ctk.CTk):
             font=("Segoe UI", 12), text_color=TEXT_WHITE, anchor="w"
         ).pack(side="left", padx=18, pady=10)
 
-        # ======== INSERIR LISTA DE EMAILS (botao topo) ========
+        # ======== DESTINATÁRIOS ========
         ctk.CTkLabel(
-            content, text="Lista de Destinatarios",
+            content, text="Destinatarios",
             font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
         ).pack(fill="x", pady=(0, 6))
 
@@ -3676,6 +3684,44 @@ class App(ctk.CTk):
         )
         self.eo_preview_text.pack(fill="x", padx=4, pady=4)
         self.eo_preview_text.configure(state="disabled")
+
+        # --- Email manual (caso a lista não seja carregada) ---
+        manual_card = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=12,
+            border_width=1, border_color=BORDER_CARD
+        )
+        manual_card.pack(fill="x", pady=(0, 16))
+
+        manual_inner = ctk.CTkFrame(manual_card, fg_color="transparent")
+        manual_inner.pack(fill="x", padx=20, pady=14)
+
+        ctk.CTkLabel(
+            manual_inner, text="Ou digite manualmente:",
+            font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        manual_row = ctk.CTkFrame(manual_inner, fg_color="transparent")
+        manual_row.pack(fill="x")
+        manual_row.columnconfigure((0, 1), weight=1)
+
+        man_nome_f = ctk.CTkFrame(manual_row, fg_color="transparent")
+        man_nome_f.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        ctk.CTkLabel(man_nome_f, text="Nome", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_manual_nome = ctk.CTkEntry(man_nome_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: Joao Silva")
+        self.eo_manual_nome.pack(fill="x", pady=(2, 0))
+
+        man_email_f = ctk.CTkFrame(manual_row, fg_color="transparent")
+        man_email_f.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        ctk.CTkLabel(man_email_f, text="E-mail", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_manual_email = ctk.CTkEntry(man_email_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: joao@email.com")
+        self.eo_manual_email.pack(fill="x", pady=(2, 0))
+
+        # --- Campo CC ---
+        cc_frame = ctk.CTkFrame(manual_inner, fg_color="transparent")
+        cc_frame.pack(fill="x", pady=(10, 0))
+        ctk.CTkLabel(cc_frame, text="CC (opcional - separe multiplos com ;)", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_cc = ctk.CTkEntry(cc_frame, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: gestor@email.com; compliance@email.com")
+        self.eo_cc.pack(fill="x", pady=(2, 0))
 
         # ======== CONFIGURAÇÕES ========
         ctk.CTkLabel(
@@ -3745,158 +3791,169 @@ class App(ctk.CTk):
         self.eo_tipo_ativo.pack(fill="x")
         self.eo_tipo_ativo.set("Fundos")
 
-        # Row 2: Dados da Ordem (Ativo, Quantidade, Financeiro, Cotação)
+        # === SELETOR TIPO DE ORDEM ===
         ctk.CTkLabel(
-            ci, text="Dados da Ordem",
+            ci, text="Tipo de Ordem",
             font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
         ).pack(fill="x", pady=(14, 6))
 
-        ordem_row = ctk.CTkFrame(ci, fg_color="transparent")
-        ordem_row.pack(fill="x", pady=(0, 14))
-        ordem_row.columnconfigure((0, 1, 2, 3), weight=1)
-
-        # Ativo *
-        ativo_frame = ctk.CTkFrame(ordem_row, fg_color="transparent")
-        ativo_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
-
-        ctk.CTkLabel(
-            ativo_frame, text="Ativo *",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-
-        self.eo_ativo = ctk.CTkEntry(
-            ativo_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=BORDER_CARD,
-            placeholder_text="Ex: XPML11"
+        self.eo_tipo_ordem = ctk.CTkSegmentedButton(
+            ci,
+            values=["Normal", "OFERTA P\u00daBLICA - RF"],
+            font=("Segoe UI", 11, "bold"),
+            fg_color=BG_INPUT,
+            selected_color=ACCENT_PURPLE,
+            selected_hover_color="#6a4db0",
+            unselected_color=BG_INPUT,
+            unselected_hover_color=BORDER_CARD,
+            text_color=TEXT_PRIMARY,
+            corner_radius=8,
+            height=38,
+            command=self._on_eo_tipo_ordem_change,
         )
-        self.eo_ativo.pack(fill="x", pady=(2, 0))
+        self.eo_tipo_ordem.pack(fill="x", pady=(0, 14))
+        self.eo_tipo_ordem.set("Normal")
 
-        # Quantidade *
-        qtd_frame = ctk.CTkFrame(ordem_row, fg_color="transparent")
-        qtd_frame.grid(row=0, column=1, sticky="nsew", padx=(6, 6))
+        # ===== FRAME NORMAL (Dados da Ordem dinâmicos + Venda) =====
+        self._eo_normal_frame = ctk.CTkFrame(ci, fg_color="transparent")
+        self._eo_normal_frame.pack(fill="x")
 
-        ctk.CTkLabel(
-            qtd_frame, text="Quantidade *",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
+        # Container para múltiplos blocos de ordem
+        self._eo_ordens_container = ctk.CTkFrame(self._eo_normal_frame, fg_color="transparent")
+        self._eo_ordens_container.pack(fill="x")
 
-        self.eo_quantidade = ctk.CTkEntry(
-            qtd_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=BORDER_CARD,
-            placeholder_text="Ex: 100"
-        )
-        self.eo_quantidade.pack(fill="x", pady=(2, 0))
+        # Lista que armazena referências aos widgets de cada bloco de ordem
+        self._eo_ordens_blocks = []
 
-        # Financeiro *
-        fin_frame = ctk.CTkFrame(ordem_row, fg_color="transparent")
-        fin_frame.grid(row=0, column=2, sticky="nsew", padx=(6, 6))
+        # Criar o primeiro bloco de ordem
+        self._eo_add_ordem_block()
 
-        ctk.CTkLabel(
-            fin_frame, text="Financeiro *",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
+        # Botão "Adicionar Ativo"
+        self._eo_add_btn_frame = ctk.CTkFrame(self._eo_normal_frame, fg_color="transparent")
+        self._eo_add_btn_frame.pack(fill="x", pady=(4, 10))
 
-        self.eo_financeiro = ctk.CTkEntry(
-            fin_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=BORDER_CARD,
-            placeholder_text="Ex: 10000.00"
-        )
-        self.eo_financeiro.pack(fill="x", pady=(2, 0))
-
-        # Cotação (opcional)
-        cot_frame = ctk.CTkFrame(ordem_row, fg_color="transparent")
-        cot_frame.grid(row=0, column=3, sticky="nsew", padx=(6, 0))
-
-        ctk.CTkLabel(
-            cot_frame, text="Cotação",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-
-        self.eo_cotação = ctk.CTkEntry(
-            cot_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=BORDER_CARD,
-            placeholder_text="Opcional"
-        )
-        self.eo_cotação.pack(fill="x", pady=(2, 0))
-
-        # ===== VENDA — Ativo de Saída (opcional) =====
-        venda_sep = ctk.CTkFrame(ci, fg_color="#fff3e8", corner_radius=8,
-                                 border_width=1, border_color=ACCENT_ORANGE)
-        venda_sep.pack(fill="x", pady=(18, 10))
-
-        venda_sep_inner = ctk.CTkFrame(venda_sep, fg_color="transparent")
-        venda_sep_inner.pack(fill="x", padx=14, pady=10)
-
-        ctk.CTkLabel(
-            venda_sep_inner, text="\u2193  Venda \u2014 Ativo de Sa\u00edda",
-            font=("Segoe UI", 11, "bold"), text_color=ACCENT_ORANGE, anchor="w"
+        ctk.CTkButton(
+            self._eo_add_btn_frame, text="+  Adicionar Ativo",
+            font=("Segoe UI", 11, "bold"),
+            fg_color=ACCENT_BLUE, hover_color="#1555bb",
+            height=34, corner_radius=8, width=180,
+            command=self._eo_add_ordem_block,
         ).pack(side="left")
 
-        ctk.CTkLabel(
-            venda_sep_inner,
-            text="(opcional \u2014 preencha caso o cliente precise sair de algum ativo)",
-            font=("Segoe UI", 9), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(side="left", padx=(10, 0))
+        # Venda
+        venda_sep = ctk.CTkFrame(self._eo_normal_frame, fg_color="#fff3e8", corner_radius=8, border_width=1, border_color=ACCENT_ORANGE)
+        venda_sep.pack(fill="x", pady=(8, 10))
+        venda_sep_inner = ctk.CTkFrame(venda_sep, fg_color="transparent")
+        venda_sep_inner.pack(fill="x", padx=14, pady=10)
+        ctk.CTkLabel(venda_sep_inner, text="\u2193  Venda \u2014 Ativo de Sa\u00edda", font=("Segoe UI", 11, "bold"), text_color=ACCENT_ORANGE, anchor="w").pack(side="left")
+        ctk.CTkLabel(venda_sep_inner, text="(opcional \u2014 preencha caso o cliente precise sair de algum ativo)", font=("Segoe UI", 9), text_color=TEXT_TERTIARY, anchor="w").pack(side="left", padx=(10, 0))
 
-        venda_row = ctk.CTkFrame(ci, fg_color="transparent")
+        venda_row = ctk.CTkFrame(self._eo_normal_frame, fg_color="transparent")
         venda_row.pack(fill="x", pady=(0, 4))
         venda_row.columnconfigure((0, 1, 2, 3), weight=1)
 
-        # Ativo de saída
         vativo_frame = ctk.CTkFrame(venda_row, fg_color="transparent")
         vativo_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
-        ctk.CTkLabel(
-            vativo_frame, text="Ativo",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-        self.eo_venda_ativo = ctk.CTkEntry(
-            vativo_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=ACCENT_ORANGE,
-            placeholder_text="Ex: FIXA2028"
-        )
+        ctk.CTkLabel(vativo_frame, text="Ativo", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_venda_ativo = ctk.CTkEntry(vativo_frame, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_ORANGE, placeholder_text="Ex: FIXA2028")
         self.eo_venda_ativo.pack(fill="x", pady=(2, 0))
 
-        # Quantidade de saída
         vqtd_frame = ctk.CTkFrame(venda_row, fg_color="transparent")
         vqtd_frame.grid(row=0, column=1, sticky="nsew", padx=(6, 6))
-        ctk.CTkLabel(
-            vqtd_frame, text="Quantidade",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-        self.eo_venda_quantidade = ctk.CTkEntry(
-            vqtd_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=ACCENT_ORANGE,
-            placeholder_text="Ex: 100"
-        )
+        ctk.CTkLabel(vqtd_frame, text="Quantidade", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_venda_quantidade = ctk.CTkEntry(vqtd_frame, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_ORANGE, placeholder_text="Ex: 100")
         self.eo_venda_quantidade.pack(fill="x", pady=(2, 0))
 
-        # Financeiro de saída
         vfin_frame = ctk.CTkFrame(venda_row, fg_color="transparent")
         vfin_frame.grid(row=0, column=2, sticky="nsew", padx=(6, 6))
-        ctk.CTkLabel(
-            vfin_frame, text="Financeiro",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-        self.eo_venda_financeiro = ctk.CTkEntry(
-            vfin_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=ACCENT_ORANGE,
-            placeholder_text="Ex: 10000.00"
-        )
+        ctk.CTkLabel(vfin_frame, text="Financeiro", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_venda_financeiro = ctk.CTkEntry(vfin_frame, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_ORANGE, placeholder_text="Ex: 10000.00")
         self.eo_venda_financeiro.pack(fill="x", pady=(2, 0))
 
-        # Cotação de saída
         vcot_frame = ctk.CTkFrame(venda_row, fg_color="transparent")
         vcot_frame.grid(row=0, column=3, sticky="nsew", padx=(6, 0))
-        ctk.CTkLabel(
-            vcot_frame, text="Cota\u00e7\u00e3o",
-            font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w"
-        ).pack(fill="x")
-        self.eo_venda_cotacao = ctk.CTkEntry(
-            vcot_frame, font=("Segoe UI", 12), height=38,
-            corner_radius=8, border_color=ACCENT_ORANGE,
-            placeholder_text="Opcional"
-        )
+        ctk.CTkLabel(vcot_frame, text="Cota\u00e7\u00e3o", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_venda_cotacao = ctk.CTkEntry(vcot_frame, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_ORANGE, placeholder_text="Opcional")
         self.eo_venda_cotacao.pack(fill="x", pady=(2, 0))
+
+        # ===== FRAME OFERTA PUBLICA RF (oculto inicialmente) =====
+        self._eo_oferta_frame = ctk.CTkFrame(ci, fg_color="transparent")
+        # Não faz pack — fica oculto até selecionar
+
+        of_banner = ctk.CTkFrame(self._eo_oferta_frame, fg_color="#f3eeff", corner_radius=8,
+                                 border_width=1, border_color=ACCENT_PURPLE)
+        of_banner.pack(fill="x", pady=(0, 14))
+        ctk.CTkLabel(
+            of_banner, text="  Reserva de Oferta P\u00fablica - Renda Fixa",
+            font=("Segoe UI", 11, "bold"), text_color=ACCENT_PURPLE, anchor="w"
+        ).pack(fill="x", padx=14, pady=10)
+
+        # Row 1: Oferta + Prospecto
+        of_row1 = ctk.CTkFrame(self._eo_oferta_frame, fg_color="transparent")
+        of_row1.pack(fill="x", pady=(0, 10))
+        of_row1.columnconfigure((0, 1), weight=1)
+
+        of_oferta_f = ctk.CTkFrame(of_row1, fg_color="transparent")
+        of_oferta_f.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        ctk.CTkLabel(of_oferta_f, text="Oferta", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_oferta = ctk.CTkEntry(of_oferta_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: CRI Direcional")
+        self.eo_of_oferta.pack(fill="x", pady=(2, 0))
+
+        of_prosp_f = ctk.CTkFrame(of_row1, fg_color="transparent")
+        of_prosp_f.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        ctk.CTkLabel(of_prosp_f, text="Link do Prospecto", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_prospecto = ctk.CTkEntry(of_prosp_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="https://...")
+        self.eo_of_prospecto.pack(fill="x", pady=(2, 0))
+
+        # Row 2: Serie
+        of_serie_f = ctk.CTkFrame(self._eo_oferta_frame, fg_color="transparent")
+        of_serie_f.pack(fill="x", pady=(0, 10))
+        ctk.CTkLabel(of_serie_f, text="S\u00e9rie", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_serie = ctk.CTkEntry(of_serie_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: 2\u00aa S\u00e9rie")
+        self.eo_of_serie.pack(fill="x", pady=(2, 0))
+
+        # Row 3: Valor + Taxa + Duration + Inv. Vinculado
+        of_row3 = ctk.CTkFrame(self._eo_oferta_frame, fg_color="transparent")
+        of_row3.pack(fill="x", pady=(0, 10))
+        of_row3.columnconfigure((0, 1, 2, 3), weight=1)
+
+        of_valor_f = ctk.CTkFrame(of_row3, fg_color="transparent")
+        of_valor_f.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        ctk.CTkLabel(of_valor_f, text="Valor da Reserva", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_valor = ctk.CTkEntry(of_valor_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: R$ 1.000.000,00")
+        self.eo_of_valor.pack(fill="x", pady=(2, 0))
+
+        of_taxa_f = ctk.CTkFrame(of_row3, fg_color="transparent")
+        of_taxa_f.grid(row=0, column=1, sticky="nsew", padx=(6, 6))
+        ctk.CTkLabel(of_taxa_f, text="Taxa", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_taxa = ctk.CTkEntry(of_taxa_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: TETO (DI Jan/31)")
+        self.eo_of_taxa.pack(fill="x", pady=(2, 0))
+
+        of_dur_f = ctk.CTkFrame(of_row3, fg_color="transparent")
+        of_dur_f.grid(row=0, column=2, sticky="nsew", padx=(6, 6))
+        ctk.CTkLabel(of_dur_f, text="Duration", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_duration = ctk.CTkEntry(of_dur_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: 4,8 anos")
+        self.eo_of_duration.pack(fill="x", pady=(2, 0))
+
+        of_vinc_f = ctk.CTkFrame(of_row3, fg_color="transparent")
+        of_vinc_f.grid(row=0, column=3, sticky="nsew", padx=(6, 0))
+        ctk.CTkLabel(of_vinc_f, text="Investidor Vinculado", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_vinculado = ctk.CTkSegmentedButton(
+            of_vinc_f, values=["N\u00c3O", "SIM"],
+            font=("Segoe UI", 11, "bold"), fg_color=BG_INPUT,
+            selected_color=ACCENT_PURPLE, selected_hover_color="#6a4db0",
+            unselected_color=BG_INPUT, unselected_hover_color=BORDER_CARD,
+            text_color=TEXT_PRIMARY, corner_radius=8, height=38,
+        )
+        self.eo_of_vinculado.pack(fill="x", pady=(2, 0))
+        self.eo_of_vinculado.set("N\u00c3O")
+
+        # Row 4: Codigo do cliente
+        of_cod_f = ctk.CTkFrame(self._eo_oferta_frame, fg_color="transparent")
+        of_cod_f.pack(fill="x", pady=(0, 10))
+        ctk.CTkLabel(of_cod_f, text="C\u00f3digo do Cliente", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        self.eo_of_codigo = ctk.CTkEntry(of_cod_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=ACCENT_PURPLE, placeholder_text="Ex: 5714703")
+        self.eo_of_codigo.pack(fill="x", pady=(2, 0))
 
         # Row 3: Assunto
         ctk.CTkLabel(
@@ -4002,7 +4059,98 @@ class App(ctk.CTk):
         self._eo_destinatarios = []
         self._eo_anexo_path = None
 
+        # Compatibilidade — referências ao primeiro bloco de ordem
+        if self._eo_ordens_blocks:
+            b0 = self._eo_ordens_blocks[0]
+            self.eo_ativo = b0["ativo"]
+            self.eo_quantidade = b0["quantidade"]
+            self.eo_financeiro = b0["financeiro"]
+            self.eo_cotação = b0["cotacao"]
+
         return page
+
+    # -----------------------------------------------------------------
+    #  ENVIO DE ORDENS: Blocos de ordem dinâmicos
+    # -----------------------------------------------------------------
+    def _eo_add_ordem_block(self):
+        """Adiciona um bloco de 'Dados da Ordem' ao container."""
+        idx = len(self._eo_ordens_blocks)
+
+        block_frame = ctk.CTkFrame(self._eo_ordens_container, fg_color="transparent")
+        block_frame.pack(fill="x", pady=(0, 4))
+
+        # Header com label e botão remover (exceto o primeiro)
+        header = ctk.CTkFrame(block_frame, fg_color="transparent")
+        header.pack(fill="x", pady=(0, 6))
+
+        ctk.CTkLabel(
+            header, text=f"Dados da Ordem  #{idx + 1}",
+            font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
+        ).pack(side="left")
+
+        remove_btn = None
+        if idx > 0:
+            remove_btn = ctk.CTkButton(
+                header, text="Remover",
+                font=("Segoe UI", 9), fg_color=ACCENT_RED, hover_color="#c0392b",
+                height=24, corner_radius=6, width=70,
+            )
+            remove_btn.pack(side="right")
+
+        # Campos: Ativo, Quantidade, Financeiro, Cotação
+        ordem_row = ctk.CTkFrame(block_frame, fg_color="transparent")
+        ordem_row.pack(fill="x", pady=(0, 6))
+        ordem_row.columnconfigure((0, 1, 2, 3), weight=1)
+
+        ativo_f = ctk.CTkFrame(ordem_row, fg_color="transparent")
+        ativo_f.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        ctk.CTkLabel(ativo_f, text="Ativo", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        ativo_entry = ctk.CTkEntry(ativo_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: XPML11")
+        ativo_entry.pack(fill="x", pady=(2, 0))
+
+        qtd_f = ctk.CTkFrame(ordem_row, fg_color="transparent")
+        qtd_f.grid(row=0, column=1, sticky="nsew", padx=(6, 6))
+        ctk.CTkLabel(qtd_f, text="Quantidade", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        qtd_entry = ctk.CTkEntry(qtd_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: 100")
+        qtd_entry.pack(fill="x", pady=(2, 0))
+
+        fin_f = ctk.CTkFrame(ordem_row, fg_color="transparent")
+        fin_f.grid(row=0, column=2, sticky="nsew", padx=(6, 6))
+        ctk.CTkLabel(fin_f, text="Financeiro", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        fin_entry = ctk.CTkEntry(fin_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Ex: 10000.00")
+        fin_entry.pack(fill="x", pady=(2, 0))
+
+        cot_f = ctk.CTkFrame(ordem_row, fg_color="transparent")
+        cot_f.grid(row=0, column=3, sticky="nsew", padx=(6, 0))
+        ctk.CTkLabel(cot_f, text="Cota\u00e7\u00e3o", font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
+        cot_entry = ctk.CTkEntry(cot_f, font=("Segoe UI", 12), height=38, corner_radius=8, border_color=BORDER_CARD, placeholder_text="Opcional")
+        cot_entry.pack(fill="x", pady=(2, 0))
+
+        block_data = {
+            "frame": block_frame,
+            "ativo": ativo_entry,
+            "quantidade": qtd_entry,
+            "financeiro": fin_entry,
+            "cotacao": cot_entry,
+        }
+        self._eo_ordens_blocks.append(block_data)
+
+        if remove_btn:
+            remove_btn.configure(command=lambda bd=block_data: self._eo_remove_ordem_block(bd))
+
+    def _eo_remove_ordem_block(self, block_data):
+        """Remove um bloco de ordem do container."""
+        if block_data in self._eo_ordens_blocks:
+            block_data["frame"].destroy()
+            self._eo_ordens_blocks.remove(block_data)
+            # Renumerar headers
+            for i, b in enumerate(self._eo_ordens_blocks):
+                for widget in b["frame"].winfo_children():
+                    if isinstance(widget, ctk.CTkFrame):
+                        for child in widget.winfo_children():
+                            if isinstance(child, ctk.CTkLabel) and "Dados da Ordem" in str(child.cget("text")):
+                                child.configure(text=f"Dados da Ordem  #{i + 1}")
+                                break
 
     # -----------------------------------------------------------------
     #  ENVIO DE ORDENS: Ações
@@ -4114,6 +4262,14 @@ class App(ctk.CTk):
         self._eo_anexo_path = None
         self.eo_anexo_label.configure(text="Nenhum arquivo", text_color=TEXT_TERTIARY)
 
+    def _on_eo_tipo_ordem_change(self, value):
+        if value == "OFERTA P\u00daBLICA - RF":
+            self._eo_normal_frame.pack_forget()
+            self._eo_oferta_frame.pack(fill="x")
+        else:
+            self._eo_oferta_frame.pack_forget()
+            self._eo_normal_frame.pack(fill="x")
+
     def _on_eo_limpar(self):
         self._eo_lista_path = None
         self._eo_destinatarios = []
@@ -4121,67 +4277,118 @@ class App(ctk.CTk):
         self.eo_lista_icon.configure(text_color=ACCENT_BLUE)
         self.eo_lista_info.configure(text="  Nenhuma lista carregada", text_color=TEXT_SECONDARY)
         self.eo_preview_frame.pack_forget()
-        self.eo_ativo.delete(0, "end")
-        self.eo_quantidade.delete(0, "end")
-        self.eo_financeiro.delete(0, "end")
-        self.eo_cotação.delete(0, "end")
+        # Limpar campos manuais e CC
+        self.eo_manual_nome.delete(0, "end")
+        self.eo_manual_email.delete(0, "end")
+        self.eo_cc.delete(0, "end")
+        # Remover blocos de ordem extras e limpar o primeiro
+        while len(self._eo_ordens_blocks) > 1:
+            b = self._eo_ordens_blocks[-1]
+            b["frame"].destroy()
+            self._eo_ordens_blocks.pop()
+        if self._eo_ordens_blocks:
+            b0 = self._eo_ordens_blocks[0]
+            b0["ativo"].delete(0, "end")
+            b0["quantidade"].delete(0, "end")
+            b0["financeiro"].delete(0, "end")
+            b0["cotacao"].delete(0, "end")
         self.eo_venda_ativo.delete(0, "end")
         self.eo_venda_quantidade.delete(0, "end")
         self.eo_venda_financeiro.delete(0, "end")
         self.eo_venda_cotacao.delete(0, "end")
+        self.eo_of_oferta.delete(0, "end")
+        self.eo_of_prospecto.delete(0, "end")
+        self.eo_of_serie.delete(0, "end")
+        self.eo_of_valor.delete(0, "end")
+        self.eo_of_taxa.delete(0, "end")
+        self.eo_of_duration.delete(0, "end")
+        self.eo_of_codigo.delete(0, "end")
+        self.eo_of_vinculado.set("N\u00c3O")
         self.eo_assunto.delete(0, "end")
         self.eo_corpo.delete("1.0", "end")
         self.eo_anexo_label.configure(text="Nenhum arquivo", text_color=TEXT_TERTIARY)
         self.eo_modo.set("Individual")
         self.eo_tipo_ativo.set("Fundos")
+        self.eo_tipo_ordem.set("Normal")
+        self._on_eo_tipo_ordem_change("Normal")
         self.eo_status_dot.configure(text_color=TEXT_TERTIARY)
         self.eo_status_text.configure(text="  Carregue a lista de emails e configure o envio")
 
     def _on_eo_gerar_emails(self):
-        if not self._eo_destinatarios:
-            messagebox.showwarning("Lista vazia", "Insira a lista de emails primeiro.")
-            return
+        # Resolver destinatários: lista carregada OU email manual
+        destinatarios = self._eo_destinatarios
+        if not destinatarios:
+            manual_email = self.eo_manual_email.get().strip()
+            if not manual_email or "@" not in manual_email:
+                messagebox.showwarning("Sem destinatario", "Insira a lista de emails ou digite um e-mail manualmente.")
+                return
+            manual_nome = self.eo_manual_nome.get().strip()
+            destinatarios = [{"nome": manual_nome, "email": manual_email}]
 
-        ativo = self.eo_ativo.get().strip()
-        quantidade = self.eo_quantidade.get().strip()
-        financeiro = self.eo_financeiro.get().strip()
-        cotação = self.eo_cotação.get().strip()
+        # CC
+        cc_text = self.eo_cc.get().strip()
 
-        campos_faltando = []
-        if not ativo:
-            campos_faltando.append("Ativo")
-        if not quantidade:
-            campos_faltando.append("Quantidade")
-        if not financeiro:
-            campos_faltando.append("Financeiro")
+        is_oferta = self.eo_tipo_ordem.get() == "OFERTA P\u00daBLICA - RF"
 
-        if campos_faltando:
-            messagebox.showwarning(
-                "Campos obrigatorios",
-                f"Preencha os seguintes campos:\n\n- " + "\n- ".join(campos_faltando)
-            )
-            return
+        if is_oferta:
+            # Modo oferta publica — gerar assunto e corpo automaticamente
+            of_oferta = self.eo_of_oferta.get().strip()
+            of_prospecto = self.eo_of_prospecto.get().strip()
+            of_serie = self.eo_of_serie.get().strip()
+            of_valor = self.eo_of_valor.get().strip()
+            of_taxa = self.eo_of_taxa.get().strip()
+            of_duration = self.eo_of_duration.get().strip()
+            of_vinculado = self.eo_of_vinculado.get()
+            of_codigo = self.eo_of_codigo.get().strip()
 
-        assunto = self.eo_assunto.get().strip()
-        corpo = self.eo_corpo.get("1.0", "end").strip()
+            campos_faltando = []
+            if not of_oferta:
+                campos_faltando.append("Oferta")
+            if not of_valor:
+                campos_faltando.append("Valor da Reserva")
+            if campos_faltando:
+                messagebox.showwarning("Campos obrigat\u00f3rios", "Preencha:\n\n- " + "\n- ".join(campos_faltando))
+                return
 
-        if not assunto:
-            messagebox.showwarning("Campo obrigatorio", "Preencha o assunto do e-mail.")
-            return
-        if not corpo:
-            messagebox.showwarning("Campo obrigatorio", "Preencha o corpo do e-mail.")
-            return
+            assunto = self.eo_assunto.get().strip()
+            if not assunto:
+                assunto = f"Oferta P\u00fablica {of_oferta}"
+
+            corpo_manual = self.eo_corpo.get("1.0", "end").strip()
+
+            ordens_lista = []
+        else:
+            # Coletar dados de todos os blocos de ordem
+            ordens_lista = []
+            for b in self._eo_ordens_blocks:
+                od = {
+                    "ativo": b["ativo"].get().strip(),
+                    "quantidade": b["quantidade"].get().strip(),
+                    "financeiro": b["financeiro"].get().strip(),
+                    "cotação": b["cotacao"].get().strip(),
+                }
+                # Incluir apenas blocos com pelo menos o ativo preenchido
+                if od["ativo"]:
+                    ordens_lista.append(od)
+
+            assunto = self.eo_assunto.get().strip()
+            corpo_manual = self.eo_corpo.get("1.0", "end").strip()
+
+            if not assunto:
+                messagebox.showwarning("Campo obrigat\u00f3rio", "Preencha o assunto do e-mail.")
+                return
+            if not corpo_manual:
+                messagebox.showwarning("Campo obrigat\u00f3rio", "Preencha o corpo do e-mail.")
+                return
 
         modo = self.eo_modo.get()
         tipo = self.eo_tipo_ativo.get()
-        n = len(self._eo_destinatarios)
+        n = len(destinatarios)
 
         if modo == "Grupo":
-            msg = (f"Sera criado 1 rascunho com {n} destinatarios em copia.\n\n"
-                   f"Tipo: {tipo}\nOutlook precisa estar aberto. Continuar?")
+            msg = f"Ser\u00e1 criado 1 rascunho com {n} destinat\u00e1rios em c\u00f3pia.\nOutlook precisa estar aberto. Continuar?"
         else:
-            msg = (f"Serao criados {n} rascunhos individuais.\n\n"
-                   f"Tipo: {tipo}\nOutlook precisa estar aberto. Continuar?")
+            msg = f"Ser\u00e3o criados {n} rascunhos individuais.\nOutlook precisa estar aberto. Continuar?"
 
         if not messagebox.askyesno("Gerar Rascunhos", msg):
             return
@@ -4190,25 +4397,48 @@ class App(ctk.CTk):
         self.eo_status_dot.configure(text_color=ACCENT_ORANGE)
         self.eo_status_text.configure(text="  Gerando rascunhos...")
 
-        ordem_dados = {
-            "ativo": ativo,
-            "quantidade": quantidade,
-            "financeiro": financeiro,
-            "cotação": cotação,
-        }
-        venda_dados = {
-            "ativo": self.eo_venda_ativo.get().strip(),
-            "quantidade": self.eo_venda_quantidade.get().strip(),
-            "financeiro": self.eo_venda_financeiro.get().strip(),
-            "cotacao": self.eo_venda_cotacao.get().strip(),
-        }
-        threading.Thread(
-            target=self._run_eo_emails,
-            args=(assunto, corpo, modo, tipo, ordem_dados, venda_dados),
-            daemon=True
-        ).start()
+        if is_oferta:
+            oferta_dados = {
+                "oferta": of_oferta,
+                "prospecto": of_prospecto,
+                "serie": of_serie,
+                "valor": of_valor,
+                "taxa": of_taxa,
+                "duration": of_duration,
+                "vinculado": of_vinculado,
+                "codigo": of_codigo,
+            }
+            # Manter compatibilidade: ordem_dados vazio
+            ordem_dados = {"ativo": "", "quantidade": "", "financeiro": "", "cotação": ""}
+            venda_dados = {}
+            threading.Thread(
+                target=self._run_eo_emails,
+                args=(assunto, corpo_manual, modo, tipo, ordem_dados, venda_dados, oferta_dados),
+                kwargs={"destinatarios_override": destinatarios, "cc_text": cc_text},
+                daemon=True
+            ).start()
+        else:
+            # Para compatibilidade, ordem_dados = primeiro bloco (ou vazio)
+            if ordens_lista:
+                ordem_dados = ordens_lista[0]
+            else:
+                ordem_dados = {"ativo": "", "quantidade": "", "financeiro": "", "cotação": ""}
+            venda_dados = {
+                "ativo": self.eo_venda_ativo.get().strip(),
+                "quantidade": self.eo_venda_quantidade.get().strip(),
+                "financeiro": self.eo_venda_financeiro.get().strip(),
+                "cotacao": self.eo_venda_cotacao.get().strip(),
+            }
+            # Ordens extras (a partir do 2o bloco)
+            ordens_extras = ordens_lista[1:] if len(ordens_lista) > 1 else []
+            threading.Thread(
+                target=self._run_eo_emails,
+                args=(assunto, corpo_manual, modo, tipo, ordem_dados, venda_dados),
+                kwargs={"ordens_extras": ordens_extras, "destinatarios_override": destinatarios, "cc_text": cc_text},
+                daemon=True
+            ).start()
 
-    def _run_eo_emails(self, assunto, corpo, modo, tipo, ordem_dados, venda_dados=None):
+    def _run_eo_emails(self, assunto, corpo, modo, tipo, ordem_dados, venda_dados=None, oferta_dados=None, ordens_extras=None, destinatarios_override=None, cc_text=None):
         try:
             import win32com.client as win32
             import pythoncom
@@ -4216,11 +4446,11 @@ class App(ctk.CTk):
 
             outlook = win32.Dispatch("Outlook.Application")
 
+            # Usar destinatários passados (podem vir do manual ou da lista)
+            destinatarios_envio = destinatarios_override if destinatarios_override else self._eo_destinatarios
+
             hoje = datetime.now().strftime("%d/%m/%Y")
             logo_tag = LOGO_TAG_CID if os.path.exists(LOGO_PATH) else ""
-
-            tipo_tag = f'<span style="display:inline-block;background:#004d33;color:#fff;' \
-                       f'padding:3px 10px;border-radius:4px;font-size:9pt;margin-bottom:8px;">{tipo}</span>'
 
             def _get_primeiro(d):
                 """Extrai primeiro nome do campo nome ou, como fallback, do email."""
@@ -4230,59 +4460,148 @@ class App(ctk.CTk):
                 parte = local.split(".")[0]             # nicolas
                 return parte.capitalize()               # Nicolas
 
-            # Tabela de dados da ordem
-            ativo = ordem_dados["ativo"]
-            quantidade = ordem_dados["quantidade"]
-            financeiro = ordem_dados["financeiro"]
-            cotação = ordem_dados["cotação"]
+            _hdr_style = 'padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;'
+            _val_style = 'padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;'
+            _val_bold = 'padding:5px 12px;color:#1a1a2e;font-size:9.5pt;font-weight:bold;border-bottom:1px solid #eef1ef;'
 
-            ordem_rows = (
-                f'<tr style="background:#f7faf9;">'
-                f'<td style="padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;">Ativo</td>'
-                f'<td style="padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;">Quantidade</td>'
-                f'<td style="padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;">Financeiro</td>'
-                f'<td style="padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;">Cota&ccedil;&atilde;o</td>'
-                f'</tr>'
-                f'<tr style="background:#ffffff;">'
-                f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;font-weight:bold;border-bottom:1px solid #eef1ef;">{ativo}</td>'
-                f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{quantidade}</td>'
-                f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{financeiro}</td>'
-                f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{cotação if cotação else "-"}</td>'
-                f'</tr>'
-            )
+            # Montar lista completa de ordens (primeiro bloco + extras)
+            todas_ordens = []
+            if ordem_dados.get("ativo"):
+                todas_ordens.append(ordem_dados)
+            if ordens_extras:
+                todas_ordens.extend(ordens_extras)
 
-            ordem_table = (
-                f'<table cellpadding="0" cellspacing="0" border="0" '
-                f'style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;margin:10px 0 6px 0;">'
-                f'{ordem_rows}</table>'
-            )
+            # Gerar tabela HTML com todos os ativos (múltiplas linhas)
+            def _build_ordem_table(ordens_list):
+                if not ordens_list:
+                    return ""
+                # Determinar quais colunas existem em pelo menos uma ordem
+                has_ativo = any(o.get("ativo") for o in ordens_list)
+                has_qtd = any(o.get("quantidade") for o in ordens_list)
+                has_fin = any(o.get("financeiro") for o in ordens_list)
+                has_cot = any(o.get("cotação") for o in ordens_list)
 
-            # Tabela de venda (opcional)
-            venda_table = ""
-            if venda_dados and any(venda_dados.get(k) for k in ("ativo", "quantidade", "financeiro")):
-                v_ativo = venda_dados.get("ativo", "") or "-"
-                v_qtd = venda_dados.get("quantidade", "") or "-"
-                v_fin = venda_dados.get("financeiro", "") or "-"
-                v_cot = venda_dados.get("cotacao", "") or "-"
-                venda_rows = (
-                    f'<tr style="background:#fff3e8;">'
-                    f'<td style="padding:5px 12px;color:#b85c00;font-weight:bold;border-bottom:1.5px solid #e6832a;font-size:8.5pt;">Ativo</td>'
-                    f'<td style="padding:5px 12px;color:#b85c00;font-weight:bold;border-bottom:1.5px solid #e6832a;font-size:8.5pt;">Quantidade</td>'
-                    f'<td style="padding:5px 12px;color:#b85c00;font-weight:bold;border-bottom:1.5px solid #e6832a;font-size:8.5pt;">Financeiro</td>'
-                    f'<td style="padding:5px 12px;color:#b85c00;font-weight:bold;border-bottom:1.5px solid #e6832a;font-size:8.5pt;">Cota&ccedil;&atilde;o</td>'
-                    f'</tr>'
-                    f'<tr style="background:#ffffff;">'
-                    f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;font-weight:bold;border-bottom:1px solid #eef1ef;">{v_ativo}</td>'
-                    f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{v_qtd}</td>'
-                    f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{v_fin}</td>'
-                    f'<td style="padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;">{v_cot}</td>'
-                    f'</tr>'
-                )
-                venda_table = (
+                cols_def = []
+                if has_ativo:
+                    cols_def.append(("Ativo", "ativo", True))
+                if has_qtd:
+                    cols_def.append(("Quantidade", "quantidade", False))
+                if has_fin:
+                    cols_def.append(("Financeiro", "financeiro", False))
+                if has_cot:
+                    cols_def.append(("Cota\u00e7\u00e3o", "cotação", False))
+
+                if not cols_def:
+                    return ""
+
+                hdr_cells = "".join(f'<td style="{_hdr_style}">{c[0]}</td>' for c in cols_def)
+                rows_html = ""
+                for ordem in ordens_list:
+                    val_cells = "".join(
+                        f'<td style="{_val_bold if c[2] else _val_style}">{ordem.get(c[1], "")}</td>' for c in cols_def
+                    )
+                    rows_html += f'<tr style="background:#ffffff;">{val_cells}</tr>'
+
+                return (
                     f'<table cellpadding="0" cellspacing="0" border="0" '
                     f'style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;margin:10px 0 6px 0;">'
-                    f'{venda_rows}</table>'
+                    f'<tr style="background:#f7faf9;">{hdr_cells}</tr>'
+                    f'{rows_html}'
+                    f'</table>'
                 )
+
+            ordem_table = _build_ordem_table(todas_ordens)
+
+            # Tabela de venda (opcional) — só colunas preenchidas
+            venda_table = ""
+            if venda_dados:
+                _vhdr_style = 'padding:5px 12px;color:#b85c00;font-weight:bold;border-bottom:1.5px solid #e6832a;font-size:8.5pt;'
+                _venda_cols = []
+                v_ativo = venda_dados.get("ativo", "")
+                v_qtd = venda_dados.get("quantidade", "")
+                v_fin = venda_dados.get("financeiro", "")
+                v_cot = venda_dados.get("cotacao", "")
+                if v_ativo:
+                    _venda_cols.append(("Ativo", v_ativo, True))
+                if v_qtd:
+                    _venda_cols.append(("Quantidade", v_qtd, False))
+                if v_fin:
+                    _venda_cols.append(("Financeiro", v_fin, False))
+                if v_cot:
+                    _venda_cols.append(("Cota\u00e7\u00e3o", v_cot, False))
+
+                if _venda_cols:
+                    vhdr_cells = "".join(f'<td style="{_vhdr_style}">{c[0]}</td>' for c in _venda_cols)
+                    vval_cells = "".join(
+                        f'<td style="{_val_bold if c[2] else _val_style}">{c[1]}</td>' for c in _venda_cols
+                    )
+                    venda_table = (
+                        f'<table cellpadding="0" cellspacing="0" border="0" '
+                        f'style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;margin:10px 0 6px 0;">'
+                        f'<tr style="background:#fff3e8;">{vhdr_cells}</tr>'
+                        f'<tr style="background:#ffffff;">{vval_cells}</tr>'
+                        f'</table>'
+                    )
+
+            # === OFERTA PUBLICA: montar corpo e tabelas especificas ===
+            oferta_section = ""
+            if oferta_dados and oferta_dados.get("oferta"):
+                od = oferta_dados
+
+                prosp_line = ""
+                if od.get("prospecto"):
+                    prosp_line = (
+                        f'<tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">'
+                        f'- Prospecto: <a href="{od["prospecto"]}" '
+                        f'style="color:#1863DC;text-decoration:underline;">{od["prospecto"]}</a></td></tr>'
+                    )
+
+                serie_header = ""
+                if od.get("serie"):
+                    serie_header = (
+                        f'<tr><td style="padding:12px 14px 4px 14px;font-size:10.5pt;color:#004d33;'
+                        f'font-weight:bold;border-top:1.5px solid #00b876;">{od["serie"]}:</td></tr>'
+                    )
+
+                dur_line = ""
+                if od.get("duration"):
+                    dur_line = f'<tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">- Duration: {od["duration"]}</td></tr>'
+
+                cod_html = ""
+                if od.get("codigo"):
+                    cod_html = f' no c\u00f3digo <b>{od["codigo"]}</b> na XP'
+
+                oferta_section = f"""
+  <tr><td style="padding:22px 0 8px 0;">
+    <table cellpadding='0' cellspacing='0' border='0'><tr>
+      <td style='background-color:#00b876;width:4px;border-radius:4px;'>&nbsp;</td>
+      <td style='padding-left:12px;'>
+        <span style='font-size:12.5pt;color:#004d33;font-weight:bold;letter-spacing:0.3px;'>Reserva</span>
+      </td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="padding:0 4px;">
+    <table cellpadding="0" cellspacing="0" border="0"
+     style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;margin:10px 0 6px 0;">
+      <tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">- Oferta: {od["oferta"]}</td></tr>
+      {prosp_line}
+      {serie_header}
+      <tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">- Valor da Reserva: <b>{od["valor"]}</b></td></tr>
+      <tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">- Taxa: {od.get("taxa", "-")}</td></tr>
+      {dur_line}
+      <tr><td style="padding:4px 14px;font-size:10pt;color:#1a1a2e;">- Investidor Vinculado (S/N): <b>{od.get("vinculado", "N\u00c3O")}</b></td></tr>
+    </table>
+  </td></tr>"""
+
+                # Se não há corpo manual, gerar texto padrão
+                if not corpo:
+                    corpo = (
+                        f"Gostaria de confirmar a altera\u00e7\u00e3o da reserva de compra{cod_html}:"
+                    )
+
+                # Forçar ordem/venda vazias no modo oferta
+                ordem_table = ""
+                venda_table = ""
 
             def _build_html(primeiro_nome, corpo_html):
                 return f"""
@@ -4307,24 +4626,24 @@ class App(ctk.CTk):
     <p style="font-size:11pt;color:#1a1a2e;margin-bottom:4px;">
       Prezado(a) <b>{primeiro_nome}</b>, tudo bem?
     </p>
-    {tipo_tag}
     <p style="font-size:10.5pt;color:#4b5563;margin-top:8px;">
       {corpo_html}
     </p>
   </td></tr>
 
+  {"" if not ordem_table else f"""
   <!-- Dados da Ordem (Compra) -->
   <tr><td style="padding:22px 0 8px 0;">
-    <table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="background-color:#00b876;width:4px;border-radius:4px;">&nbsp;</td>
-      <td style="padding-left:12px;">
-        <span style="font-size:12.5pt;color:#004d33;font-weight:bold;letter-spacing:0.3px;">Dados da Ordem</span>
+    <table cellpadding='0' cellspacing='0' border='0'><tr>
+      <td style='background-color:#00b876;width:4px;border-radius:4px;'>&nbsp;</td>
+      <td style='padding-left:12px;'>
+        <span style='font-size:12.5pt;color:#004d33;font-weight:bold;letter-spacing:0.3px;'>Dados da Ordem</span>
       </td>
     </tr></table>
   </td></tr>
-  <tr><td style="padding:0 4px;">
+  <tr><td style='padding:0 4px;'>
     {ordem_table}
-  </td></tr>
+  </td></tr>"""}
   {"" if not venda_table else f"""
   <!-- Dados da Venda (Saída) -->
   <tr><td style="padding:18px 0 8px 0;">
@@ -4338,6 +4657,7 @@ class App(ctk.CTk):
   <tr><td style='padding:0 4px;'>
     {venda_table}
   </td></tr>"""}
+  {oferta_section}
   <tr><td style="padding:28px 0 0 0;">
     <hr style="border:none;border-top:2px solid #004d33;margin:0 0 12px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -4348,7 +4668,7 @@ class App(ctk.CTk):
           --><span style="font-size:10pt;color:#004d33;font-weight:bold;">Produtos</span>
         </td>
         <td style="text-align:right;">
-          <span style="font-size:8.5pt;color:#6b7280;">Envio de Ordens &middot; {tipo} &middot; {hoje}</span><br>
+          <span style="font-size:8.5pt;color:#6b7280;">Somus Capital | Produtos &middot; {hoje}</span><br>
           <span style="font-size:7.5pt;color:#9ca3af;">E-mail gerado automaticamente</span>
         </td>
       </tr>
@@ -4367,7 +4687,9 @@ class App(ctk.CTk):
                     primeiro = "Prezados"
                     corpo_html = corpo.replace("{nome}", primeiro).replace("\n", "<br>")
                     mail = outlook.CreateItem(0)
-                    mail.To = "; ".join(d["email"] for d in self._eo_destinatarios)
+                    mail.To = "; ".join(d["email"] for d in destinatarios_envio)
+                    if cc_text:
+                        mail.CC = cc_text
                     mail.Subject = assunto
                     mail.HTMLBody = _build_html(primeiro, corpo_html)
                     _attach_logo_cid(mail)
@@ -4379,12 +4701,14 @@ class App(ctk.CTk):
                     erros = 1
             else:
                 # Individual
-                for d in self._eo_destinatarios:
+                for d in destinatarios_envio:
                     primeiro = _get_primeiro(d)
                     corpo_html = corpo.replace("{nome}", primeiro).replace("\n", "<br>")
                     try:
                         mail = outlook.CreateItem(0)
                         mail.To = d["email"]
+                        if cc_text:
+                            mail.CC = cc_text
                         mail.Subject = assunto
                         mail.HTMLBody = _build_html(primeiro, corpo_html)
                         _attach_logo_cid(mail)
@@ -4412,6 +4736,534 @@ class App(ctk.CTk):
                 self.eo_enviar_btn.configure(state="normal")
                 self.eo_status_dot.configure(text_color=ACCENT_RED)
                 self.eo_status_text.configure(text=f"  Erro: {e}")
+                messagebox.showerror("Erro", str(e))
+            self.after(0, _err)
+
+    # -----------------------------------------------------------------
+    #  PAGE: ORDEM MASSA
+    # -----------------------------------------------------------------
+    def _build_ordem_massa_page(self):
+        page = ctk.CTkFrame(self, fg_color=BG_PRIMARY, corner_radius=0)
+
+        self._make_topbar(page, "Ordem MASSA", subtitle="Mesa de Produtos")
+
+        scroll = ctk.CTkScrollableFrame(page, fg_color=BG_PRIMARY, corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=0, pady=0)
+
+        content = ctk.CTkFrame(scroll, fg_color="transparent")
+        content.pack(fill="x", padx=28, pady=20)
+
+        # Banner
+        banner = ctk.CTkFrame(content, fg_color=ACCENT_GREEN, corner_radius=10, height=44)
+        banner.pack(fill="x", pady=(0, 18))
+        banner.pack_propagate(False)
+
+        ctk.CTkLabel(
+            banner, text="  \u21c8  Envio de ordens em massa a partir de planilha",
+            font=("Segoe UI", 12), text_color=TEXT_WHITE, anchor="w"
+        ).pack(side="left", padx=18, pady=10)
+
+        # ======== PLANILHA ========
+        ctk.CTkLabel(
+            content, text="Planilha de Opera\u00e7\u00f5es",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 6))
+
+        self.om_lista_card = ctk.CTkFrame(
+            content, fg_color="#f0f4ff", corner_radius=12,
+            border_width=2, border_color=ACCENT_BLUE
+        )
+        self.om_lista_card.pack(fill="x", pady=(0, 16))
+
+        lista_inner = ctk.CTkFrame(self.om_lista_card, fg_color="transparent")
+        lista_inner.pack(fill="x", padx=20, pady=16)
+
+        lista_left = ctk.CTkFrame(lista_inner, fg_color="transparent")
+        lista_left.pack(side="left", fill="x", expand=True)
+
+        self.om_lista_icon = ctk.CTkLabel(
+            lista_left, text="\u2709",
+            font=("Segoe UI", 20), text_color=ACCENT_BLUE
+        )
+        self.om_lista_icon.pack(side="left")
+
+        self.om_lista_info = ctk.CTkLabel(
+            lista_left, text="  Nenhuma planilha carregada",
+            font=("Segoe UI", 12), text_color=TEXT_SECONDARY, anchor="w"
+        )
+        self.om_lista_info.pack(side="left", padx=(6, 0))
+
+        ctk.CTkButton(
+            lista_inner, text="  Carregar Planilha",
+            font=("Segoe UI", 12, "bold"),
+            fg_color=ACCENT_BLUE, hover_color="#1555bb",
+            height=38, corner_radius=8, width=200,
+            command=self._on_om_browse_planilha,
+        ).pack(side="right")
+
+        # Preview da planilha carregada
+        self.om_preview_frame = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=10,
+            border_width=1, border_color=BORDER_CARD
+        )
+        self.om_preview_frame.pack(fill="x", pady=(0, 16))
+        self.om_preview_frame.pack_forget()
+
+        self.om_preview_text = ctk.CTkTextbox(
+            self.om_preview_frame, font=("Consolas", 9),
+            fg_color=BG_CARD, text_color=TEXT_PRIMARY,
+            corner_radius=10, height=200, wrap="none"
+        )
+        self.om_preview_text.pack(fill="x", padx=4, pady=4)
+        self.om_preview_text.configure(state="disabled")
+
+        # ======== CONFIGURA\u00c7\u00d5ES ========
+        ctk.CTkLabel(
+            content, text="Configura\u00e7\u00f5es do Envio",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        ).pack(fill="x", pady=(0, 8))
+
+        config_card = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=12,
+                                   border_width=1, border_color=BORDER_CARD)
+        config_card.pack(fill="x", pady=(0, 16))
+
+        ci = ctk.CTkFrame(config_card, fg_color="transparent")
+        ci.pack(fill="x", padx=20, pady=16)
+
+        # Assessor
+        ctk.CTkLabel(
+            ci, text="Nome do Assessor",
+            font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+
+        self.om_assessor = ctk.CTkEntry(
+            ci, font=("Segoe UI", 12), height=40,
+            corner_radius=8, border_color=BORDER_CARD,
+            placeholder_text="Ex: Bruno Torres"
+        )
+        self.om_assessor.pack(fill="x", pady=(0, 14))
+
+        # Assunto
+        ctk.CTkLabel(
+            ci, text="Assunto do E-mail",
+            font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+
+        self.om_assunto = ctk.CTkEntry(
+            ci, font=("Segoe UI", 12), height=40,
+            corner_radius=8, border_color=BORDER_CARD,
+            placeholder_text="Ex: Confirma\u00e7\u00e3o de Ordem - Renda Fixa"
+        )
+        self.om_assunto.pack(fill="x", pady=(0, 14))
+
+        # Corpo
+        ctk.CTkLabel(
+            ci, text="Corpo do E-mail",
+            font=("Segoe UI", 11, "bold"), text_color=TEXT_SECONDARY, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+
+        ctk.CTkLabel(
+            ci, text="Use {assessor} para inserir o nome do assessor automaticamente",
+            font=("Segoe UI", 9), text_color=TEXT_TERTIARY, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+
+        self.om_corpo = ctk.CTkTextbox(
+            ci, font=("Segoe UI", 11), height=120,
+            corner_radius=8, border_width=1, border_color=BORDER_CARD,
+            fg_color=BG_PRIMARY, text_color=TEXT_PRIMARY, wrap="word"
+        )
+        self.om_corpo.pack(fill="x", pady=(0, 14))
+        self.om_corpo.insert("1.0", "Conforme alinhado com o assessor {assessor}, pe\u00e7o a confirma\u00e7\u00e3o de aplica\u00e7\u00e3o do ativo:")
+
+        # ======== A\u00c7\u00d5ES ========
+        act_frame = ctk.CTkFrame(content, fg_color="transparent")
+        act_frame.pack(fill="x", pady=(6, 14))
+
+        self.om_enviar_btn = ctk.CTkButton(
+            act_frame, text="\u21c8  Gerar Rascunhos no Outlook",
+            font=("Segoe UI", 13, "bold"),
+            fg_color=ACCENT_GREEN, hover_color=BG_SIDEBAR_HOVER,
+            height=44, corner_radius=10,
+            command=self._on_om_gerar_emails,
+        )
+        self.om_enviar_btn.pack(side="left", padx=(0, 10))
+
+        ctk.CTkButton(
+            act_frame, text="Limpar Tudo",
+            font=("Segoe UI", 11),
+            fg_color="#6b7280", hover_color="#555d6a",
+            height=44, corner_radius=10, width=120,
+            command=self._on_om_limpar,
+        ).pack(side="left")
+
+        # ======== STATUS ========
+        self.om_status_frame = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=10,
+            border_width=1, border_color=BORDER_CARD
+        )
+        self.om_status_frame.pack(fill="x", pady=(0, 8))
+
+        si = ctk.CTkFrame(self.om_status_frame, fg_color="transparent")
+        si.pack(fill="x", padx=16, pady=10)
+
+        self.om_status_dot = ctk.CTkLabel(
+            si, text="\u25cf", font=("Segoe UI", 11), text_color=TEXT_TERTIARY
+        )
+        self.om_status_dot.pack(side="left")
+
+        self.om_status_text = ctk.CTkLabel(
+            si, text="  Carregue a planilha de opera\u00e7\u00f5es e configure o envio",
+            font=("Segoe UI", 11), text_color=TEXT_SECONDARY
+        )
+        self.om_status_text.pack(side="left")
+
+        # Internal state
+        self._om_planilha_path = None
+        self._om_clientes = []  # Lista de dicts: {codigo, email, nome, ordens: [{ativo, cotação, financeiro}]}
+
+        return page
+
+    # -----------------------------------------------------------------
+    #  ORDEM MASSA: Handlers
+    # -----------------------------------------------------------------
+    def _on_om_browse_planilha(self):
+        path = filedialog.askopenfilename(
+            title="Selecionar planilha de opera\u00e7\u00f5es",
+            initialdir=os.path.expanduser("~/Downloads"),
+            filetypes=[("Excel", "*.xlsx *.xls"), ("Todos", "*.*")]
+        )
+        if not path:
+            return
+
+        try:
+            wb = openpyxl.load_workbook(path, data_only=True)
+            ws = wb[wb.sheetnames[0]]
+
+            # Detectar colunas pela header (row 1)
+            headers = {}
+            for col in range(1, ws.max_column + 1):
+                val = ws.cell(1, col).value
+                if val:
+                    headers[str(val).strip().lower()] = col
+
+            # Mapear colunas
+            col_codigo = None
+            col_nome = None
+            col_email = None
+            col_ativo = None
+            col_taxa = None
+            col_valor = None
+
+            for key, col in headers.items():
+                if not col_codigo and any(k in key for k in ["c\u00f3digo", "codigo"]):
+                    col_codigo = col
+                if not col_nome and any(k in key for k in ["cliente", "nome"]):
+                    col_nome = col
+                if not col_email and any(k in key for k in ["email", "e-mail", "mail"]):
+                    col_email = col
+                if not col_ativo and any(k in key for k in ["ativo", "produto"]):
+                    col_ativo = col
+                if not col_taxa and any(k in key for k in ["taxa", "cota\u00e7\u00e3o", "cotacao"]):
+                    col_taxa = col
+                if not col_valor and any(k in key for k in ["valor", "financeiro"]):
+                    col_valor = col
+
+            if not col_email:
+                wb.close()
+                messagebox.showwarning(
+                    "Coluna n\u00e3o encontrada",
+                    "N\u00e3o foi poss\u00edvel encontrar a coluna de e-mail na planilha.\n\n"
+                    "A planilha deve ter colunas: C\u00f3digo, Cliente, EMAIL, ATIVO, TAXA, Valor."
+                )
+                return
+
+            clientes = {}
+            for r in range(2, ws.max_row + 1):
+                email_val = ws.cell(r, col_email).value if col_email else None
+                if not email_val or "@" not in str(email_val):
+                    continue
+
+                email = str(email_val).strip()
+                codigo_raw = ws.cell(r, col_codigo).value if col_codigo else ""
+                if isinstance(codigo_raw, (int, float)):
+                    codigo = str(int(codigo_raw))
+                else:
+                    codigo = str(codigo_raw or "").strip()
+
+                nome_raw = sanitize_text(ws.cell(r, col_nome).value) if col_nome else ""
+                ativo = str(ws.cell(r, col_ativo).value or "").strip() if col_ativo else ""
+                taxa = str(ws.cell(r, col_taxa).value or "").strip() if col_taxa else ""
+                valor_raw = ws.cell(r, col_valor).value if col_valor else 0
+
+                valor_num = float(valor_raw) if isinstance(valor_raw, (int, float)) else 0
+                valor_fmt = f"R$ {valor_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+                key = (codigo, email)
+                if key not in clientes:
+                    primeiro_nome = nome_raw.split()[0].capitalize() if nome_raw else email.split("@")[0].split(".")[0].capitalize()
+                    clientes[key] = {
+                        "codigo": codigo,
+                        "email": email,
+                        "nome": primeiro_nome,
+                        "nome_completo": nome_raw,
+                        "ordens": [],
+                    }
+
+                ordem = {"ativo": ativo, "financeiro": valor_fmt}
+                if taxa:
+                    ordem["cota\u00e7\u00e3o"] = taxa
+                clientes[key]["ordens"].append(ordem)
+
+            wb.close()
+
+            clientes_list = list(clientes.values())
+            if not clientes_list:
+                messagebox.showwarning("Planilha vazia", "Nenhuma opera\u00e7\u00e3o v\u00e1lida encontrada na planilha.")
+                return
+
+            self._om_planilha_path = path
+            self._om_clientes = clientes_list
+
+            total_ordens = sum(len(c["ordens"]) for c in clientes_list)
+
+            # Atualizar UI
+            self.om_lista_icon.configure(text_color=ACCENT_GREEN)
+            self.om_lista_info.configure(
+                text=f"  {len(clientes_list)} clientes, {total_ordens} ordens  -  {os.path.basename(path)}",
+                text_color=ACCENT_GREEN
+            )
+
+            # Preview
+            self.om_preview_frame.pack(fill="x", pady=(0, 16))
+            self.om_preview_text.configure(state="normal")
+            self.om_preview_text.delete("1.0", "end")
+
+            header_line = f"{'C\u00f3digo':<12} {'Cliente':<35} {'Email':<40} {'Ativo':<25} {'Taxa':<18} {'Financeiro':<16}\n"
+            sep_line = f"{'-'*12} {'-'*35} {'-'*40} {'-'*25} {'-'*18} {'-'*16}\n"
+            self.om_preview_text.insert("end", header_line)
+            self.om_preview_text.insert("end", sep_line)
+
+            count = 0
+            for c in clientes_list:
+                for o in c["ordens"]:
+                    line = f"{c['codigo']:<12} {c['nome_completo'][:34]:<35} {c['email'][:39]:<40} {o.get('ativo', '')[:24]:<25} {o.get('cota\u00e7\u00e3o', '')[:17]:<18} {o.get('financeiro', ''):<16}\n"
+                    self.om_preview_text.insert("end", line)
+                    count += 1
+                    if count >= 30:
+                        break
+                if count >= 30:
+                    break
+
+            remaining = total_ordens - count
+            if remaining > 0:
+                self.om_preview_text.insert("end", f"\n... e mais {remaining} opera\u00e7\u00f5es")
+            self.om_preview_text.configure(state="disabled")
+
+            self.om_status_dot.configure(text_color=ACCENT_GREEN)
+            self.om_status_text.configure(text=f"  Planilha carregada - {len(clientes_list)} clientes, {total_ordens} ordens prontas")
+
+        except Exception as e:
+            messagebox.showerror("Erro ao ler planilha", str(e))
+
+    def _on_om_limpar(self):
+        self._om_planilha_path = None
+        self._om_clientes = []
+        self.om_lista_icon.configure(text_color=ACCENT_BLUE)
+        self.om_lista_info.configure(text="  Nenhuma planilha carregada", text_color=TEXT_SECONDARY)
+        self.om_preview_frame.pack_forget()
+        self.om_assessor.delete(0, "end")
+        self.om_assunto.delete(0, "end")
+        self.om_corpo.delete("1.0", "end")
+        self.om_corpo.insert("1.0", "Conforme alinhado com o assessor {assessor}, pe\u00e7o a confirma\u00e7\u00e3o de aplica\u00e7\u00e3o do ativo:")
+        self.om_status_dot.configure(text_color=TEXT_TERTIARY)
+        self.om_status_text.configure(text="  Carregue a planilha de opera\u00e7\u00f5es e configure o envio")
+
+    def _on_om_gerar_emails(self):
+        if not self._om_clientes:
+            messagebox.showwarning("Sem dados", "Carregue uma planilha de opera\u00e7\u00f5es primeiro.")
+            return
+
+        assessor = self.om_assessor.get().strip()
+        assunto = self.om_assunto.get().strip()
+        corpo_template = self.om_corpo.get("1.0", "end").strip()
+
+        if not assessor:
+            messagebox.showwarning("Campo obrigat\u00f3rio", "Preencha o nome do assessor.")
+            return
+        if not assunto:
+            messagebox.showwarning("Campo obrigat\u00f3rio", "Preencha o assunto do e-mail.")
+            return
+        if not corpo_template:
+            messagebox.showwarning("Campo obrigat\u00f3rio", "Preencha o corpo do e-mail.")
+            return
+
+        n = len(self._om_clientes)
+        msg = f"Ser\u00e3o criados {n} rascunhos individuais (um por cliente).\nOutlook precisa estar aberto. Continuar?"
+        if not messagebox.askyesno("Gerar Rascunhos", msg):
+            return
+
+        self.om_enviar_btn.configure(state="disabled")
+        self.om_status_dot.configure(text_color=ACCENT_ORANGE)
+        self.om_status_text.configure(text="  Gerando rascunhos...")
+
+        threading.Thread(
+            target=self._run_om_emails,
+            args=(assunto, corpo_template, assessor),
+            daemon=True,
+        ).start()
+
+    def _run_om_emails(self, assunto, corpo_template, assessor):
+        try:
+            import win32com.client as win32
+            import pythoncom
+            pythoncom.CoInitialize()
+
+            outlook = win32.Dispatch("Outlook.Application")
+
+            hoje = datetime.now().strftime("%d/%m/%Y")
+            logo_tag = LOGO_TAG_CID if os.path.exists(LOGO_PATH) else ""
+
+            _hdr_style = 'padding:5px 12px;color:#00785a;font-weight:bold;border-bottom:1.5px solid #00785a;font-size:8.5pt;'
+            _val_style = 'padding:5px 12px;color:#1a1a2e;font-size:9.5pt;border-bottom:1px solid #eef1ef;'
+            _val_bold = 'padding:5px 12px;color:#1a1a2e;font-size:9.5pt;font-weight:bold;border-bottom:1px solid #eef1ef;'
+
+            def _build_ordem_table(ordens_list):
+                if not ordens_list:
+                    return ""
+                has_ativo = any(o.get("ativo") for o in ordens_list)
+                has_cot = any(o.get("cota\u00e7\u00e3o") for o in ordens_list)
+                has_fin = any(o.get("financeiro") for o in ordens_list)
+
+                cols_def = []
+                if has_ativo:
+                    cols_def.append(("Ativo", "ativo", True))
+                if has_cot:
+                    cols_def.append(("Cota\u00e7\u00e3o", "cota\u00e7\u00e3o", False))
+                if has_fin:
+                    cols_def.append(("Financeiro", "financeiro", False))
+
+                if not cols_def:
+                    return ""
+
+                hdr_cells = "".join(f'<td style="{_hdr_style}">{c[0]}</td>' for c in cols_def)
+                rows_html = ""
+                for ordem in ordens_list:
+                    val_cells = "".join(
+                        f'<td style="{_val_bold if c[2] else _val_style}">{ordem.get(c[1], "")}</td>' for c in cols_def
+                    )
+                    rows_html += f'<tr style="background:#ffffff;">{val_cells}</tr>'
+
+                return (
+                    f'<table cellpadding="0" cellspacing="0" border="0" '
+                    f'style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;margin:10px 0 6px 0;">'
+                    f'<tr style="background:#f7faf9;">{hdr_cells}</tr>'
+                    f'{rows_html}'
+                    f'</table>'
+                )
+
+            def _build_html(primeiro_nome, corpo_html, ordem_table):
+                return f"""
+<div style="font-family:Calibri,Arial,sans-serif;max-width:960px;margin:0 auto;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:16px 0 12px 0;vertical-align:middle;">
+      {logo_tag}<!--
+      --><span style="font-size:16pt;font-weight:bold;color:#004d33;">Somus Capital</span><!--
+      --><span style="font-size:16pt;color:#004d33;font-weight:300;"> | </span><!--
+      --><span style="font-size:16pt;color:#004d33;font-weight:bold;">Produtos</span>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 16px 0;">
+      <hr style="border:none;border-top:2px solid #004d33;margin:0;">
+    </td>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
+  <tr><td style="padding:0 4px;">
+    <p style="font-size:11pt;color:#1a1a2e;margin-bottom:4px;">
+      Prezado(a) <b>{primeiro_nome}</b>, tudo bem?
+    </p>
+    <p style="font-size:10.5pt;color:#4b5563;margin-top:8px;">
+      {corpo_html}
+    </p>
+  </td></tr>
+
+  {"" if not ordem_table else f'''
+  <!-- Dados da Ordem (Compra) -->
+  <tr><td style="padding:22px 0 8px 0;">
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="background-color:#00b876;width:4px;border-radius:4px;">&nbsp;</td>
+      <td style="padding-left:12px;">
+        <span style="font-size:12.5pt;color:#004d33;font-weight:bold;letter-spacing:0.3px;">Dados da Ordem</span>
+      </td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="padding:0 4px;">
+    {ordem_table}
+  </td></tr>'''}
+
+  <tr><td style="padding:28px 0 0 0;">
+    <hr style="border:none;border-top:2px solid #004d33;margin:0 0 12px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="vertical-align:middle;">
+          <span style="font-size:10pt;font-weight:bold;color:#004d33;">Somus Capital</span><!--
+          --><span style="font-size:10pt;color:#004d33;font-weight:300;"> | </span><!--
+          --><span style="font-size:10pt;color:#004d33;font-weight:bold;">Produtos</span>
+        </td>
+        <td style="text-align:right;">
+          <span style="font-size:8.5pt;color:#6b7280;">Somus Capital | Produtos &middot; {hoje}</span><br>
+          <span style="font-size:7.5pt;color:#9ca3af;">E-mail gerado automaticamente</span>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</div>
+"""
+
+            criados = 0
+            erros = 0
+
+            for cliente in self._om_clientes:
+                try:
+                    primeiro = cliente["nome"]
+                    corpo_final = corpo_template.replace("{assessor}", assessor).replace("{nome}", primeiro)
+                    corpo_html = corpo_final.replace("\n", "<br>")
+
+                    ordem_table = _build_ordem_table(cliente["ordens"])
+
+                    html = _build_html(primeiro, corpo_html, ordem_table)
+
+                    mail = outlook.CreateItem(0)
+                    mail.To = cliente["email"]
+                    mail.Subject = f"{assunto} - C\u00f3d. {cliente['codigo']}"
+                    mail.HTMLBody = html
+                    _attach_logo_cid(mail)
+                    mail.Save()
+
+                    criados += 1
+                except Exception:
+                    erros += 1
+
+            pythoncom.CoUninitialize()
+
+            def _done():
+                self.om_enviar_btn.configure(state="normal")
+                self.om_status_dot.configure(text_color="#00a86b")
+                self.om_status_text.configure(
+                    text=f"  Conclu\u00eddo - {criados} rascunho(s), {erros} erro(s)"
+                )
+                messagebox.showinfo("Rascunhos Criados",
+                    f"{criados} rascunho(s) criado(s) no Outlook!\n{erros} erro(s).")
+            self.after(0, _done)
+
+        except Exception as e:
+            def _err():
+                self.om_enviar_btn.configure(state="normal")
+                self.om_status_dot.configure(text_color=ACCENT_RED)
+                self.om_status_text.configure(text=f"  Erro: {e}")
                 messagebox.showerror("Erro", str(e))
             self.after(0, _err)
 
@@ -10591,6 +11443,523 @@ class App(ctk.CTk):
             height=42, corner_radius=10, width=100,
             command=win.destroy,
         ).pack(side="left")
+
+    # =================================================================
+    #  TOP PICKS
+    # =================================================================
+    def _build_top_picks_page(self):
+        page = ctk.CTkFrame(self, fg_color=BG_PRIMARY, corner_radius=0)
+
+        self._make_topbar(page, "Top Picks", subtitle="Maiores Taxas por Faixa e Indexador")
+
+        scroll = ctk.CTkScrollableFrame(page, fg_color=BG_PRIMARY, corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=0, pady=0)
+
+        content = ctk.CTkFrame(scroll, fg_color="transparent")
+        content.pack(fill="x", padx=28, pady=20)
+
+        # ======== DROP ZONE ========
+        self.tp_drop_card = ctk.CTkFrame(
+            content, fg_color="#fff8f0", corner_radius=14,
+            border_width=2, border_color=ACCENT_ORANGE
+        )
+        self.tp_drop_card.pack(fill="x", pady=(0, 16))
+        self.tp_drop_card.bind("<Button-1>", lambda e: self._on_browse_top_picks())
+
+        drop_inner = ctk.CTkFrame(self.tp_drop_card, fg_color="transparent")
+        drop_inner.pack(fill="x", padx=30, pady=36)
+        drop_inner.bind("<Button-1>", lambda e: self._on_browse_top_picks())
+
+        self.tp_icon_label = ctk.CTkLabel(
+            drop_inner, text="\u2605",
+            font=("Segoe UI", 44), text_color=ACCENT_ORANGE
+        )
+        self.tp_icon_label.pack()
+        self.tp_icon_label.bind("<Button-1>", lambda e: self._on_browse_top_picks())
+
+        self.tp_drop_title = ctk.CTkLabel(
+            drop_inner, text="Clique para selecionar a planilha de ativos",
+            font=("Segoe UI", 16, "bold"), text_color=TEXT_PRIMARY
+        )
+        self.tp_drop_title.pack(pady=(8, 2))
+        self.tp_drop_title.bind("<Button-1>", lambda e: self._on_browse_top_picks())
+
+        self.tp_drop_sub = ctk.CTkLabel(
+            drop_inner, text="Formatos aceitos:  .xlsx  .xls",
+            font=("Segoe UI", 11), text_color=TEXT_SECONDARY
+        )
+        self.tp_drop_sub.pack()
+        self.tp_drop_sub.bind("<Button-1>", lambda e: self._on_browse_top_picks())
+
+        self.tp_browse_btn = ctk.CTkButton(
+            drop_inner, text="  Selecionar Arquivo",
+            font=("Segoe UI", 12, "bold"),
+            fg_color=ACCENT_ORANGE, hover_color="#c96e1f",
+            height=40, corner_radius=8, width=200,
+            command=self._on_browse_top_picks,
+        )
+        self.tp_browse_btn.pack(pady=(14, 0))
+
+        # ======== FILE INFO BAR ========
+        self.tp_file_frame = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=10,
+            border_width=1, border_color=BORDER_CARD
+        )
+        self.tp_file_frame.pack(fill="x", pady=(0, 12))
+        self.tp_file_frame.pack_forget()
+
+        fi = ctk.CTkFrame(self.tp_file_frame, fg_color="transparent")
+        fi.pack(fill="x", padx=16, pady=10)
+
+        self.tp_file_icon = ctk.CTkLabel(
+            fi, text="\u25cf", font=("Segoe UI", 12), text_color=ACCENT_GREEN
+        )
+        self.tp_file_icon.pack(side="left")
+
+        self.tp_file_name = ctk.CTkLabel(
+            fi, text="", font=("Segoe UI", 11, "bold"), text_color=TEXT_PRIMARY
+        )
+        self.tp_file_name.pack(side="left", padx=(6, 0))
+
+        self.tp_file_info = ctk.CTkLabel(
+            fi, text="", font=("Segoe UI", 10), text_color=TEXT_SECONDARY
+        )
+        self.tp_file_info.pack(side="left", padx=(12, 0))
+
+        ctk.CTkButton(
+            fi, text="Trocar", font=("Segoe UI", 10),
+            fg_color=BG_INPUT, hover_color=BORDER_CARD,
+            text_color=TEXT_SECONDARY, height=28, corner_radius=6, width=70,
+            command=self._on_browse_top_picks,
+        ).pack(side="right")
+
+        # ======== PREVIEW ========
+        self.tp_preview_label = ctk.CTkLabel(
+            content, text="Preview dos Dados",
+            font=("Segoe UI", 14, "bold"), text_color=TEXT_PRIMARY, anchor="w"
+        )
+        self.tp_preview_label.pack(fill="x", pady=(4, 8))
+
+        self.tp_preview_frame = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=12,
+            border_width=1, border_color=BORDER_CARD
+        )
+        self.tp_preview_frame.pack(fill="x", pady=(0, 14))
+
+        self.tp_preview_text = ctk.CTkTextbox(
+            self.tp_preview_frame, font=("Consolas", 9),
+            fg_color=BG_CARD, text_color=TEXT_PRIMARY,
+            corner_radius=10, height=200, wrap="none"
+        )
+        self.tp_preview_text.pack(fill="x", padx=4, pady=4)
+        self.tp_preview_text.insert("1.0", "  Nenhum arquivo carregado...")
+        self.tp_preview_text.configure(state="disabled")
+
+        # ======== ACTION BUTTONS ========
+        btn_frame = ctk.CTkFrame(content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(0, 12))
+
+        self.tp_process_btn = ctk.CTkButton(
+            btn_frame, text="  Gerar Top Picks",
+            font=("Segoe UI", 13, "bold"),
+            fg_color=ACCENT_GREEN, hover_color=self._darken(ACCENT_GREEN),
+            height=44, corner_radius=10, state="disabled",
+            command=self._on_process_top_picks,
+        )
+        self.tp_process_btn.pack(side="left", padx=(0, 10))
+
+        self.tp_open_btn = ctk.CTkButton(
+            btn_frame, text="  Abrir Resultado",
+            font=("Segoe UI", 13, "bold"),
+            fg_color=ACCENT_BLUE, hover_color="#1555bb",
+            height=44, corner_radius=10, state="disabled",
+            command=self._on_open_top_picks_result,
+        )
+        self.tp_open_btn.pack(side="left", padx=(0, 10))
+
+        # ======== STATUS BAR ========
+        self.tp_status_frame = ctk.CTkFrame(
+            content, fg_color=BG_CARD, corner_radius=10,
+            border_width=1, border_color=BORDER_CARD
+        )
+        self.tp_status_frame.pack(fill="x", pady=(0, 8))
+
+        si = ctk.CTkFrame(self.tp_status_frame, fg_color="transparent")
+        si.pack(fill="x", padx=16, pady=10)
+
+        self.tp_status_dot = ctk.CTkLabel(
+            si, text="\u25cf", font=("Segoe UI", 11), text_color=TEXT_TERTIARY
+        )
+        self.tp_status_dot.pack(side="left")
+
+        self.tp_status_text = ctk.CTkLabel(
+            si, text="  Aguardando arquivo...",
+            font=("Segoe UI", 11), text_color=TEXT_SECONDARY
+        )
+        self.tp_status_text.pack(side="left")
+
+        # Internal state
+        self._tp_input_path = None
+        self._tp_output_path = None
+
+        return page
+
+    # -----------------------------------------------------------------
+    #  TOP PICKS: Ações
+    # -----------------------------------------------------------------
+    def _on_browse_top_picks(self):
+        path = filedialog.askopenfilename(
+            title="Selecionar Planilha de Ativos",
+            filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
+        )
+        if path:
+            self._tp_load_file(path)
+
+    def _tp_load_file(self, path):
+        self._tp_input_path = path
+        self._tp_output_path = None
+
+        try:
+            wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+            ws = wb[wb.sheetnames[0]]
+            total_rows = ws.max_row or 0
+            total_cols = ws.max_column or 0
+            wb.close()
+
+            fname = os.path.basename(path)
+            self.tp_file_name.configure(text=fname)
+            info = f"~{total_rows} linhas  |  {total_cols} colunas"
+            self.tp_file_info.configure(text=info)
+            self.tp_file_frame.pack(fill="x", pady=(0, 12))
+
+            self.tp_drop_title.configure(text=fname)
+            self.tp_drop_sub.configure(text="Arquivo carregado - clique para trocar")
+            self.tp_icon_label.configure(text_color=ACCENT_GREEN)
+            self.tp_drop_card.configure(border_color=ACCENT_GREEN, fg_color="#f0fff4")
+
+            # Preview
+            self.tp_preview_text.configure(state="normal")
+            self.tp_preview_text.delete("1.0", "end")
+
+            wb2 = openpyxl.load_workbook(path, read_only=True, data_only=True)
+            ws2 = wb2[wb2.sheetnames[0]]
+            lines = []
+            for i, row in enumerate(ws2.iter_rows(max_row=min(12, total_rows), values_only=True)):
+                vals = [str(c) if c is not None else "" for c in row]
+                lines.append("  ".join(f"{v:<18s}" for v in vals[:10]))
+            wb2.close()
+
+            self.tp_preview_text.insert("1.0", "\n".join(lines))
+            self.tp_preview_text.configure(state="disabled")
+
+            self.tp_process_btn.configure(state="normal")
+            self.tp_open_btn.configure(state="disabled")
+            self.tp_status_dot.configure(text_color=ACCENT_GREEN)
+            self.tp_status_text.configure(text=f"  Arquivo carregado: {fname}")
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler arquivo:\n{e}")
+
+    def _on_process_top_picks(self):
+        self.tp_process_btn.configure(state="disabled")
+        self.tp_status_dot.configure(text_color=ACCENT_ORANGE)
+        self.tp_status_text.configure(text="  Processando Top Picks...")
+        threading.Thread(target=self._run_top_picks, daemon=True).start()
+
+    def _on_open_top_picks_result(self):
+        if self._tp_output_path and os.path.exists(self._tp_output_path):
+            os.startfile(self._tp_output_path)
+
+    @staticmethod
+    def _tp_extract_tax_number(tax_text):
+        """Extrai valor numerico de textos como 'IPC-A + 8,50%' ou '117,50% CDI' ou '13,50%'."""
+        if not tax_text:
+            return 0.0
+        s = str(tax_text).replace("%", "").strip()
+        nums = re.findall(r'(\d+[,.]?\d*)', s)
+        if not nums:
+            return 0.0
+        val_str = nums[-1].replace(",", ".")
+        try:
+            return float(val_str)
+        except ValueError:
+            return 0.0
+
+    @staticmethod
+    def _tp_count_business_days(start_date, end_date):
+        """Conta dias uteis (seg-sex) entre duas datas."""
+        from datetime import timedelta
+        if not start_date or not end_date:
+            return 0
+        if isinstance(start_date, str):
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    start_date = datetime.strptime(start_date, fmt)
+                    break
+                except ValueError:
+                    continue
+        if isinstance(end_date, str):
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    end_date = datetime.strptime(end_date, fmt)
+                    break
+                except ValueError:
+                    continue
+        if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+            return 0
+        if end_date <= start_date:
+            return 0
+        total_days = (end_date - start_date).days
+        full_weeks = total_days // 7
+        remaining = total_days % 7
+        count = full_weeks * 5
+        d = start_date.weekday()
+        for i in range(1, remaining + 1):
+            if (d + i) % 7 < 5:
+                count += 1
+        return count
+
+    @staticmethod
+    def _tp_classify_indexador(indexador_text):
+        """Classifica indexador em '% CDI', 'IPC-A', 'PRE FIXADO' ou None."""
+        if not indexador_text:
+            return None
+        s = indexador_text.upper()
+        if "CDI" in s and "CDI+" not in s.replace(" ", ""):
+            return "% CDI"
+        if "IPC" in s or "IPCA" in s:
+            return "IPC-A"
+        if "PR\u00c9" in s or "PRE" in s:
+            return "PR\u00c9 FIXADO"
+        return None
+
+    @staticmethod
+    def _tp_extract_ativo_name(ativo_text):
+        """Extrai nome do emissor: 'CDB FIBRA - JUL/2031' -> 'FIBRA'."""
+        if not ativo_text:
+            return ""
+        s = str(ativo_text)
+        pos = s.find("-")
+        if pos > 4:
+            return s[3:pos].strip()
+        return s[3:].strip() if len(s) > 3 else s
+
+    HIGH_GRADE_RATINGS = {
+        "AA-", "AA", "AA+", "AAA",
+        "brAA-", "brAA", "brAA+", "brAAA",
+        "AA-.br", "AA.br", "AA+.br", "AAA.br",
+    }
+
+    def _tp_find_best_per_faixa(self, rows_data, col_map, idx_dias_uteis, filter_ratings=None):
+        """Encontra o melhor ativo por faixa x indexador.
+        Se filter_ratings for um set, filtra apenas esses ratings."""
+        faixas = [(90, 199), (200, 400), (600, 800)]
+        result_rows = []
+
+        for faixa_min, faixa_max in faixas:
+            best = {}
+            for row in rows_data:
+                dias = row[idx_dias_uteis]
+                if not isinstance(dias, (int, float)) or dias < faixa_min or dias > faixa_max:
+                    continue
+
+                # Filtro de rating (high grade)
+                if filter_ratings is not None:
+                    rating_val = str(row[col_map["rating"]]).strip() if row[col_map["rating"]] else ""
+                    if rating_val not in filter_ratings:
+                        continue
+
+                tag = self._tp_classify_indexador(
+                    str(row[col_map["indexador"]]) if row[col_map["indexador"]] else ""
+                )
+                if not tag:
+                    continue
+
+                tax_text = str(row[col_map["tax_max"]]) if row[col_map["tax_max"]] else ""
+                tax_val = self._tp_extract_tax_number(tax_text)
+
+                if tag not in best or tax_val > best[tag][1]:
+                    best[tag] = (row, tax_val)
+
+            for tag in ["% CDI", "PR\u00c9 FIXADO", "IPC-A"]:
+                if tag in best:
+                    row = best[tag][0]
+                    ativo_raw = str(row[col_map["ativo"]]) if row[col_map["ativo"]] else ""
+                    # Tipo = primeiros 3 caracteres (CDB, LCA, LCI, etc.)
+                    tipo = ativo_raw[:3].strip() if len(ativo_raw) >= 3 else ativo_raw
+                    emissor = self._tp_extract_ativo_name(ativo_raw)
+                    dias_val = row[idx_dias_uteis]
+                    venc = row[col_map["vencimento"]]
+                    indexador = str(row[col_map["indexador"]]) if row[col_map["indexador"]] else ""
+                    tax_min_txt = str(row[col_map["tax_min"]]) if row[col_map["tax_min"]] else ""
+                    tax_max_txt = str(row[col_map["tax_max"]]) if row[col_map["tax_max"]] else ""
+                    rating_val = str(row[col_map["rating"]]).strip() if row[col_map["rating"]] else "Sem Rating"
+                    if not rating_val:
+                        rating_val = "Sem Rating"
+                    roa_val = row[col_map["roa"]] if row[col_map["roa"]] else ""
+
+                    result_rows.append([tipo, emissor, dias_val, venc,
+                                        indexador, tax_min_txt, tax_max_txt, rating_val, roa_val])
+
+        return result_rows
+
+    def _run_top_picks(self):
+        try:
+            wb = openpyxl.load_workbook(self._tp_input_path, data_only=True)
+            ws = wb[wb.sheetnames[0]]
+
+            headers = []
+            rows_data = []
+            for i, row in enumerate(ws.iter_rows(values_only=True)):
+                if i == 0:
+                    headers = [str(c) if c else "" for c in row]
+                    continue
+                rows_data.append(list(row))
+            wb.close()
+
+            # Mapear colunas pelo header
+            col_map = {}
+            header_keys = {
+                "Ativo": "ativo", "Ticker": "ticker", "Indexador": "indexador",
+                "Rating": "rating", "Vencimento": "vencimento",
+            }
+            for idx, h in enumerate(headers):
+                clean = h.strip()
+                if clean in header_keys:
+                    col_map[header_keys[clean]] = idx
+                elif clean.startswith("Tax.M\u00edn") or clean == "Tax.Min":
+                    col_map["tax_min"] = idx
+                elif clean == "Tax.M\u00e1x" or clean == "Tax.Max":
+                    col_map["tax_max"] = idx
+                elif clean == "ROA E. Aprox." or clean.startswith("ROA"):
+                    col_map["roa"] = idx
+
+            col_map.setdefault("ativo", 0)
+            col_map.setdefault("ticker", 1)
+            col_map.setdefault("indexador", 3)
+            col_map.setdefault("rating", 9)
+            col_map.setdefault("vencimento", 11)
+            col_map.setdefault("tax_min", 12)
+            col_map.setdefault("tax_max", 13)
+            col_map.setdefault("roa", 19)
+
+            today = datetime.now()
+
+            for row in rows_data:
+                venc = row[col_map["vencimento"]]
+                dias = self._tp_count_business_days(today, venc)
+                row.append(dias)
+            idx_dias_uteis = len(headers)
+
+            # Gerar output
+            wb_out = openpyxl.Workbook()
+
+            # Aba MAIORES TAXAS
+            ws_taxas = wb_out.active
+            ws_taxas.title = "MAIORES TAXAS"
+            out_headers = headers + ["Dias \u00dateis Restantes"]
+            ws_taxas.append(out_headers)
+            for row in rows_data:
+                ws_taxas.append(row)
+
+            # Aba HIGH GRADE
+            ws_hg = wb_out.create_sheet("HIGH GRADE")
+            ws_hg.append(out_headers)
+            for row in rows_data:
+                rating_val = str(row[col_map["rating"]]) if row[col_map["rating"]] else ""
+                if rating_val.strip() in self.HIGH_GRADE_RATINGS:
+                    ws_hg.append(row)
+
+            # Aba CONSOLIDADO — High Yield (todos) + High Grade (filtrado)
+            ws_cons = wb_out.create_sheet("CONSOLIDADO")
+            cons_headers = ["Tipo", "Emissor", "Dias \u00dateis", "Vencimento",
+                            "Indexador", "Taxa M\u00edn", "Taxa M\u00e1x", "Rating", "ROA"]
+
+            # Secao 1: HIGH YIELD (todos os ratings)
+            ws_cons.append(["TOP PICKS - HIGH YIELD"])
+            ws_cons.append(cons_headers)
+            hy_rows = self._tp_find_best_per_faixa(rows_data, col_map, idx_dias_uteis)
+            for cr in hy_rows:
+                ws_cons.append(cr)
+
+            # Linha em branco de separacao
+            ws_cons.append([])
+
+            # Secao 2: HIGH GRADE (apenas ratings AA+)
+            ws_cons.append(["TOP PICKS - HIGH GRADE"])
+            ws_cons.append(cons_headers)
+            hg_rows = self._tp_find_best_per_faixa(rows_data, col_map, idx_dias_uteis,
+                                                    filter_ratings=self.HIGH_GRADE_RATINGS)
+            for cr in hg_rows:
+                ws_cons.append(cr)
+
+            all_cons_rows = hy_rows + hg_rows
+
+            # Formatar datas no CONSOLIDADO
+            for r in range(1, ws_cons.max_row + 1):
+                cell = ws_cons.cell(row=r, column=4)
+                if isinstance(cell.value, datetime):
+                    cell.number_format = "DD/MM/YYYY"
+
+            # Formatar datas no MAIORES TAXAS
+            venc_col_out = col_map["vencimento"] + 1
+            for r in range(2, ws_taxas.max_row + 1):
+                cell = ws_taxas.cell(row=r, column=venc_col_out)
+                if isinstance(cell.value, datetime):
+                    cell.number_format = "DD/MM/YYYY"
+
+            # Salvar
+            output_dir = os.path.join(BASE_DIR, "Mesa Produtos", "Top Picks")
+            os.makedirs(output_dir, exist_ok=True)
+            output_name = f"TOP_PICKS_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_path = os.path.join(output_dir, output_name)
+            wb_out.save(output_path)
+            self._tp_output_path = output_path
+
+            n_taxas = len(rows_data)
+            n_hg = ws_hg.max_row - 1
+            n_hy = len(hy_rows)
+            n_hg_picks = len(hg_rows)
+
+            def update_ok():
+                self.tp_status_dot.configure(text_color=ACCENT_GREEN)
+                self.tp_status_text.configure(
+                    text=f"  Conclu\u00eddo! {n_taxas} ativos | {n_hy} high yield | {n_hg_picks} high grade"
+                )
+                self.tp_process_btn.configure(state="normal")
+                self.tp_open_btn.configure(state="normal")
+
+                self.tp_preview_text.configure(state="normal")
+                self.tp_preview_text.delete("1.0", "end")
+                preview_lines = []
+                preview_lines.append("  === TOP PICKS - HIGH YIELD ===")
+                preview_lines.append("  " + "  ".join(f"{h:<16s}" for h in cons_headers))
+                preview_lines.append("  " + "-" * 145)
+                for cr in hy_rows:
+                    vals = [str(v) if v is not None else "" for v in cr]
+                    preview_lines.append("  " + "  ".join(f"{v:<16s}" for v in vals))
+                preview_lines.append("")
+                preview_lines.append("  === TOP PICKS - HIGH GRADE ===")
+                preview_lines.append("  " + "  ".join(f"{h:<16s}" for h in cons_headers))
+                preview_lines.append("  " + "-" * 145)
+                for cr in hg_rows:
+                    vals = [str(v) if v is not None else "" for v in cr]
+                    preview_lines.append("  " + "  ".join(f"{v:<16s}" for v in vals))
+                if not all_cons_rows:
+                    preview_lines.append("  Nenhum top pick encontrado nas faixas definidas.")
+                self.tp_preview_text.insert("1.0", "\n".join(preview_lines))
+                self.tp_preview_text.configure(state="disabled")
+
+            self.after(0, update_ok)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            def update_err():
+                self.tp_status_dot.configure(text_color=ACCENT_RED)
+                self.tp_status_text.configure(text=f"  Erro: {e}")
+                self.tp_process_btn.configure(state="normal")
+            self.after(0, update_err)
 
     @staticmethod
     def _darken(hex_color):
