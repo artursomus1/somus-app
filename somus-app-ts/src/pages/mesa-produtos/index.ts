@@ -1,0 +1,12 @@
+export { default as Dashboard } from './Dashboard';
+export { default as FluxoRF } from './FluxoRF';
+export { default as Informativo } from './Informativo';
+export { default as InfoAgio } from './InfoAgio';
+export { default as EnvioOrdens } from './EnvioOrdens';
+export { default as CtrlReceita } from './CtrlReceita';
+export { default as Organizador } from './Organizador';
+export { default as Consolidador } from './Consolidador';
+export { default as EnvioSaldos } from './EnvioSaldos';
+export { default as EnvioMesa } from './EnvioMesa';
+export { default as EnvioAniversarios } from './EnvioAniversarios';
+export { default as Tarefas } from './Tarefas';
