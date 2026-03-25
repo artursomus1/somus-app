@@ -229,10 +229,10 @@ export default function RenovacoesAnuais() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Renovacoes Anuais de Seguros
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Acompanhamento e envio de renovacoes
           </p>
         </div>
@@ -267,24 +267,24 @@ export default function RenovacoesAnuais() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="h-5 w-5 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Total Renovacoes</span>
+            <span className="text-sm text-somus-text-secondary">Total Renovacoes</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{totalRenovacoes}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{totalRenovacoes}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Total Premios</span>
+            <span className="text-sm text-somus-text-secondary">Total Premios</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalPremios)}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{formatCurrency(totalPremios)}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="h-5 w-5 text-amber-400" />
-            <span className="text-sm text-somus-gray-500">Vencendo Este Mes</span>
+            <span className="text-sm text-somus-text-secondary">Vencendo Este Mes</span>
           </div>
           <div className="text-2xl font-bold text-amber-400">{vencendoEsteMes}</div>
         </div>
@@ -294,22 +294,22 @@ export default function RenovacoesAnuais() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-somus-gray-400" />
+            <Filter className="h-4 w-4 text-somus-text-tertiary" />
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg pl-9 pr-3 py-1.5 w-56 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
           <select
             value={assessorFilter}
             onChange={(e) => setAssessorFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos assessores</option>
             {ASSESSORES.map((a) => (
@@ -319,7 +319,7 @@ export default function RenovacoesAnuais() {
           <select
             value={mesFilter === 'TODOS' ? 'TODOS' : String(mesFilter)}
             onChange={(e) => setMesFilter(e.target.value === 'TODOS' ? 'TODOS' : Number(e.target.value))}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos os meses</option>
             {MESES_FILTRO.map((m) => (
@@ -329,7 +329,7 @@ export default function RenovacoesAnuais() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos os status</option>
             <option value="proxima">Proxima</option>
@@ -344,14 +344,14 @@ export default function RenovacoesAnuais() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Cliente</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Seguradora</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Produto</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Vencimento</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Premio</th>
-                <th className="text-center py-3 px-4 font-semibold text-somus-gray-600">Status</th>
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Cliente</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Seguradora</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Produto</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Vencimento</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Premio</th>
+                <th className="text-center py-3 px-4 font-semibold text-somus-text-secondary">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -361,20 +361,20 @@ export default function RenovacoesAnuais() {
                   <tr
                     key={r.id}
                     className={cn(
-                      'border-b border-somus-gray-100 transition-colors',
-                      r.status === 'vencida' ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-somus-gray-50'
+                      'border-b border-somus-border/30 transition-colors',
+                      r.status === 'vencida' ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-somus-bg-hover'
                     )}
                   >
-                    <td className="py-3 px-4 font-medium text-somus-gray-900">{r.cliente}</td>
-                    <td className="py-3 px-4 text-somus-gray-600">{r.assessor}</td>
-                    <td className="py-3 px-4 text-somus-gray-700">{r.seguradora}</td>
+                    <td className="py-3 px-4 font-medium text-somus-text-primary">{r.cliente}</td>
+                    <td className="py-3 px-4 text-somus-text-secondary">{r.assessor}</td>
+                    <td className="py-3 px-4 text-somus-text-primary">{r.seguradora}</td>
                     <td className="py-3 px-4">
-                      <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-gray-100 text-somus-gray-700 font-medium">
+                      <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-border/30 text-somus-text-primary font-medium">
                         {r.produto}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-somus-gray-600">{formatDate(r.vencimento)}</td>
-                    <td className="py-3 px-4 text-right font-medium text-somus-gray-900">
+                    <td className="py-3 px-4 text-somus-text-secondary">{formatDate(r.vencimento)}</td>
+                    <td className="py-3 px-4 text-right font-medium text-somus-text-primary">
                       {formatCurrency(r.premio)}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -394,7 +394,7 @@ export default function RenovacoesAnuais() {
               })}
               {filteredRenovacoes.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-somus-gray-400">
+                  <td colSpan={7} className="py-12 text-center text-somus-text-tertiary">
                     Nenhuma renovacao encontrada
                   </td>
                 </tr>

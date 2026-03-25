@@ -375,14 +375,14 @@ export default function GeradorPropostas() {
     <PageLayout title="Gerador de Propostas" subtitle="Gere apresentacoes PPTX profissionais">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
+          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-text-secondary hover:text-somus-text-primary transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
           </button>
         </div>
 
         {/* Subtipo Selector */}
         <div className="mb-5">
-          <label className="text-sm font-medium text-somus-gray-700 mb-2 block">Subtipo</label>
+          <label className="text-sm font-medium text-somus-text-primary mb-2 block">Subtipo</label>
           <div className="flex flex-wrap gap-2">
             {SUBTIPOS.map((s) => (
               <button
@@ -502,11 +502,11 @@ export default function GeradorPropostas() {
 
                   {/* Cenarios count */}
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-somus-gray-700">Cenarios:</span>
+                    <span className="text-sm font-medium text-somus-text-primary">Cenarios:</span>
                     <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => setNumCenarios(Math.max(1, numCenarios - 1))} className="p-1.5 rounded-md bg-somus-gray-100 hover:bg-somus-gray-200"><Minus className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setNumCenarios(Math.max(1, numCenarios - 1))} className="p-1.5 rounded-md bg-somus-border/30 hover:bg-somus-border"><Minus className="h-4 w-4" /></button>
                       <span className="text-sm font-bold w-6 text-center">{numCenarios}</span>
-                      <button type="button" onClick={() => setNumCenarios(Math.min(3, numCenarios + 1))} className="p-1.5 rounded-md bg-somus-gray-100 hover:bg-somus-gray-200"><Plus className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => setNumCenarios(Math.min(3, numCenarios + 1))} className="p-1.5 rounded-md bg-somus-border/30 hover:bg-somus-border"><Plus className="h-4 w-4" /></button>
                     </div>
                   </div>
 

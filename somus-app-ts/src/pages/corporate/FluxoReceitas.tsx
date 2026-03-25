@@ -173,24 +173,24 @@ function OperacaoRow({ op, onEdit, onDelete, onTogglePagamento }: {
 
   return (
     <>
-      <tr className="border-b border-somus-gray-100 hover:bg-somus-gray-50">
+      <tr className="border-b border-somus-border/30 hover:bg-somus-bg-hover">
         <td className="px-4 py-3">
-          <button onClick={() => setExpanded(!expanded)} className="p-0.5 hover:bg-somus-gray-200 rounded">
-            {expanded ? <ChevronDown className="h-4 w-4 text-somus-gray-500" /> : <ChevronRight className="h-4 w-4 text-somus-gray-500" />}
+          <button onClick={() => setExpanded(!expanded)} className="p-0.5 hover:bg-somus-bg-tertiary rounded">
+            {expanded ? <ChevronDown className="h-4 w-4 text-somus-text-secondary" /> : <ChevronRight className="h-4 w-4 text-somus-text-secondary" />}
           </button>
         </td>
-        <td className="px-4 py-3 font-medium text-somus-gray-900">{op.clienteNome}</td>
-        <td className="px-4 py-3 text-somus-gray-600">{op.assessor}</td>
-        <td className="px-4 py-3 text-somus-gray-600">{op.tipo}</td>
+        <td className="px-4 py-3 font-medium text-somus-text-primary">{op.clienteNome}</td>
+        <td className="px-4 py-3 text-somus-text-secondary">{op.assessor}</td>
+        <td className="px-4 py-3 text-somus-text-secondary">{op.tipo}</td>
         <td className="px-4 py-3 font-medium text-right">{fmtBRL(op.valorCarta)}</td>
         <td className="px-4 py-3">
           <StatusBadge status={mapOpStatus(op.status)} label={op.status.charAt(0).toUpperCase() + op.status.slice(1)} />
         </td>
-        <td className="px-4 py-3 text-somus-gray-500 text-sm">{pagos}/{total}</td>
+        <td className="px-4 py-3 text-somus-text-secondary text-sm">{pagos}/{total}</td>
         <td className="px-4 py-3 text-right font-medium">{fmtBRL(totalPago)}</td>
         <td className="px-4 py-3">
           <div className="flex items-center gap-1">
-            <button onClick={onEdit} className="p-1.5 hover:bg-somus-gray-100 rounded-md" title="Editar"><Edit3 className="h-3.5 w-3.5 text-somus-gray-500" /></button>
+            <button onClick={onEdit} className="p-1.5 hover:bg-somus-bg-tertiary rounded-md" title="Editar"><Edit3 className="h-3.5 w-3.5 text-somus-text-secondary" /></button>
             <button onClick={onDelete} className="p-1.5 hover:bg-red-50 rounded-md" title="Excluir"><Trash2 className="h-3.5 w-3.5 text-red-400" /></button>
           </div>
         </td>
@@ -198,8 +198,8 @@ function OperacaoRow({ op, onEdit, onDelete, onTogglePagamento }: {
       {expanded && (
         <tr>
           <td colSpan={9} className="px-4 py-0">
-            <div className="bg-somus-gray-50 rounded-lg my-2 p-4">
-              <h4 className="text-sm font-semibold text-somus-gray-700 mb-3">Pagamentos</h4>
+            <div className="bg-somus-bg-hover rounded-lg my-2 p-4">
+              <h4 className="text-sm font-semibold text-somus-text-primary mb-3">Pagamentos</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {op.pagamentos.map((pg) => (
                   <button
@@ -209,7 +209,7 @@ function OperacaoRow({ op, onEdit, onDelete, onTogglePagamento }: {
                       'flex flex-col items-center p-2.5 rounded-lg border text-xs transition-colors',
                       pg.status === 'pago' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                       pg.status === 'atrasado' ? 'bg-red-50 border-red-200 text-red-700' :
-                      'bg-white border-somus-gray-200 text-somus-gray-600 hover:bg-somus-gray-100',
+                      'bg-somus-bg-secondary border-somus-border text-somus-text-secondary hover:bg-somus-bg-tertiary',
                     )}
                   >
                     <span className="font-bold text-sm">M{pg.mes}</span>
@@ -289,7 +289,7 @@ export default function FluxoReceitas() {
     <PageLayout title="Fluxo de Receitas" subtitle="Acompanhe operacoes e pagamentos">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
+          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-text-secondary hover:text-somus-text-primary transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
           </button>
           <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => { setEditingOp(null); setModalOpen(true); }}>
@@ -307,13 +307,13 @@ export default function FluxoReceitas() {
         {/* Filters */}
         <div className="flex items-center gap-4 mb-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar cliente ou assessor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary"
             />
           </div>
           <div className="w-48">
@@ -325,8 +325,8 @@ export default function FluxoReceitas() {
         <Card padding="none">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <DollarSign className="h-10 w-10 text-somus-gray-300 mb-3" />
-              <p className="text-sm text-somus-gray-400">Nenhuma operacao encontrada</p>
+              <DollarSign className="h-10 w-10 text-somus-text-tertiary mb-3" />
+              <p className="text-sm text-somus-text-tertiary">Nenhuma operacao encontrada</p>
               <Button variant="primary" size="sm" className="mt-4" icon={<Plus className="h-4 w-4" />} onClick={() => { setEditingOp(null); setModalOpen(true); }}>
                 Adicionar Operacao
               </Button>
@@ -335,15 +335,15 @@ export default function FluxoReceitas() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-somus-gray-50 border-b border-somus-gray-200">
+                  <tr className="bg-somus-bg-hover border-b border-somus-border">
                     <th className="w-10 px-4 py-3" />
-                    <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Cliente</th>
-                    <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Assessor</th>
-                    <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Tipo</th>
-                    <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Valor Carta</th>
-                    <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Status</th>
-                    <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Pgtos</th>
-                    <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Total Pago</th>
+                    <th className="text-left px-4 py-3 font-medium text-somus-text-secondary">Cliente</th>
+                    <th className="text-left px-4 py-3 font-medium text-somus-text-secondary">Assessor</th>
+                    <th className="text-left px-4 py-3 font-medium text-somus-text-secondary">Tipo</th>
+                    <th className="text-right px-4 py-3 font-medium text-somus-text-secondary">Valor Carta</th>
+                    <th className="text-left px-4 py-3 font-medium text-somus-text-secondary">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-somus-text-secondary">Pgtos</th>
+                    <th className="text-right px-4 py-3 font-medium text-somus-text-secondary">Total Pago</th>
                     <th className="w-20 px-4 py-3" />
                   </tr>
                 </thead>

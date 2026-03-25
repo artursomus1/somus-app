@@ -187,30 +187,38 @@ function Titlebar() {
 function ModuleSelector() {
   const { currentModule, setModule, role } = useAppStore();
   const allowedModules = ROLE_MODULES[role];
+  const activeIndex = allowedModules.indexOf(currentModule);
 
   return (
-    <div className="flex gap-1 p-2">
-      {allowedModules.map((mod) => {
-        const Icon = MODULE_ICONS[mod];
-        const isActive = currentModule === mod;
-        return (
-          <button
-            key={mod}
-            onClick={() => setModule(mod)}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-150',
-              isActive
-                ? 'text-somus-text-accent border border-somus-green-500/30'
-                : 'text-somus-text-tertiary hover:text-somus-text-secondary hover:bg-somus-bg-hover border border-transparent',
-            )}
-            style={isActive ? { background: 'linear-gradient(135deg, rgba(26,122,62,0.15) 0%, rgba(13,92,44,0.05) 100%)' } : undefined}
-            title={MODULE_LABELS[mod]}
-          >
-            <Icon size={14} />
-            <span className="hidden xl:inline">{MODULE_LABELS[mod]}</span>
-          </button>
-        );
-      })}
+    <div className="p-2">
+      <div className="relative flex bg-somus-bg-input rounded-lg p-0.5">
+        {/* Sliding indicator */}
+        <div
+          className="absolute top-0.5 bottom-0.5 rounded-md bg-gradient-to-r from-somus-green-500 to-somus-green-600 transition-all duration-300 ease-out"
+          style={{
+            width: `${100 / allowedModules.length}%`,
+            left: `${(activeIndex * 100) / allowedModules.length}%`,
+          }}
+        />
+        {/* Module buttons */}
+        {allowedModules.map((mod) => {
+          const Icon = MODULE_ICONS[mod];
+          const isActive = currentModule === mod;
+          return (
+            <button
+              key={mod}
+              onClick={() => setModule(mod)}
+              className={cn(
+                'relative z-10 flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium transition-colors duration-200',
+                isActive ? 'text-white' : 'text-somus-text-tertiary hover:text-somus-text-secondary',
+              )}
+            >
+              <Icon size={14} />
+              <span>{MODULE_LABELS[mod]}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -108,10 +108,10 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Dashboard de Receita
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Visao geral da receita Mesa de Produtos
           </p>
         </div>
@@ -124,8 +124,8 @@ export default function Dashboard() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-somus-gray-400" />
-            <span className="text-sm font-medium text-somus-gray-600">
+            <Filter className="h-4 w-4 text-somus-text-tertiary" />
+            <span className="text-sm font-medium text-somus-text-secondary">
               Filtros:
             </span>
           </div>
@@ -133,7 +133,7 @@ export default function Dashboard() {
           <select
             value={mesFilter}
             onChange={(e) => setMesFilter(Number(e.target.value))}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             {MESES.map((m, i) => (
               <option key={i} value={i}>{m}</option>
@@ -143,7 +143,7 @@ export default function Dashboard() {
           <select
             value={anoFilter}
             onChange={(e) => setAnoFilter(Number(e.target.value))}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             {anos.map((a) => (
               <option key={a} value={a}>{a}</option>
@@ -153,7 +153,7 @@ export default function Dashboard() {
           <select
             value={equipeFilter}
             onChange={(e) => setEquipeFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODAS">Todas as equipes</option>
             {EQUIPES.map((eq) => (
@@ -164,7 +164,7 @@ export default function Dashboard() {
           <select
             value={produtoFilter}
             onChange={(e) => setProdutoFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos os produtos</option>
             {PRODUTOS.map((p) => (
@@ -326,19 +326,19 @@ export default function Dashboard() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">#</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Equipe</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Receita</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Operacoes</th>
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">#</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Equipe</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Receita</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Operacoes</th>
               </tr>
             </thead>
             <tbody>
               {topAssessors.map((a) => (
                 <tr
                   key={a.rank}
-                  className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
+                  className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors"
                 >
                   <td className="py-3 px-4">
                     <span
@@ -346,13 +346,13 @@ export default function Dashboard() {
                         'inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold',
                         a.rank <= 3
                           ? 'bg-somus-green text-white'
-                          : 'bg-somus-gray-100 text-somus-gray-600'
+                          : 'bg-somus-bg-tertiary text-somus-text-secondary'
                       )}
                     >
                       {a.rank}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">
                     {a.nome}
                   </td>
                   <td className="py-3 px-4">
@@ -360,10 +360,10 @@ export default function Dashboard() {
                       {a.equipe}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 text-right font-medium text-somus-text-primary">
                     {formatCurrency(a.receita)}
                   </td>
-                  <td className="py-3 px-4 text-right text-somus-gray-600">
+                  <td className="py-3 px-4 text-right text-somus-text-secondary">
                     {a.operacoes}
                   </td>
                 </tr>
@@ -392,14 +392,14 @@ function KPICard({
   trendUp: boolean;
 }) {
   return (
-    <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+    <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-somus-gray-500 font-medium">{title}</span>
+        <span className="text-sm text-somus-text-secondary font-medium">{title}</span>
         <div className="p-2 rounded-lg bg-somus-green/10 text-somus-green">
           {icon}
         </div>
       </div>
-      <div className="text-2xl font-bold text-somus-gray-900">{value}</div>
+      <div className="text-2xl font-bold text-somus-text-primary">{value}</div>
       <div className="mt-1 flex items-center gap-1">
         <span
           className={cn(
@@ -409,7 +409,7 @@ function KPICard({
         >
           {trendUp ? '\u2191' : '\u2193'} {trend}
         </span>
-        <span className="text-xs text-somus-gray-400">vs mes anterior</span>
+        <span className="text-xs text-somus-text-tertiary">vs mes anterior</span>
       </div>
     </div>
   );

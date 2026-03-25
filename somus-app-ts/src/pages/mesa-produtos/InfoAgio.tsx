@@ -145,12 +145,12 @@ export default function InfoAgio() {
 
   const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
-      className="text-left py-3 px-4 font-semibold text-somus-gray-600 cursor-pointer select-none hover:text-somus-green transition-colors"
+      className="text-left py-3 px-4 font-semibold text-somus-text-secondary cursor-pointer select-none hover:text-somus-green transition-colors"
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
         {children}
-        <ArrowUpDown className={cn('h-3 w-3', sortField === field ? 'text-somus-green' : 'text-somus-gray-300')} />
+        <ArrowUpDown className={cn('h-3 w-3', sortField === field ? 'text-somus-green' : 'text-somus-text-tertiary')} />
       </div>
     </th>
   );
@@ -160,10 +160,10 @@ export default function InfoAgio() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Tabela de Agio / Desagio
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Visualizacao de premios e descontos em ativos de renda fixa
           </p>
         </div>
@@ -187,24 +187,24 @@ export default function InfoAgio() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-somus-green-400" />
-            <span className="text-sm text-somus-gray-500">Com Agio</span>
+            <span className="text-sm text-somus-text-secondary">Com Agio</span>
           </div>
           <div className="text-2xl font-bold text-somus-green-400">{totalAgio}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="h-4 w-4 text-red-400" />
-            <span className="text-sm text-somus-gray-500">Com Desagio</span>
+            <span className="text-sm text-somus-text-secondary">Com Desagio</span>
           </div>
           <div className="text-2xl font-bold text-red-400">{totalDesagio}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-4">
           <div className="flex items-center gap-2 mb-2">
-            <ArrowUpDown className="h-4 w-4 text-somus-gray-400" />
-            <span className="text-sm text-somus-gray-500">Media Agio</span>
+            <ArrowUpDown className="h-4 w-4 text-somus-text-tertiary" />
+            <span className="text-sm text-somus-text-secondary">Media Agio</span>
           </div>
           <div className={cn('text-2xl font-bold', avgAgio >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
             {formatPercent(avgAgio)}
@@ -216,22 +216,22 @@ export default function InfoAgio() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-somus-gray-400" />
+            <Filter className="h-4 w-4 text-somus-text-tertiary" />
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar cliente, ativo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg pl-9 pr-3 py-1.5 w-56 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos os tipos</option>
             {TIPOS.map((t) => (
@@ -241,7 +241,7 @@ export default function InfoAgio() {
           <select
             value={agioFilter}
             onChange={(e) => setAgioFilter(e.target.value as any)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Agio e Desagio</option>
             <option value="AGIO">Somente Agio</option>
@@ -255,7 +255,7 @@ export default function InfoAgio() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
+              <tr className="border-b border-somus-border">
                 <SortHeader field="cliente">Cliente</SortHeader>
                 <SortHeader field="ativo">Ativo</SortHeader>
                 <SortHeader field="tipo">Tipo</SortHeader>
@@ -268,12 +268,12 @@ export default function InfoAgio() {
               {filteredData.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
+                  className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors"
                 >
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">{item.cliente}</td>
-                  <td className="py-3 px-4 text-somus-gray-700">{item.ativo}</td>
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">{item.cliente}</td>
+                  <td className="py-3 px-4 text-somus-text-primary">{item.ativo}</td>
                   <td className="py-3 px-4">
-                    <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-gray-100 text-somus-gray-700 font-medium">
+                    <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-border/30 text-somus-text-primary font-medium">
                       {item.tipo}
                     </span>
                   </td>
@@ -285,7 +285,7 @@ export default function InfoAgio() {
                           ? 'bg-somus-green-500/10 text-somus-green-400'
                           : item.agioPct < 0
                           ? 'bg-red-500/10 text-red-400'
-                          : 'bg-somus-gray-100 text-somus-gray-600'
+                          : 'bg-somus-border/30 text-somus-text-secondary'
                       )}
                     >
                       {item.agioPct > 0 ? (
@@ -296,15 +296,15 @@ export default function InfoAgio() {
                       {formatPercent(item.agioPct)}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 text-right font-medium text-somus-text-primary">
                     {formatCurrency(item.valor)}
                   </td>
-                  <td className="py-3 px-4 text-somus-gray-600">{formatDate(item.data)}</td>
+                  <td className="py-3 px-4 text-somus-text-secondary">{formatDate(item.data)}</td>
                 </tr>
               ))}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-somus-gray-400">
+                  <td colSpan={6} className="py-12 text-center text-somus-text-tertiary">
                     Nenhum registro encontrado
                   </td>
                 </tr>

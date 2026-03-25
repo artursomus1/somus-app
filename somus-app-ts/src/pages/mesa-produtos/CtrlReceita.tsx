@@ -168,10 +168,10 @@ export default function CtrlReceita() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Controle de Receita
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Receita mensal por assessor e produto
           </p>
         </div>
@@ -206,13 +206,13 @@ export default function CtrlReceita() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-somus-gray-400" />
-            <span className="text-sm font-medium text-somus-gray-600">Filtros:</span>
+            <Filter className="h-4 w-4 text-somus-text-tertiary" />
+            <span className="text-sm font-medium text-somus-text-secondary">Filtros:</span>
           </div>
           <select
             value={mesFilter}
             onChange={(e) => setMesFilter(Number(e.target.value))}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             {MESES.map((m, i) => (
               <option key={i} value={i}>{m}</option>
@@ -221,7 +221,7 @@ export default function CtrlReceita() {
           <select
             value={anoFilter}
             onChange={(e) => setAnoFilter(Number(e.target.value))}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             {anos.map((a) => (
               <option key={a} value={a}>{a}</option>
@@ -230,7 +230,7 @@ export default function CtrlReceita() {
           <select
             value={equipeFilter}
             onChange={(e) => setEquipeFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODAS">Todas as equipes</option>
             {EQUIPES.map((eq) => (
@@ -241,14 +241,14 @@ export default function CtrlReceita() {
       </Card>
 
       {/* Total KPI */}
-      <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+      <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
         <div className="flex items-center gap-3 mb-1">
           <div className="p-2 rounded-lg bg-somus-green/10 text-somus-green">
             <DollarSign className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-sm text-somus-gray-500">Receita Total - {MESES[mesFilter]} {anoFilter}</div>
-            <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totals.total)}</div>
+            <div className="text-sm text-somus-text-secondary">Receita Total - {MESES[mesFilter]} {anoFilter}</div>
+            <div className="text-2xl font-bold text-somus-text-primary">{formatCurrency(totals.total)}</div>
           </div>
         </div>
       </div>
@@ -258,17 +258,17 @@ export default function CtrlReceita() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-3 font-semibold text-somus-gray-600 sticky left-0 bg-somus-bg-secondary min-w-[160px]">
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-3 font-semibold text-somus-text-secondary sticky left-0 bg-somus-bg-secondary min-w-[160px]">
                   Assessor
                 </th>
-                <th className="text-left py-3 px-2 font-semibold text-somus-gray-600 min-w-[80px]">
+                <th className="text-left py-3 px-2 font-semibold text-somus-text-secondary min-w-[80px]">
                   Equipe
                 </th>
                 {PRODUTOS.map((p) => (
                   <th
                     key={p}
-                    className="text-right py-3 px-2 font-semibold text-somus-gray-600 min-w-[110px]"
+                    className="text-right py-3 px-2 font-semibold text-somus-text-secondary min-w-[110px]"
                   >
                     {PRODUTO_LABELS[p]}
                   </th>
@@ -282,9 +282,9 @@ export default function CtrlReceita() {
               {filteredData.map((row) => (
                 <tr
                   key={row.assessor}
-                  className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
+                  className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors"
                 >
-                  <td className="py-2.5 px-3 font-medium text-somus-gray-900 sticky left-0 bg-somus-bg-secondary">
+                  <td className="py-2.5 px-3 font-medium text-somus-text-primary sticky left-0 bg-somus-bg-secondary">
                     {row.assessor}
                   </td>
                   <td className="py-2.5 px-2">
@@ -293,7 +293,7 @@ export default function CtrlReceita() {
                     </span>
                   </td>
                   {PRODUTOS.map((p) => (
-                    <td key={p} className="py-2.5 px-2 text-right text-somus-gray-700">
+                    <td key={p} className="py-2.5 px-2 text-right text-somus-text-primary">
                       {formatCurrency((row as any)[p])}
                     </td>
                   ))}
@@ -305,13 +305,13 @@ export default function CtrlReceita() {
 
               {/* Subtotals by equipe */}
               {Object.entries(subtotalsByEquipe).map(([equipe, vals]) => (
-                <tr key={`sub-${equipe}`} className="bg-somus-gray-50 border-b border-somus-gray-200">
-                  <td className="py-2.5 px-3 font-bold text-somus-gray-700 sticky left-0 bg-somus-gray-50">
+                <tr key={`sub-${equipe}`} className="bg-somus-bg-hover border-b border-somus-border">
+                  <td className="py-2.5 px-3 font-bold text-somus-text-primary sticky left-0 bg-somus-bg-hover">
                     Subtotal {equipe}
                   </td>
                   <td className="py-2.5 px-2"></td>
                   {PRODUTOS.map((p) => (
-                    <td key={p} className="py-2.5 px-2 text-right font-semibold text-somus-gray-700">
+                    <td key={p} className="py-2.5 px-2 text-right font-semibold text-somus-text-primary">
                       {formatCurrency(vals[p])}
                     </td>
                   ))}

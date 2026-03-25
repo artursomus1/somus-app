@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { List } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { NasaEngine } from '@engine/index';
@@ -39,7 +39,24 @@ export default function Parcelas() {
 
   const contemp = 36;
   const credito = 500000;
-  const fluxo = result.fluxo.filter((f: FluxoMensal) => f.mes > 0);
+  const allFluxo = result.fluxo.filter((f: FluxoMensal) => f.mes > 0);
+
+  const [phaseFilter, setPhaseFilter] = useState<'TODOS' | 'PRE' | 'POS'>('TODOS');
+  const [mesInicio, setMesInicio] = useState(0);
+  const [mesFim, setMesFim] = useState(999);
+
+  const fluxo = useMemo(() => {
+    let data = allFluxo;
+    if (phaseFilter === 'PRE') {
+      data = data.filter((f: FluxoMensal) => f.mes <= contemp);
+    } else if (phaseFilter === 'POS') {
+      data = data.filter((f: FluxoMensal) => f.mes > contemp);
+    }
+    if (mesInicio > 0 || mesFim < 999) {
+      data = data.filter((f: FluxoMensal) => f.mes >= mesInicio && f.mes <= mesFim);
+    }
+    return data;
+  }, [allFluxo, phaseFilter, mesInicio, mesFim]);
 
   // Summary stats
   const parcelas = fluxo.map((f: FluxoMensal) => f.parcela_com_seguro);
@@ -67,6 +84,38 @@ export default function Parcelas() {
       </header>
 
       <main className="flex-1 overflow-y-auto bg-somus-bg-primary p-5 space-y-5">
+        {/* Filters */}
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-xs text-somus-text-secondary">Fase:</span>
+          <select
+            value={phaseFilter}
+            onChange={(e) => setPhaseFilter(e.target.value as any)}
+            className="px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+          >
+            <option value="TODOS">Todas</option>
+            <option value="PRE">Pre-contemplacao (1 a {contemp})</option>
+            <option value="POS">Pos-contemplacao ({contemp + 1}+)</option>
+          </select>
+          <span className="text-xs text-somus-text-secondary ml-2">Mes:</span>
+          <input
+            type="number"
+            placeholder="Inicio"
+            value={mesInicio || ''}
+            onChange={(e) => setMesInicio(Number(e.target.value) || 0)}
+            className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+          />
+          <span className="text-somus-text-tertiary">a</span>
+          <input
+            type="number"
+            placeholder="Fim"
+            value={mesFim === 999 ? '' : mesFim}
+            onChange={(e) => setMesFim(Number(e.target.value) || 999)}
+            className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+          />
+          <button onClick={() => { setPhaseFilter('TODOS'); setMesInicio(0); setMesFim(999); }} className="text-xs text-somus-text-tertiary hover:text-somus-text-primary">Limpar</button>
+          <span className="text-[10px] text-somus-text-tertiary ml-auto">{fluxo.length} parcelas</span>
+        </div>
+
         {/* Summary Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[

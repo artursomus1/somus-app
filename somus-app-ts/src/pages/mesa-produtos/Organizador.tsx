@@ -154,10 +154,10 @@ export default function Organizador() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Organizador de Planilhas
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Combine e organize multiplas planilhas Excel
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function Organizador() {
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
                     isActive
                       ? 'bg-somus-green text-white'
-                      : 'bg-somus-gray-200 text-somus-gray-500'
+                      : 'bg-somus-border text-somus-text-secondary'
                   )}
                 >
                   {i + 1}
@@ -189,14 +189,14 @@ export default function Organizador() {
                 <span
                   className={cn(
                     'text-sm font-medium',
-                    isActive ? 'text-somus-green' : 'text-somus-gray-400'
+                    isActive ? 'text-somus-green' : 'text-somus-text-tertiary'
                   )}
                 >
                   {label}
                 </span>
               </div>
               {i < 2 && (
-                <ArrowRight className="h-4 w-4 text-somus-gray-300" />
+                <ArrowRight className="h-4 w-4 text-somus-text-tertiary" />
               )}
             </React.Fragment>
           );
@@ -216,12 +216,12 @@ export default function Organizador() {
                   onChange={handleUpload}
                   className="hidden"
                 />
-                <div className="border-2 border-dashed border-somus-gray-300 rounded-lg p-8 text-center hover:border-somus-green/50 transition-colors">
-                  <Upload className="h-8 w-8 text-somus-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-somus-gray-600">
+                <div className="border-2 border-dashed border-somus-border rounded-lg p-8 text-center hover:border-somus-green/50 transition-colors">
+                  <Upload className="h-8 w-8 text-somus-text-tertiary mx-auto mb-3" />
+                  <p className="text-sm text-somus-text-secondary">
                     {uploading ? 'Carregando...' : 'Clique para selecionar arquivos Excel'}
                   </p>
-                  <p className="text-xs text-somus-gray-400 mt-1">
+                  <p className="text-xs text-somus-text-tertiary mt-1">
                     Suporta multiplos arquivos .xlsx e .xls
                   </p>
                 </div>
@@ -232,13 +232,13 @@ export default function Organizador() {
                   {files.map((f) => (
                     <div
                       key={f.id}
-                      className="flex items-center justify-between py-3 px-4 bg-somus-gray-50 rounded-lg"
+                      className="flex items-center justify-between py-3 px-4 bg-somus-bg-hover rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <FileSpreadsheet className="h-5 w-5 text-somus-green" />
                         <div>
-                          <div className="text-sm font-medium text-somus-gray-900">{f.name}</div>
-                          <div className="text-xs text-somus-gray-400">
+                          <div className="text-sm font-medium text-somus-text-primary">{f.name}</div>
+                          <div className="text-xs text-somus-text-tertiary">
                             {f.sheets.length} sheet(s)
                           </div>
                         </div>
@@ -247,7 +247,7 @@ export default function Organizador() {
                         <select
                           value={f.selectedSheet}
                           onChange={(e) => changeSheet(f.id, e.target.value)}
-                          className="text-xs border border-somus-gray-300 rounded px-2 py-1"
+                          className="text-xs border border-somus-border rounded px-2 py-1"
                         >
                           {f.sheets.map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -255,7 +255,7 @@ export default function Organizador() {
                         </select>
                         <button
                           onClick={() => removeFile(f.id)}
-                          className="text-somus-gray-400 hover:text-red-400 transition-colors"
+                          className="text-somus-text-tertiary hover:text-red-400 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -290,28 +290,28 @@ export default function Organizador() {
                 key={i}
                 className={cn(
                   'flex items-center gap-4 py-2 px-4 rounded-lg',
-                  m.enabled ? 'bg-somus-gray-50' : 'bg-somus-gray-100 opacity-60'
+                  m.enabled ? 'bg-somus-bg-hover' : 'bg-somus-border/30 opacity-60'
                 )}
               >
                 <input
                   type="checkbox"
                   checked={m.enabled}
                   onChange={() => toggleMapping(i)}
-                  className="w-4 h-4 rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+                  className="w-4 h-4 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
                 />
                 <div className="flex-1">
-                  <span className="text-sm text-somus-gray-600">Origem:</span>
-                  <span className="text-sm font-medium text-somus-gray-900 ml-2">{m.source}</span>
+                  <span className="text-sm text-somus-text-secondary">Origem:</span>
+                  <span className="text-sm font-medium text-somus-text-primary ml-2">{m.source}</span>
                 </div>
-                <ArrowRight className="h-4 w-4 text-somus-gray-400" />
+                <ArrowRight className="h-4 w-4 text-somus-text-tertiary" />
                 <div className="flex-1">
-                  <span className="text-sm text-somus-gray-600">Destino:</span>
+                  <span className="text-sm text-somus-text-secondary">Destino:</span>
                   <input
                     type="text"
                     value={m.target}
                     onChange={(e) => updateMappingTarget(i, e.target.value)}
                     disabled={!m.enabled}
-                    className="text-sm border border-somus-gray-300 rounded px-2 py-1 ml-2 w-40 focus:ring-2 focus:ring-somus-green/40 focus:outline-none disabled:opacity-50"
+                    className="text-sm border border-somus-border rounded px-2 py-1 ml-2 w-40 focus:ring-2 focus:ring-somus-green/40 focus:outline-none disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -351,9 +351,9 @@ export default function Organizador() {
           <div className="mt-4 overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-somus-bg-secondary">
-                <tr className="border-b border-somus-gray-200">
+                <tr className="border-b border-somus-border">
                   {mergedData[0].map((header: string, i: number) => (
-                    <th key={i} className="text-left py-3 px-3 font-semibold text-somus-gray-600 whitespace-nowrap">
+                    <th key={i} className="text-left py-3 px-3 font-semibold text-somus-text-secondary whitespace-nowrap">
                       {header}
                     </th>
                   ))}
@@ -363,10 +363,10 @@ export default function Organizador() {
                 {mergedData.slice(1, 101).map((row, rowIdx) => (
                   <tr
                     key={rowIdx}
-                    className="border-b border-somus-gray-100 hover:bg-somus-gray-50"
+                    className="border-b border-somus-border/30 hover:bg-somus-bg-hover"
                   >
                     {row.map((cell: any, colIdx: number) => (
-                      <td key={colIdx} className="py-2 px-3 text-somus-gray-700 whitespace-nowrap">
+                      <td key={colIdx} className="py-2 px-3 text-somus-text-primary whitespace-nowrap">
                         {cell ?? ''}
                       </td>
                     ))}
@@ -375,7 +375,7 @@ export default function Organizador() {
               </tbody>
             </table>
             {mergedData.length > 101 && (
-              <div className="text-center py-4 text-sm text-somus-gray-400">
+              <div className="text-center py-4 text-sm text-somus-text-tertiary">
                 Exibindo 100 de {mergedData.length - 1} linhas
               </div>
             )}

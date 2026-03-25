@@ -189,10 +189,10 @@ export default function EnvioOrdens() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Envio de Ordens
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Upload e envio de ordens para assessores
           </p>
         </div>
@@ -229,19 +229,19 @@ export default function EnvioOrdens() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg pl-9 pr-3 py-1.5 w-56 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
           <select
             value={assessorFilter}
             onChange={(e) => setAssessorFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos assessores</option>
             {ASSESSORES.map((a) => (
@@ -256,22 +256,22 @@ export default function EnvioOrdens() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
+              <tr className="border-b border-somus-border">
                 <th className="py-3 px-4 w-10">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === filteredOrdens.length && filteredOrdens.length > 0}
                     onChange={toggleAll}
-                    className="w-4 h-4 rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+                    className="w-4 h-4 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
                   />
                 </th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Cliente</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Ativo</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Tipo</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Qtd</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Preco</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Status</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Cliente</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Ativo</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Tipo</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Qtd</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Preco</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -279,7 +279,7 @@ export default function EnvioOrdens() {
                 <tr
                   key={o.id}
                   className={cn(
-                    'border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors',
+                    'border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors',
                     selectedIds.has(o.id) && 'bg-somus-green/5'
                   )}
                 >
@@ -288,11 +288,11 @@ export default function EnvioOrdens() {
                       type="checkbox"
                       checked={selectedIds.has(o.id)}
                       onChange={() => toggleSelect(o.id)}
-                      className="w-4 h-4 rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+                      className="w-4 h-4 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
                     />
                   </td>
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">{o.cliente}</td>
-                  <td className="py-3 px-4 text-somus-gray-700">{o.ativo}</td>
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">{o.cliente}</td>
+                  <td className="py-3 px-4 text-somus-text-primary">{o.ativo}</td>
                   <td className="py-3 px-4">
                     <span
                       className={cn(
@@ -305,11 +305,11 @@ export default function EnvioOrdens() {
                       {o.tipo}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right text-somus-gray-700">{o.quantidade}</td>
-                  <td className="py-3 px-4 text-right font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 text-right text-somus-text-primary">{o.quantidade}</td>
+                  <td className="py-3 px-4 text-right font-medium text-somus-text-primary">
                     {formatCurrency(o.preco)}
                   </td>
-                  <td className="py-3 px-4 text-somus-gray-600">{o.assessor}</td>
+                  <td className="py-3 px-4 text-somus-text-secondary">{o.assessor}</td>
                   <td className="py-3 px-4">
                     <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full font-medium', statusColor[o.status])}>
                       {statusIcon(o.status)}
@@ -320,7 +320,7 @@ export default function EnvioOrdens() {
               ))}
               {filteredOrdens.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-somus-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-somus-text-tertiary">
                     Nenhuma ordem encontrada
                   </td>
                 </tr>

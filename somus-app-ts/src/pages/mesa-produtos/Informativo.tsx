@@ -131,10 +131,10 @@ export default function Informativo() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-somus-gray-900">
+        <h1 className="text-2xl font-bold text-somus-text-primary">
           Informativo
         </h1>
-        <p className="text-sm text-somus-gray-500 mt-1">
+        <p className="text-sm text-somus-text-secondary mt-1">
           Crie e envie informativos para a equipe
         </p>
       </div>
@@ -146,13 +146,13 @@ export default function Informativo() {
             <div className="mt-4 space-y-4">
               {/* Template */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">
                   Template
                 </label>
                 <select
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 >
                   {TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>{t.nome}</option>
@@ -162,7 +162,7 @@ export default function Informativo() {
 
               {/* Titulo */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">
                   Titulo
                 </label>
                 <input
@@ -170,13 +170,13 @@ export default function Informativo() {
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                   placeholder="Digite o titulo do informativo..."
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 />
               </div>
 
               {/* Conteudo */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">
                   Conteudo
                 </label>
                 <textarea
@@ -184,7 +184,7 @@ export default function Informativo() {
                   onChange={(e) => setConteudo(e.target.value)}
                   placeholder="Digite o conteudo do informativo..."
                   rows={12}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
                 />
               </div>
 
@@ -226,7 +226,7 @@ export default function Informativo() {
                 </button>
                 <button
                   onClick={limparSelecao}
-                  className="text-xs px-2 py-1 rounded bg-somus-gray-100 text-somus-gray-600 hover:bg-somus-gray-200 transition-colors"
+                  className="text-xs px-2 py-1 rounded bg-somus-border/30 text-somus-text-secondary hover:bg-somus-border transition-colors"
                 >
                   Limpar
                 </button>
@@ -238,7 +238,7 @@ export default function Informativo() {
                   <button
                     key={eq}
                     onClick={() => selecionarEquipe(eq)}
-                    className="text-xs px-2 py-1 rounded border border-somus-gray-200 text-somus-gray-600 hover:bg-somus-green/10 hover:text-somus-green hover:border-somus-green/30 transition-colors"
+                    className="text-xs px-2 py-1 rounded border border-somus-border text-somus-text-secondary hover:bg-somus-green/10 hover:text-somus-green hover:border-somus-green/30 transition-colors"
                   >
                     {eq}
                   </button>
@@ -249,7 +249,7 @@ export default function Informativo() {
               <select
                 value={equipeFilter}
                 onChange={(e) => setEquipeFilter(e.target.value)}
-                className="w-full text-xs border border-somus-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                className="w-full text-xs border border-somus-border rounded-lg px-2 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
               >
                 <option value="TODAS">Todas as equipes</option>
                 {EQUIPES.map((eq) => (
@@ -266,20 +266,20 @@ export default function Informativo() {
                       'flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors',
                       d.selecionado
                         ? 'bg-somus-green/5 border border-somus-green/20'
-                        : 'hover:bg-somus-gray-50 border border-transparent'
+                        : 'hover:bg-somus-bg-hover border border-transparent'
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={d.selecionado}
                       onChange={() => toggleDestinatario(d.email)}
-                      className="w-4 h-4 rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+                      className="w-4 h-4 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-somus-gray-900 truncate">
+                      <div className="text-sm font-medium text-somus-text-primary truncate">
                         {d.nome}
                       </div>
-                      <div className="text-xs text-somus-gray-400">{d.equipe}</div>
+                      <div className="text-xs text-somus-text-tertiary">{d.equipe}</div>
                     </div>
                   </label>
                 ))}
@@ -294,30 +294,30 @@ export default function Informativo() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Titulo</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Template</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Data</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Destinatarios</th>
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Titulo</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Template</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Data</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Destinatarios</th>
               </tr>
             </thead>
             <tbody>
               {historico.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
+                  className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors"
                 >
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-somus-green" />
                       {item.titulo}
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-somus-gray-600">{item.template}</td>
-                  <td className="py-3 px-4 text-somus-gray-600">
+                  <td className="py-3 px-4 text-somus-text-secondary">{item.template}</td>
+                  <td className="py-3 px-4 text-somus-text-secondary">
                     {new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}
                   </td>
-                  <td className="py-3 px-4 text-right text-somus-gray-600">
+                  <td className="py-3 px-4 text-right text-somus-text-secondary">
                     {item.destinatarios}
                   </td>
                 </tr>

@@ -176,7 +176,7 @@ function ScenarioCard({ scenario, selected, onToggleSelect, onDelete }: {
     <div
       className={cn(
         'rounded-lg border-2 p-5 transition-colors cursor-pointer',
-        selected ? 'border-somus-green bg-somus-green-bg' : 'border-somus-gray-200 bg-white hover:border-somus-gray-300',
+        selected ? 'border-somus-green bg-somus-green-bg' : 'border-somus-border bg-somus-bg-secondary hover:border-somus-border',
       )}
       onClick={onToggleSelect}
     >
@@ -184,24 +184,24 @@ function ScenarioCard({ scenario, selected, onToggleSelect, onDelete }: {
         <div className="flex items-center gap-2">
           <div className={cn(
             'h-5 w-5 rounded-md border-2 flex items-center justify-center',
-            selected ? 'bg-somus-green border-somus-green' : 'border-somus-gray-300',
+            selected ? 'bg-somus-green border-somus-green' : 'border-somus-border',
           )}>
             {selected && <Check className="h-3.5 w-3.5 text-white" />}
           </div>
-          <h3 className="font-semibold text-somus-gray-900">{scenario.nome}</h3>
+          <h3 className="font-semibold text-somus-text-primary">{scenario.nome}</h3>
         </div>
         <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-red-50 rounded-md">
           <Trash2 className="h-4 w-4 text-red-400" />
         </button>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <div><span className="text-somus-gray-500">Carta Liq.:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.cartaLiquida)}</span></div>
-        <div><span className="text-somus-gray-500">Total Pago:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.totalPago)}</span></div>
-        <div><span className="text-somus-gray-500">CET a.a.:</span> <span className="ml-1 font-medium">{fmtPct(scenario.cetAnual * 100, 2)}</span></div>
-        <div><span className="text-somus-gray-500">Parcela F1:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.parcelaF1)}</span></div>
-        <div><span className="text-somus-gray-500">Parcela F2:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.parcelaF2)}</span></div>
+        <div><span className="text-somus-text-secondary">Carta Liq.:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.cartaLiquida)}</span></div>
+        <div><span className="text-somus-text-secondary">Total Pago:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.totalPago)}</span></div>
+        <div><span className="text-somus-text-secondary">CET a.a.:</span> <span className="ml-1 font-medium">{fmtPct(scenario.cetAnual * 100, 2)}</span></div>
+        <div><span className="text-somus-text-secondary">Parcela F1:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.parcelaF1)}</span></div>
+        <div><span className="text-somus-text-secondary">Parcela F2:</span> <span className="ml-1 font-medium">{fmtBRL(scenario.parcelaF2)}</span></div>
       </div>
-      <p className="text-xs text-somus-gray-400 mt-3">
+      <p className="text-xs text-somus-text-tertiary mt-3">
         Salvo em {new Date(scenario.timestamp).toLocaleDateString('pt-BR')}
       </p>
     </div>
@@ -305,7 +305,7 @@ export default function Cenarios() {
     <PageLayout title="Cenarios" subtitle="Gerencie ate 10 cenarios salvos">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
+          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-text-secondary hover:text-somus-text-primary transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
           </button>
           <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function Cenarios() {
 
         {/* Info bar */}
         <div className="flex items-center justify-between mb-5">
-          <p className="text-sm text-somus-gray-500">
+          <p className="text-sm text-somus-text-secondary">
             {cenarios.length}/10 cenarios
             {selectedIds.size > 0 && ` | ${selectedIds.size} selecionado(s)`}
           </p>
@@ -330,9 +330,9 @@ export default function Cenarios() {
 
         {/* Scenario Grid */}
         {cenarios.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border-2 border-dashed border-somus-gray-200">
-            <Layers className="h-12 w-12 text-somus-gray-300 mb-4" />
-            <p className="text-sm text-somus-gray-400 mb-4">Nenhum cenario salvo</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-somus-bg-secondary rounded-lg border-2 border-dashed border-somus-border">
+            <Layers className="h-12 w-12 text-somus-border mb-4" />
+            <p className="text-sm text-somus-text-tertiary mb-4">Nenhum cenario salvo</p>
             <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>Criar Primeiro Cenario</Button>
           </div>
         ) : (
@@ -346,15 +346,15 @@ export default function Cenarios() {
         {/* ─── Comparison View ─────────────────────────────────────── */}
         {comparing && selected.length >= 2 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-bold text-somus-gray-900">Comparacao de Cenarios</h2>
+            <h2 className="text-lg font-bold text-somus-text-primary">Comparacao de Cenarios</h2>
 
             {/* Comparison Table */}
             <Card title="Metricas Comparativas" padding="none">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-somus-gray-50 border-b border-somus-gray-200">
-                      <th className="text-left px-5 py-3 font-medium text-somus-gray-600">Metrica</th>
+                    <tr className="bg-somus-bg-hover border-b border-somus-border">
+                      <th className="text-left px-5 py-3 font-medium text-somus-text-secondary">Metrica</th>
                       {selected.map((s) => (
                         <th key={s.id} className="text-right px-5 py-3 font-medium text-somus-green">{s.nome}</th>
                       ))}
@@ -371,8 +371,8 @@ export default function Cenarios() {
                       { label: 'Lance Livre', fn: (s: SavedScenario) => fmtBRL(s.lanceLivreValor) },
                       { label: 'Lance Embutido', fn: (s: SavedScenario) => fmtBRL(s.lanceEmbutidoValor) },
                     ].map((row) => (
-                      <tr key={row.label} className="border-b border-somus-gray-100 hover:bg-somus-gray-50">
-                        <td className="px-5 py-3 text-somus-gray-700">{row.label}</td>
+                      <tr key={row.label} className="border-b border-somus-border/30 hover:bg-somus-bg-hover">
+                        <td className="px-5 py-3 text-somus-text-primary">{row.label}</td>
                         {selected.map((s) => (
                           <td key={s.id} className="text-right px-5 py-3 font-medium">{row.fn(s)}</td>
                         ))}

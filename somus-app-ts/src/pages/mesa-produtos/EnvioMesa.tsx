@@ -155,8 +155,8 @@ export default function EnvioMesa() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-somus-gray-900">Envio Mesa</h1>
-        <p className="text-sm text-somus-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-somus-text-primary">Envio Mesa</h1>
+        <p className="text-sm text-somus-text-secondary mt-1">
           Envie dados e atualizacoes da mesa para a equipe
         </p>
       </div>
@@ -168,11 +168,11 @@ export default function EnvioMesa() {
             <div className="mt-4 space-y-4">
               {/* Template */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">Template</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">Template</label>
                 <select
                   value={templateId}
                   onChange={(e) => handleTemplateChange(e.target.value)}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 >
                   {EMAIL_TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>{t.nome}</option>
@@ -182,19 +182,19 @@ export default function EnvioMesa() {
 
               {/* Assunto */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">Assunto</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">Assunto</label>
                 <input
                   type="text"
                   value={assunto}
                   onChange={(e) => setAssunto(e.target.value)}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 />
               </div>
 
               {/* Data Rows */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-somus-gray-700">Dados</label>
+                  <label className="text-sm font-medium text-somus-text-primary">Dados</label>
                   <button
                     onClick={addRow}
                     className="text-xs text-somus-green hover:text-somus-green-light flex items-center gap-1"
@@ -210,18 +210,18 @@ export default function EnvioMesa() {
                         placeholder="Campo"
                         value={row.campo}
                         onChange={(e) => updateRow(row.id, 'campo', e.target.value)}
-                        className="flex-1 text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                        className="flex-1 text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                       />
                       <input
                         type="text"
                         placeholder="Valor"
                         value={row.valor}
                         onChange={(e) => updateRow(row.id, 'valor', e.target.value)}
-                        className="flex-1 text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                        className="flex-1 text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                       />
                       <button
                         onClick={() => removeRow(row.id)}
-                        className="text-somus-gray-400 hover:text-red-400 transition-colors p-1"
+                        className="text-somus-text-tertiary hover:text-red-400 transition-colors p-1"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -232,13 +232,13 @@ export default function EnvioMesa() {
 
               {/* Observacoes */}
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1.5">Observacoes</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1.5">Observacoes</label>
                 <textarea
                   value={observacoes}
                   onChange={(e) => setObservacoes(e.target.value)}
                   placeholder="Observacoes adicionais..."
                   rows={4}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export default function EnvioMesa() {
               </button>
               <button
                 onClick={limparSelecao}
-                className="text-xs px-2 py-1 rounded bg-somus-gray-100 text-somus-gray-600 hover:bg-somus-gray-200 transition-colors"
+                className="text-xs px-2 py-1 rounded bg-somus-border/30 text-somus-text-secondary hover:bg-somus-border transition-colors"
               >
                 Limpar
               </button>
@@ -292,18 +292,18 @@ export default function EnvioMesa() {
                     'flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors',
                     d.selecionado
                       ? 'bg-somus-green/5 border border-somus-green/20'
-                      : 'hover:bg-somus-gray-50 border border-transparent'
+                      : 'hover:bg-somus-bg-hover border border-transparent'
                   )}
                 >
                   <input
                     type="checkbox"
                     checked={d.selecionado}
                     onChange={() => toggleDestinatario(d.email)}
-                    className="w-4 h-4 rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+                    className="w-4 h-4 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
                   />
                   <div>
-                    <div className="text-sm font-medium text-somus-gray-900">{d.nome}</div>
-                    <div className="text-xs text-somus-gray-400">{d.email}</div>
+                    <div className="text-sm font-medium text-somus-text-primary">{d.nome}</div>
+                    <div className="text-xs text-somus-text-tertiary">{d.email}</div>
                   </div>
                 </label>
               ))}

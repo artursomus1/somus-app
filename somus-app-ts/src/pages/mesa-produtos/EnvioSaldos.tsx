@@ -160,8 +160,8 @@ export default function EnvioSaldos() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">Envio de Saldos</h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-somus-text-primary">Envio de Saldos</h1>
+          <p className="text-sm text-somus-text-secondary mt-1">
             Envio diario de saldos e vencimentos para assessores
           </p>
         </div>
@@ -186,26 +186,26 @@ export default function EnvioSaldos() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Clientes</span>
+            <span className="text-sm text-somus-text-secondary">Clientes</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{filteredSaldos.length}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{filteredSaldos.length}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Total Disponivel</span>
+            <span className="text-sm text-somus-text-secondary">Total Disponivel</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalDisponivel)}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{formatCurrency(totalDisponivel)}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Total Aplicado</span>
+            <span className="text-sm text-somus-text-secondary">Total Aplicado</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalAplicado)}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{formatCurrency(totalAplicado)}</div>
         </div>
       </div>
 
@@ -213,19 +213,19 @@ export default function EnvioSaldos() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar assessor ou cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg pl-9 pr-3 py-1.5 w-56 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
           <select
             value={assessorFilter}
             onChange={(e) => setAssessorFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos assessores</option>
             {ASSESSORES.map((a) => (
@@ -240,35 +240,35 @@ export default function EnvioSaldos() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Cliente</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Saldo Disponivel</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Saldo Aplicado</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Venc. RF</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Venc. Fundos</th>
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Cliente</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Saldo Disponivel</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Saldo Aplicado</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Venc. RF</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Venc. Fundos</th>
                 <th className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
             <tbody>
               {filteredSaldos.map((s) => (
-                <tr key={s.id} className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors">
-                  <td className="py-3 px-4 text-somus-gray-600">{s.assessor}</td>
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">{s.cliente}</td>
-                  <td className={cn('py-3 px-4 text-right font-medium', s.saldoDisponivel > 50000 ? 'text-somus-green-400' : 'text-somus-gray-900')}>
+                <tr key={s.id} className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors">
+                  <td className="py-3 px-4 text-somus-text-secondary">{s.assessor}</td>
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">{s.cliente}</td>
+                  <td className={cn('py-3 px-4 text-right font-medium', s.saldoDisponivel > 50000 ? 'text-somus-green-400' : 'text-somus-text-primary')}>
                     {formatCurrency(s.saldoDisponivel)}
                   </td>
-                  <td className="py-3 px-4 text-right text-somus-gray-700">{formatCurrency(s.saldoAplicado)}</td>
-                  <td className="py-3 px-4 text-right text-somus-gray-600">
+                  <td className="py-3 px-4 text-right text-somus-text-primary">{formatCurrency(s.saldoAplicado)}</td>
+                  <td className="py-3 px-4 text-right text-somus-text-secondary">
                     {s.vencimentosRF > 0 ? formatCurrency(s.vencimentosRF) : '-'}
                   </td>
-                  <td className="py-3 px-4 text-right text-somus-gray-600">
+                  <td className="py-3 px-4 text-right text-somus-text-secondary">
                     {s.vencimentosFundos > 0 ? formatCurrency(s.vencimentosFundos) : '-'}
                   </td>
                   <td className="py-3 px-4">
                     <button
                       onClick={() => setPreviewAssessor(s.assessor)}
-                      className="text-somus-gray-400 hover:text-somus-green transition-colors"
+                      className="text-somus-text-tertiary hover:text-somus-green transition-colors"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -277,7 +277,7 @@ export default function EnvioSaldos() {
               ))}
               {filteredSaldos.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-somus-gray-400">
+                  <td colSpan={7} className="py-12 text-center text-somus-text-tertiary">
                     Nenhum saldo encontrado
                   </td>
                 </tr>
@@ -294,48 +294,48 @@ export default function EnvioSaldos() {
           headerRight={
             <button
               onClick={() => setPreviewAssessor(null)}
-              className="text-sm text-somus-gray-400 hover:text-somus-gray-600"
+              className="text-sm text-somus-text-tertiary hover:text-somus-text-secondary"
             >
               Fechar
             </button>
           }
         >
-          <div className="mt-4 border border-somus-gray-200 rounded-lg overflow-hidden">
+          <div className="mt-4 border border-somus-border rounded-lg overflow-hidden">
             <div className="bg-somus-green text-white p-5">
               <h3 className="text-lg font-semibold">Saldos e Vencimentos</h3>
               <p className="text-sm opacity-80 mt-1">{new Date().toLocaleDateString('pt-BR')}</p>
             </div>
             <div className="p-5">
-              <p className="text-sm text-somus-gray-700 mb-4">
+              <p className="text-sm text-somus-text-primary mb-4">
                 Ola {previewAssessor.split(' ')[0]}, segue o resumo dos saldos e vencimentos:
               </p>
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-somus-gray-100">
-                    <th className="text-left py-2 px-3 border border-somus-gray-200 text-somus-gray-600">Cliente</th>
-                    <th className="text-right py-2 px-3 border border-somus-gray-200 text-somus-gray-600">Saldo Disponivel</th>
-                    <th className="text-right py-2 px-3 border border-somus-gray-200 text-somus-gray-600">Venc. RF</th>
-                    <th className="text-right py-2 px-3 border border-somus-gray-200 text-somus-gray-600">Venc. Fundos</th>
+                  <tr className="bg-somus-border/30">
+                    <th className="text-left py-2 px-3 border border-somus-border text-somus-text-secondary">Cliente</th>
+                    <th className="text-right py-2 px-3 border border-somus-border text-somus-text-secondary">Saldo Disponivel</th>
+                    <th className="text-right py-2 px-3 border border-somus-border text-somus-text-secondary">Venc. RF</th>
+                    <th className="text-right py-2 px-3 border border-somus-border text-somus-text-secondary">Venc. Fundos</th>
                   </tr>
                 </thead>
                 <tbody>
                   {previewItems.map((item) => (
                     <tr key={item.id}>
-                      <td className="py-2 px-3 border border-somus-gray-200">{item.cliente}</td>
-                      <td className={cn('py-2 px-3 border border-somus-gray-200 text-right', item.saldoDisponivel > 50000 && 'text-somus-green-400 font-medium')}>
+                      <td className="py-2 px-3 border border-somus-border">{item.cliente}</td>
+                      <td className={cn('py-2 px-3 border border-somus-border text-right', item.saldoDisponivel > 50000 && 'text-somus-green-400 font-medium')}>
                         {formatCurrency(item.saldoDisponivel)}
                       </td>
-                      <td className="py-2 px-3 border border-somus-gray-200 text-right">
+                      <td className="py-2 px-3 border border-somus-border text-right">
                         {item.vencimentosRF > 0 ? formatCurrency(item.vencimentosRF) : '-'}
                       </td>
-                      <td className="py-2 px-3 border border-somus-gray-200 text-right">
+                      <td className="py-2 px-3 border border-somus-border text-right">
                         {item.vencimentosFundos > 0 ? formatCurrency(item.vencimentosFundos) : '-'}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p className="text-xs text-somus-gray-400 mt-4">Somus Capital - Mesa de Produtos</p>
+              <p className="text-xs text-somus-text-tertiary mt-4">Somus Capital - Mesa de Produtos</p>
             </div>
           </div>
         </Card>

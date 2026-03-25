@@ -144,10 +144,10 @@ export default function FluxoRF() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Fluxo Renda Fixa
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Agenda de eventos de renda fixa por assessor
           </p>
         </div>
@@ -184,25 +184,25 @@ export default function FluxoRF() {
       <Card padding="sm">
         <div className="flex flex-wrap items-center gap-4 p-2">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-somus-gray-400" />
-            <span className="text-sm font-medium text-somus-gray-600">Filtros:</span>
+            <Filter className="h-4 w-4 text-somus-text-tertiary" />
+            <span className="text-sm font-medium text-somus-text-secondary">Filtros:</span>
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar ativo ou assessor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-1.5 w-56 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg pl-9 pr-3 py-1.5 w-56 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
 
           <select
             value={assessorFilter}
             onChange={(e) => setAssessorFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos assessores</option>
             {ASSESSORES_LIST.map((a) => (
@@ -213,7 +213,7 @@ export default function FluxoRF() {
           <select
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos os tipos</option>
             {TIPOS_EVENTO.map((t) => (
@@ -222,19 +222,19 @@ export default function FluxoRF() {
           </select>
 
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-somus-gray-400" />
+            <Calendar className="h-4 w-4 text-somus-text-tertiary" />
             <input
               type="date"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
-            <span className="text-somus-gray-400">a</span>
+            <span className="text-somus-text-tertiary">a</span>
             <input
               type="date"
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
-              className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
         </div>
@@ -245,21 +245,21 @@ export default function FluxoRF() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Ativo</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Tipo Evento</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Data</th>
-                <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                <th className="text-right py-3 px-4 font-semibold text-somus-gray-600">Valor</th>
+              <tr className="border-b border-somus-border">
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Ativo</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Tipo Evento</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Data</th>
+                <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                <th className="text-right py-3 px-4 font-semibold text-somus-text-secondary">Valor</th>
               </tr>
             </thead>
             <tbody>
               {filteredEventos.map((evt) => (
                 <tr
                   key={evt.id}
-                  className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
+                  className="border-b border-somus-border/30 hover:bg-somus-bg-hover transition-colors"
                 >
-                  <td className="py-3 px-4 font-medium text-somus-gray-900">{evt.ativo}</td>
+                  <td className="py-3 px-4 font-medium text-somus-text-primary">{evt.ativo}</td>
                   <td className="py-3 px-4">
                     <span
                       className={cn(
@@ -274,16 +274,16 @@ export default function FluxoRF() {
                       {evt.tipoEvento}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-somus-gray-600">{formatDate(evt.data)}</td>
-                  <td className="py-3 px-4 text-somus-gray-600">{evt.assessor}</td>
-                  <td className="py-3 px-4 text-right font-medium text-somus-gray-900">
+                  <td className="py-3 px-4 text-somus-text-secondary">{formatDate(evt.data)}</td>
+                  <td className="py-3 px-4 text-somus-text-secondary">{evt.assessor}</td>
+                  <td className="py-3 px-4 text-right font-medium text-somus-text-primary">
                     {formatCurrency(evt.valor)}
                   </td>
                 </tr>
               ))}
               {filteredEventos.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-somus-gray-400">
+                  <td colSpan={5} className="py-12 text-center text-somus-text-tertiary">
                     Nenhum evento encontrado
                   </td>
                 </tr>
@@ -300,11 +300,11 @@ export default function FluxoRF() {
             {generatedPDFs.map((name) => (
               <div
                 key={name}
-                className="flex items-center justify-between py-2 px-4 bg-somus-gray-50 rounded-lg"
+                className="flex items-center justify-between py-2 px-4 bg-somus-bg-hover rounded-lg"
               >
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-somus-green" />
-                  <span className="text-sm font-medium text-somus-gray-700">
+                  <span className="text-sm font-medium text-somus-text-primary">
                     Fluxo RF - {name}.pdf
                   </span>
                 </div>
@@ -328,7 +328,7 @@ export default function FluxoRF() {
           <div className="mt-4">
             <iframe
               src={previewUrl}
-              className="w-full h-[600px] border border-somus-gray-200 rounded-lg"
+              className="w-full h-[600px] border border-somus-border rounded-lg"
               title="Preview PDF"
             />
           </div>

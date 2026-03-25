@@ -117,6 +117,11 @@ export default function FluxoFinanceiro() {
   const [searchMax, setSearchMax] = useState(200);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
   const [compact, setCompact] = useState(true);
+  const [visibleGroupFlags, setVisibleGroupFlags] = useState<boolean[]>(COLUMN_GROUPS.map(() => true));
+
+  const toggleGroupVisibility = (idx: number) => {
+    setVisibleGroupFlags((prev) => prev.map((v, i) => (i === idx ? !v : v)));
+  };
 
   const toggleGroup = (idx: number) => {
     setCollapsedGroups((prev) => {
@@ -193,6 +198,23 @@ export default function FluxoFinanceiro() {
             <input type="number" min={0} max={200} value={searchMax} onChange={(e) => setSearchMax(Number(e.target.value))} className="w-14 px-1.5 py-0.5 text-[10px] bg-somus-bg-input border border-somus-border rounded text-somus-text-primary" />
           </div>
           <span className="text-[10px] text-somus-text-tertiary">{visibleRows.length} linhas</span>
+          <button onClick={() => { setSearchMin(0); setSearchMax(200); }} className="text-[10px] text-somus-text-tertiary hover:text-somus-text-primary">Limpar</button>
+        </div>
+
+        {/* Column group toggles */}
+        <div className="flex flex-wrap items-center gap-3 mt-2">
+          <span className="text-[10px] text-somus-text-secondary">Grupos:</span>
+          {COLUMN_GROUPS.map((g, gi) => (
+            <label key={gi} className="inline-flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={visibleGroupFlags[gi]}
+                onChange={() => toggleGroupVisibility(gi)}
+                className="w-3 h-3 rounded border-somus-border text-somus-green focus:ring-somus-green/40"
+              />
+              <span className="text-[10px]" style={{ color: g.color }}>{g.label}</span>
+            </label>
+          ))}
         </div>
       </header>
 
@@ -206,6 +228,7 @@ export default function FluxoFinanceiro() {
                   Período
                 </th>
                 {COLUMN_GROUPS.map((g, gi) => {
+                  if (!visibleGroupFlags[gi]) return null;
                   const collapsed = collapsedGroups.has(gi);
                   return (
                     <th
@@ -229,6 +252,7 @@ export default function FluxoFinanceiro() {
                 <th className={`${cellPad} text-center text-somus-text-secondary font-medium sticky left-0 bg-somus-bg-secondary z-20 w-12`}>Mês</th>
                 <th className={`${cellPad} text-center text-somus-text-secondary font-medium`}>Rest.</th>
                 {COLUMN_GROUPS.map((g, gi) => {
+                  if (!visibleGroupFlags[gi]) return null;
                   if (collapsedGroups.has(gi)) {
                     return <th key={gi} className={`${cellPad} text-center text-somus-text-tertiary font-normal`}>...</th>;
                   }
@@ -245,14 +269,15 @@ export default function FluxoFinanceiro() {
                 <td className={`${cellPad} text-center font-bold text-somus-gold sticky left-0 bg-somus-bg-input z-20`}>TOT</td>
                 <td className={`${cellPad} text-center text-somus-text-tertiary`}>—</td>
                 {COLUMN_GROUPS.map((g, gi) => {
+                  if (!visibleGroupFlags[gi]) return null;
                   if (collapsedGroups.has(gi)) {
-                    return <td key={gi} className={cellPad}>—</td>;
+                    return <td key={gi} className={cellPad}>--</td>;
                   }
                   return g.keys.map((k) => {
                     const v = totals[k];
                     return (
                       <td key={k} className={`${cellPad} text-right font-semibold text-somus-text-primary`}>
-                        {v !== undefined ? formatCell(k, v) : '—'}
+                        {v !== undefined ? formatCell(k, v) : '--'}
                       </td>
                     );
                   });
@@ -272,6 +297,7 @@ export default function FluxoFinanceiro() {
                     </td>
                     <td className={`${cellPad} text-center text-somus-text-tertiary`}>{f.meses_restantes}</td>
                     {COLUMN_GROUPS.map((g, gi) => {
+                      if (!visibleGroupFlags[gi]) return null;
                       if (collapsedGroups.has(gi)) {
                         return <td key={gi} className={`${cellPad} text-center text-somus-text-tertiary`}>...</td>;
                       }

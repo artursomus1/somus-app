@@ -52,13 +52,13 @@ const DEFAULT_TASKS: Task[] = [
 ];
 
 const COLUMNS: { key: Status; label: string; icon: React.ReactNode; color: string }[] = [
-  { key: 'todo', label: 'A Fazer', icon: <Clock className="h-4 w-4" />, color: 'text-somus-gray-500' },
+  { key: 'todo', label: 'A Fazer', icon: <Clock className="h-4 w-4" />, color: 'text-somus-text-secondary' },
   { key: 'inprogress', label: 'Em Progresso', icon: <AlertCircle className="h-4 w-4" />, color: 'text-blue-400' },
   { key: 'done', label: 'Concluido', icon: <CheckCircle2 className="h-4 w-4" />, color: 'text-somus-green-400' },
 ];
 
 const PRIORITY_STYLES: Record<Priority, { bg: string; text: string; label: string }> = {
-  baixa: { bg: 'bg-somus-gray-100', text: 'text-somus-gray-600', label: 'Baixa' },
+  baixa: { bg: 'bg-somus-border/30', text: 'text-somus-text-secondary', label: 'Baixa' },
   media: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Media' },
   alta: { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Alta' },
   urgente: { bg: 'bg-red-500/10', text: 'text-red-400', label: 'Urgente' },
@@ -192,8 +192,8 @@ export default function Tarefas() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">Tarefas</h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-somus-text-primary">Tarefas</h1>
+          <p className="text-sm text-somus-text-secondary mt-1">
             Organizador de tarefas da equipe
           </p>
         </div>
@@ -208,7 +208,7 @@ export default function Tarefas() {
           <select
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODOS">Todos responsaveis</option>
             {ASSIGNEES.map((a) => (
@@ -218,7 +218,7 @@ export default function Tarefas() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="text-sm border border-somus-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+            className="text-sm border border-somus-border rounded-lg px-3 py-1.5 bg-somus-bg-input text-somus-text-primary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
           >
             <option value="TODAS">Todas prioridades</option>
             <option value="urgente">Urgente</option>
@@ -226,7 +226,7 @@ export default function Tarefas() {
             <option value="media">Media</option>
             <option value="baixa">Baixa</option>
           </select>
-          <span className="text-xs text-somus-gray-400">
+          <span className="text-xs text-somus-text-tertiary">
             {filteredTasks.length} tarefas
           </span>
         </div>
@@ -243,7 +243,7 @@ export default function Tarefas() {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, col.key)}
               className={cn(
-                'bg-somus-gray-50 rounded-xl p-4 min-h-[300px] transition-colors',
+                'bg-somus-bg-hover rounded-xl p-4 min-h-[300px] transition-colors',
                 dragOverColumn === col.key && 'bg-somus-green/5 ring-2 ring-somus-green/20'
               )}
             >
@@ -251,8 +251,8 @@ export default function Tarefas() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className={col.color}>{col.icon}</span>
-                  <span className="text-sm font-semibold text-somus-gray-700">{col.label}</span>
-                  <span className="text-xs bg-somus-gray-200 text-somus-gray-600 rounded-full px-2 py-0.5">
+                  <span className="text-sm font-semibold text-somus-text-primary">{col.label}</span>
+                  <span className="text-xs bg-somus-border text-somus-text-secondary rounded-full px-2 py-0.5">
                     {colTasks.length}
                   </span>
                 </div>
@@ -266,25 +266,25 @@ export default function Tarefas() {
                     draggable
                     onDragStart={() => handleDragStart(task.id)}
                     className={cn(
-                      'bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4 cursor-grab active:cursor-grabbing hover:border-somus-gray-300 transition-colors',
+                      'bg-somus-bg-secondary rounded-lg border border-somus-border p-4 cursor-grab active:cursor-grabbing hover:border-somus-border transition-colors',
                       draggedTaskId === task.id && 'opacity-50'
                     )}
                   >
                     {/* Task header */}
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="text-sm font-semibold text-somus-gray-900 flex-1">
+                      <h4 className="text-sm font-semibold text-somus-text-primary flex-1">
                         {task.title}
                       </h4>
                       <div className="flex items-center gap-1 ml-2">
                         <button
                           onClick={() => openEditModal(task)}
-                          className="text-somus-gray-400 hover:text-somus-green transition-colors p-0.5"
+                          className="text-somus-text-tertiary hover:text-somus-green transition-colors p-0.5"
                         >
                           <Edit3 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="text-somus-gray-400 hover:text-red-400 transition-colors p-0.5"
+                          className="text-somus-text-tertiary hover:text-red-400 transition-colors p-0.5"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -292,7 +292,7 @@ export default function Tarefas() {
                     </div>
 
                     {task.description && (
-                      <p className="text-xs text-somus-gray-500 mb-3 line-clamp-2">
+                      <p className="text-xs text-somus-text-secondary mb-3 line-clamp-2">
                         {task.description}
                       </p>
                     )}
@@ -316,7 +316,7 @@ export default function Tarefas() {
                               'text-xs flex items-center gap-1',
                               isOverdue(task.dueDate) && task.status !== 'done'
                                 ? 'text-red-400 font-medium'
-                                : 'text-somus-gray-400'
+                                : 'text-somus-text-tertiary'
                             )}
                           >
                             <Calendar className="h-3 w-3" />
@@ -331,13 +331,13 @@ export default function Tarefas() {
                       <div className="w-5 h-5 rounded-full bg-somus-green/20 flex items-center justify-center">
                         <User className="h-3 w-3 text-somus-green" />
                       </div>
-                      <span className="text-xs text-somus-gray-500">{task.assignee}</span>
+                      <span className="text-xs text-somus-text-secondary">{task.assignee}</span>
                     </div>
                   </div>
                 ))}
 
                 {colTasks.length === 0 && (
-                  <div className="text-center py-8 text-xs text-somus-gray-400">
+                  <div className="text-center py-8 text-xs text-somus-text-tertiary">
                     Arraste tarefas aqui
                   </div>
                 )}
@@ -350,15 +350,15 @@ export default function Tarefas() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-somus-bg-secondary rounded-xl shadow-xl border border-somus-gray-200 w-full max-w-md mx-4">
+          <div className="bg-somus-bg-secondary rounded-xl shadow-xl border border-somus-border w-full max-w-md mx-4">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-somus-gray-200">
-              <h3 className="text-lg font-semibold text-somus-gray-900">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-somus-border">
+              <h3 className="text-lg font-semibold text-somus-text-primary">
                 {editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-somus-gray-400 hover:text-somus-gray-600 transition-colors"
+                className="text-somus-text-tertiary hover:text-somus-text-secondary transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -367,34 +367,34 @@ export default function Tarefas() {
             {/* Modal Body */}
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1">Titulo *</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1">Titulo *</label>
                 <input
                   type="text"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Titulo da tarefa"
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1">Descricao</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1">Descricao</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Descricao da tarefa..."
                   rows={3}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-somus-gray-700 mb-1">Responsavel</label>
+                  <label className="block text-sm font-medium text-somus-text-primary mb-1">Responsavel</label>
                   <select
                     value={formAssignee}
                     onChange={(e) => setFormAssignee(e.target.value)}
-                    className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                    className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                   >
                     {ASSIGNEES.map((a) => (
                       <option key={a} value={a}>{a}</option>
@@ -402,11 +402,11 @@ export default function Tarefas() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-somus-gray-700 mb-1">Prioridade</label>
+                  <label className="block text-sm font-medium text-somus-text-primary mb-1">Prioridade</label>
                   <select
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value as Priority)}
-                    className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                    className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Media</option>
@@ -417,18 +417,18 @@ export default function Tarefas() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-somus-gray-700 mb-1">Data Limite</label>
+                <label className="block text-sm font-medium text-somus-text-primary mb-1">Data Limite</label>
                 <input
                   type="date"
                   value={formDueDate}
                   onChange={(e) => setFormDueDate(e.target.value)}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-somus-gray-200">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-somus-border">
               <Button variant="secondary" onClick={() => setShowModal(false)}>
                 Cancelar
               </Button>

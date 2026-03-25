@@ -182,8 +182,8 @@ export default function EnvioAniversarios() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">Envio de Aniversarios</h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-somus-text-primary">Envio de Aniversarios</h1>
+          <p className="text-sm text-somus-text-secondary mt-1">
             Envie mensagens de aniversario automaticamente
           </p>
         </div>
@@ -204,21 +204,21 @@ export default function EnvioAniversarios() {
           <div className="mt-4">
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-4">
-              <button onClick={prevMonth} className="p-1 hover:bg-somus-gray-100 rounded transition-colors">
-                <ChevronLeft className="h-5 w-5 text-somus-gray-600" />
+              <button onClick={prevMonth} className="p-1 hover:bg-somus-border/30 rounded transition-colors">
+                <ChevronLeft className="h-5 w-5 text-somus-text-secondary" />
               </button>
-              <span className="text-sm font-semibold text-somus-gray-900">
+              <span className="text-sm font-semibold text-somus-text-primary">
                 {MESES[calendarMonth]} {calendarYear}
               </span>
-              <button onClick={nextMonth} className="p-1 hover:bg-somus-gray-100 rounded transition-colors">
-                <ChevronRight className="h-5 w-5 text-somus-gray-600" />
+              <button onClick={nextMonth} className="p-1 hover:bg-somus-border/30 rounded transition-colors">
+                <ChevronRight className="h-5 w-5 text-somus-text-secondary" />
               </button>
             </div>
 
             {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((d) => (
-                <div key={d} className="text-center text-xs font-medium text-somus-gray-400 py-1">
+                <div key={d} className="text-center text-xs font-medium text-somus-text-tertiary py-1">
                   {d}
                 </div>
               ))}
@@ -240,7 +240,7 @@ export default function EnvioAniversarios() {
                       'bg-amber-500/15 text-amber-300 font-semibold',
                     !d.hasAniversario &&
                       !(d.day === today.getDate() && calendarMonth === currentMonth && calendarYear === currentYear) &&
-                      'text-somus-gray-600 hover:bg-somus-gray-50'
+                      'text-somus-text-secondary hover:bg-somus-bg-hover'
                   )}
                 >
                   {d.day > 0 && (
@@ -255,7 +255,7 @@ export default function EnvioAniversarios() {
               ))}
             </div>
 
-            <div className="mt-4 flex items-center gap-4 text-xs text-somus-gray-500">
+            <div className="mt-4 flex items-center gap-4 text-xs text-somus-text-secondary">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-amber-500/15 border border-amber-500/30" />
                 Aniversario
@@ -272,13 +272,13 @@ export default function EnvioAniversarios() {
         <div className="lg:col-span-2 space-y-6">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
             <input
               type="text"
               placeholder="Buscar cliente ou assessor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+              className="w-full text-sm border border-somus-border rounded-lg pl-9 pr-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
             />
           </div>
 
@@ -290,12 +290,12 @@ export default function EnvioAniversarios() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-somus-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Cliente</th>
-                    <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Data</th>
-                    <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Idade</th>
-                    <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Assessor</th>
-                    <th className="text-left py-3 px-4 font-semibold text-somus-gray-600">Contato</th>
+                  <tr className="border-b border-somus-border">
+                    <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Cliente</th>
+                    <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Data</th>
+                    <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Idade</th>
+                    <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Assessor</th>
+                    <th className="text-left py-3 px-4 font-semibold text-somus-text-secondary">Contato</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,30 +307,30 @@ export default function EnvioAniversarios() {
                       <tr
                         key={a.id}
                         className={cn(
-                          'border-b border-somus-gray-100 transition-colors',
-                          isToday ? 'bg-amber-500/10' : 'hover:bg-somus-gray-50'
+                          'border-b border-somus-border/30 transition-colors',
+                          isToday ? 'bg-amber-500/10' : 'hover:bg-somus-bg-hover'
                         )}
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             {isToday && <Cake className="h-4 w-4 text-amber-400" />}
-                            <span className="font-medium text-somus-gray-900">{a.cliente}</span>
+                            <span className="font-medium text-somus-text-primary">{a.cliente}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-somus-gray-600">
+                        <td className="py-3 px-4 text-somus-text-secondary">
                           {birthDate.toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="py-3 px-4 text-somus-gray-600">
+                        <td className="py-3 px-4 text-somus-text-secondary">
                           {getAge(a.dataNascimento)} anos
                         </td>
-                        <td className="py-3 px-4 text-somus-gray-600">{a.assessor}</td>
-                        <td className="py-3 px-4 text-somus-gray-500 text-xs">{a.telefone}</td>
+                        <td className="py-3 px-4 text-somus-text-secondary">{a.assessor}</td>
+                        <td className="py-3 px-4 text-somus-text-secondary text-xs">{a.telefone}</td>
                       </tr>
                     );
                   })}
                   {filteredAniversariantes.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-somus-gray-400">
+                      <td colSpan={5} className="py-12 text-center text-somus-text-tertiary">
                         Nenhum aniversariante neste mes
                       </td>
                     </tr>
@@ -360,14 +360,14 @@ export default function EnvioAniversarios() {
                   value={messageTemplate}
                   onChange={(e) => setMessageTemplate(e.target.value)}
                   rows={10}
-                  className="w-full text-sm border border-somus-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
+                  className="w-full text-sm border border-somus-border rounded-lg px-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none resize-none"
                 />
               ) : (
-                <div className="bg-somus-gray-50 rounded-lg p-4 text-sm text-somus-gray-700 whitespace-pre-line">
+                <div className="bg-somus-bg-hover rounded-lg p-4 text-sm text-somus-text-primary whitespace-pre-line">
                   {messageTemplate}
                 </div>
               )}
-              <p className="text-xs text-somus-gray-400 mt-2">
+              <p className="text-xs text-somus-text-tertiary mt-2">
                 Use {'{nome}'} para inserir o nome do cliente automaticamente
               </p>
             </div>

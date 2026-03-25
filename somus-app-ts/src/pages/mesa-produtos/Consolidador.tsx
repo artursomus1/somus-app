@@ -151,10 +151,10 @@ export default function Consolidador() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-somus-gray-900">
+          <h1 className="text-2xl font-bold text-somus-text-primary">
             Consolidador de Carteiras
           </h1>
-          <p className="text-sm text-somus-gray-500 mt-1">
+          <p className="text-sm text-somus-text-secondary mt-1">
             Consolidacao de portfolios por cliente
           </p>
         </div>
@@ -187,24 +187,24 @@ export default function Consolidador() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-5 w-5 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Total Clientes</span>
+            <span className="text-sm text-somus-text-secondary">Total Clientes</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{totalClientes}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{totalClientes}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <Briefcase className="h-5 w-5 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Valor Total</span>
+            <span className="text-sm text-somus-text-secondary">Valor Total</span>
           </div>
-          <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalValor)}</div>
+          <div className="text-2xl font-bold text-somus-text-primary">{formatCurrency(totalValor)}</div>
         </div>
-        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-border p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-somus-green" />
-            <span className="text-sm text-somus-gray-500">Resultado Total</span>
+            <span className="text-sm text-somus-text-secondary">Resultado Total</span>
           </div>
           <div className={cn('text-2xl font-bold', totalResultado >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
             {formatCurrency(totalResultado)}
@@ -214,13 +214,13 @@ export default function Consolidador() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
         <input
           type="text"
           placeholder="Buscar por cliente, assessor ou CPF/CNPJ..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full text-sm border border-somus-gray-300 rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
+          className="w-full text-sm border border-somus-border rounded-lg pl-9 pr-3 py-2 bg-somus-bg-input text-somus-text-primary placeholder:text-somus-text-tertiary focus:ring-2 focus:ring-somus-green/40 focus:outline-none"
         />
       </div>
 
@@ -230,15 +230,15 @@ export default function Consolidador() {
           {filteredConsolidated.map((client) => {
             const isExpanded = expandedClients.has(client.cpfCnpj);
             return (
-              <div key={client.cpfCnpj} className="border border-somus-gray-200 rounded-lg overflow-hidden">
+              <div key={client.cpfCnpj} className="border border-somus-border rounded-lg overflow-hidden">
                 {/* Client Row */}
                 <button
                   onClick={() => toggleExpand(client.cpfCnpj)}
-                  className="w-full flex items-center justify-between py-3 px-4 bg-somus-bg-secondary hover:bg-somus-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-4 bg-somus-bg-secondary hover:bg-somus-bg-hover transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className={cn(
-                      'w-5 h-5 flex items-center justify-center transition-transform text-somus-gray-400',
+                      'w-5 h-5 flex items-center justify-center transition-transform text-somus-text-tertiary',
                       isExpanded && 'rotate-90'
                     )}>
                       <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
@@ -246,25 +246,25 @@ export default function Consolidador() {
                       </svg>
                     </div>
                     <div className="text-left">
-                      <div className="text-sm font-semibold text-somus-gray-900">
+                      <div className="text-sm font-semibold text-somus-text-primary">
                         {client.cliente}
                       </div>
-                      <div className="text-xs text-somus-gray-400">
+                      <div className="text-xs text-somus-text-tertiary">
                         {client.cpfCnpj} | {client.assessor}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-8">
                     <div className="text-right">
-                      <div className="text-xs text-somus-gray-400">Ativos</div>
-                      <div className="text-sm font-medium text-somus-gray-700">{client.totalAtivos}</div>
+                      <div className="text-xs text-somus-text-tertiary">Ativos</div>
+                      <div className="text-sm font-medium text-somus-text-primary">{client.totalAtivos}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-somus-gray-400">Valor</div>
-                      <div className="text-sm font-medium text-somus-gray-900">{formatCurrency(client.valorTotal)}</div>
+                      <div className="text-xs text-somus-text-tertiary">Valor</div>
+                      <div className="text-sm font-medium text-somus-text-primary">{formatCurrency(client.valorTotal)}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-somus-gray-400">Resultado</div>
+                      <div className="text-xs text-somus-text-tertiary">Resultado</div>
                       <div className={cn('text-sm font-medium', client.resultadoTotal >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
                         {formatCurrency(client.resultadoTotal)}
                       </div>
@@ -274,30 +274,30 @@ export default function Consolidador() {
 
                 {/* Items */}
                 {isExpanded && (
-                  <div className="border-t border-somus-gray-200 bg-somus-gray-50">
+                  <div className="border-t border-somus-border bg-somus-bg-hover">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-somus-gray-200">
-                          <th className="text-left py-2 px-4 font-semibold text-somus-gray-500 text-xs">Ativo</th>
-                          <th className="text-left py-2 px-4 font-semibold text-somus-gray-500 text-xs">Tipo</th>
-                          <th className="text-right py-2 px-4 font-semibold text-somus-gray-500 text-xs">Qtd</th>
-                          <th className="text-right py-2 px-4 font-semibold text-somus-gray-500 text-xs">Preco Medio</th>
-                          <th className="text-right py-2 px-4 font-semibold text-somus-gray-500 text-xs">Valor Atual</th>
-                          <th className="text-right py-2 px-4 font-semibold text-somus-gray-500 text-xs">Resultado</th>
+                        <tr className="border-b border-somus-border">
+                          <th className="text-left py-2 px-4 font-semibold text-somus-text-secondary text-xs">Ativo</th>
+                          <th className="text-left py-2 px-4 font-semibold text-somus-text-secondary text-xs">Tipo</th>
+                          <th className="text-right py-2 px-4 font-semibold text-somus-text-secondary text-xs">Qtd</th>
+                          <th className="text-right py-2 px-4 font-semibold text-somus-text-secondary text-xs">Preco Medio</th>
+                          <th className="text-right py-2 px-4 font-semibold text-somus-text-secondary text-xs">Valor Atual</th>
+                          <th className="text-right py-2 px-4 font-semibold text-somus-text-secondary text-xs">Resultado</th>
                         </tr>
                       </thead>
                       <tbody>
                         {client.items.map((item, idx) => (
-                          <tr key={idx} className="border-b border-somus-gray-100">
-                            <td className="py-2 px-4 text-somus-gray-700">{item.ativo}</td>
+                          <tr key={idx} className="border-b border-somus-border/30">
+                            <td className="py-2 px-4 text-somus-text-primary">{item.ativo}</td>
                             <td className="py-2 px-4">
-                              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-gray-200 text-somus-gray-600">
+                              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-somus-border text-somus-text-secondary">
                                 {item.tipo}
                               </span>
                             </td>
-                            <td className="py-2 px-4 text-right text-somus-gray-600">{item.quantidade}</td>
-                            <td className="py-2 px-4 text-right text-somus-gray-600">{formatCurrency(item.precoMedio)}</td>
-                            <td className="py-2 px-4 text-right font-medium text-somus-gray-900">{formatCurrency(item.valorAtual)}</td>
+                            <td className="py-2 px-4 text-right text-somus-text-secondary">{item.quantidade}</td>
+                            <td className="py-2 px-4 text-right text-somus-text-secondary">{formatCurrency(item.precoMedio)}</td>
+                            <td className="py-2 px-4 text-right font-medium text-somus-text-primary">{formatCurrency(item.valorAtual)}</td>
                             <td className={cn('py-2 px-4 text-right font-medium', item.resultado >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
                               {formatCurrency(item.resultado)}
                             </td>
@@ -312,7 +312,7 @@ export default function Consolidador() {
           })}
 
           {filteredConsolidated.length === 0 && (
-            <div className="text-center py-12 text-somus-gray-400">
+            <div className="text-center py-12 text-somus-text-tertiary">
               Nenhum cliente encontrado
             </div>
           )}

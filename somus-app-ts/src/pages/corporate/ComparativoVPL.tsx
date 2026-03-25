@@ -162,6 +162,9 @@ export default function ComparativoVPL() {
     }
   }
 
+  const [vpMesInicio, setVpMesInicio] = useState(0);
+  const [vpMesFim, setVpMesFim] = useState(999);
+
   // Per-month VP table
   const allVPRows = useMemo(() => {
     if (!result) return [];
@@ -174,6 +177,11 @@ export default function ComparativoVPL() {
     }
     return rows;
   }, [result]);
+
+  const filteredVPRows = useMemo(() => {
+    if (vpMesInicio <= 0 && vpMesFim >= 999) return allVPRows;
+    return allVPRows.filter((r) => r.mes >= vpMesInicio && r.mes <= vpMesFim);
+  }, [allVPRows, vpMesInicio, vpMesFim]);
 
   const parcelaMediaPos = useMemo(() => {
     if (!result || !result.pv_pos_t_detail.length) return 0;
@@ -336,8 +344,27 @@ export default function ComparativoVPL() {
             {/* Per-month VP Table */}
             <div className="bg-somus-bg-secondary border border-somus-border rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-somus-border flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-somus-text-primary">Tabela de VP por Mês</h3>
-                <span className="text-[10px] text-somus-text-tertiary">{allVPRows.length} registros</span>
+                <h3 className="text-sm font-semibold text-somus-text-primary">Tabela de VP por Mes</h3>
+                <span className="text-[10px] text-somus-text-tertiary">{filteredVPRows.length} registros</span>
+              </div>
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-somus-border/50">
+                <span className="text-xs text-somus-text-secondary">Filtrar:</span>
+                <input
+                  type="number"
+                  placeholder="Mes inicio"
+                  value={vpMesInicio || ''}
+                  onChange={(e) => setVpMesInicio(Number(e.target.value) || 0)}
+                  className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+                />
+                <span className="text-somus-text-tertiary">a</span>
+                <input
+                  type="number"
+                  placeholder="Mes fim"
+                  value={vpMesFim === 999 ? '' : vpMesFim}
+                  onChange={(e) => setVpMesFim(Number(e.target.value) || 999)}
+                  className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+                />
+                <button onClick={() => { setVpMesInicio(0); setVpMesFim(999); }} className="text-xs text-somus-text-tertiary hover:text-somus-text-primary">Limpar</button>
               </div>
               <div className="overflow-x-auto max-h-[400px]">
                 <table className="w-full text-xs">
@@ -351,7 +378,7 @@ export default function ComparativoVPL() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allVPRows.map((r) => (
+                    {filteredVPRows.map((r) => (
                       <tr key={r.mes} className={`border-b border-somus-border/30 ${r.mes === contemp ? 'bg-somus-gold/5' : ''}`}>
                         <td className="px-3 py-1.5 text-somus-text-primary font-medium">
                           {r.mes}

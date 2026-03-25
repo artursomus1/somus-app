@@ -120,6 +120,8 @@ export default function ConsorcioVsFinanc() {
   const setPage = useAppStore((s) => s.setPage);
   const [result, setResult] = useState<CompResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [flowMesInicio, setFlowMesInicio] = useState(0);
+  const [flowMesFim, setFlowMesFim] = useState(999);
 
   const engine = useMemo(() => new NasaEngine(), []);
 
@@ -180,6 +182,11 @@ export default function ConsorcioVsFinanc() {
     }
     return points;
   }, [result]);
+
+  const filteredCumulativeData = useMemo(() => {
+    if (flowMesInicio <= 0 && flowMesFim >= 999) return cumulativeData;
+    return cumulativeData.filter((p) => p.mes >= flowMesInicio && p.mes <= flowMesFim);
+  }, [cumulativeData, flowMesInicio, flowMesFim]);
 
   const vplPieConsorcio = result ? [
     { name: 'Fundo Comum', value: Math.abs(result.vpl_consorcio * 0.6) },
@@ -372,9 +379,30 @@ export default function ConsorcioVsFinanc() {
             {/* Cumulative payments chart */}
             {cumulativeData.length > 0 && (
               <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-somus-text-primary mb-4">Pagamentos Acumulados</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-somus-text-primary">Pagamentos Acumulados</h3>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-somus-text-secondary">Filtrar:</span>
+                    <input
+                      type="number"
+                      placeholder="Mes inicio"
+                      value={flowMesInicio || ''}
+                      onChange={(e) => setFlowMesInicio(Number(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+                    />
+                    <span className="text-somus-text-tertiary">a</span>
+                    <input
+                      type="number"
+                      placeholder="Mes fim"
+                      value={flowMesFim === 999 ? '' : flowMesFim}
+                      onChange={(e) => setFlowMesFim(Number(e.target.value) || 999)}
+                      className="w-24 px-2 py-1 text-xs bg-somus-bg-input text-somus-text-primary border border-somus-border rounded"
+                    />
+                    <button onClick={() => { setFlowMesInicio(0); setFlowMesFim(999); }} className="text-xs text-somus-text-tertiary hover:text-somus-text-primary">Limpar</button>
+                  </div>
+                </div>
                 <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={cumulativeData}>
+                  <LineChart data={filteredCumulativeData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" vertical={false} />
                     <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={{ stroke: '#1E2A3A' }} />
                     <YAxis tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
