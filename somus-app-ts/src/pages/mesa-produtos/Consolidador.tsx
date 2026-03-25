@@ -187,26 +187,26 @@ export default function Consolidador() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-5 w-5 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Total Clientes</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{totalClientes}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <Briefcase className="h-5 w-5 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Valor Total</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalValor)}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Resultado Total</span>
           </div>
-          <div className={cn('text-2xl font-bold', totalResultado >= 0 ? 'text-emerald-600' : 'text-red-500')}>
+          <div className={cn('text-2xl font-bold', totalResultado >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
             {formatCurrency(totalResultado)}
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function Consolidador() {
                 {/* Client Row */}
                 <button
                   onClick={() => toggleExpand(client.cpfCnpj)}
-                  className="w-full flex items-center justify-between py-3 px-4 bg-white hover:bg-somus-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-4 bg-somus-bg-secondary hover:bg-somus-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className={cn(
@@ -265,7 +265,7 @@ export default function Consolidador() {
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-somus-gray-400">Resultado</div>
-                      <div className={cn('text-sm font-medium', client.resultadoTotal >= 0 ? 'text-emerald-600' : 'text-red-500')}>
+                      <div className={cn('text-sm font-medium', client.resultadoTotal >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
                         {formatCurrency(client.resultadoTotal)}
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export default function Consolidador() {
                             <td className="py-2 px-4 text-right text-somus-gray-600">{item.quantidade}</td>
                             <td className="py-2 px-4 text-right text-somus-gray-600">{formatCurrency(item.precoMedio)}</td>
                             <td className="py-2 px-4 text-right font-medium text-somus-gray-900">{formatCurrency(item.valorAtual)}</td>
-                            <td className={cn('py-2 px-4 text-right font-medium', item.resultado >= 0 ? 'text-emerald-600' : 'text-red-500')}>
+                            <td className={cn('py-2 px-4 text-right font-medium', item.resultado >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
                               {formatCurrency(item.resultado)}
                             </td>
                           </tr>

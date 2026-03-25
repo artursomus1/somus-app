@@ -186,21 +186,21 @@ export default function EnvioSaldos() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Clientes</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{filteredSaldos.length}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Total Disponivel</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalDisponivel)}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Total Aplicado</span>
@@ -255,7 +255,7 @@ export default function EnvioSaldos() {
                 <tr key={s.id} className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors">
                   <td className="py-3 px-4 text-somus-gray-600">{s.assessor}</td>
                   <td className="py-3 px-4 font-medium text-somus-gray-900">{s.cliente}</td>
-                  <td className={cn('py-3 px-4 text-right font-medium', s.saldoDisponivel > 50000 ? 'text-emerald-600' : 'text-somus-gray-900')}>
+                  <td className={cn('py-3 px-4 text-right font-medium', s.saldoDisponivel > 50000 ? 'text-somus-green-400' : 'text-somus-gray-900')}>
                     {formatCurrency(s.saldoDisponivel)}
                   </td>
                   <td className="py-3 px-4 text-right text-somus-gray-700">{formatCurrency(s.saldoAplicado)}</td>
@@ -322,7 +322,7 @@ export default function EnvioSaldos() {
                   {previewItems.map((item) => (
                     <tr key={item.id}>
                       <td className="py-2 px-3 border border-somus-gray-200">{item.cliente}</td>
-                      <td className={cn('py-2 px-3 border border-somus-gray-200 text-right', item.saldoDisponivel > 50000 && 'text-emerald-600 font-medium')}>
+                      <td className={cn('py-2 px-3 border border-somus-gray-200 text-right', item.saldoDisponivel > 50000 && 'text-somus-green-400 font-medium')}>
                         {formatCurrency(item.saldoDisponivel)}
                       </td>
                       <td className="py-2 px-3 border border-somus-gray-200 text-right">

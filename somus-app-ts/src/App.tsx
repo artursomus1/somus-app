@@ -26,6 +26,10 @@ import {
   List,
   LineChart,
   Presentation,
+  BadgeDollarSign,
+  Landmark,
+  Receipt,
+  Combine,
 } from 'lucide-react';
 import {
   useAppStore,
@@ -65,6 +69,11 @@ import ResumoCliente from './pages/corporate/ResumoCliente';
 import GeradorPropostas from './pages/corporate/GeradorPropostas';
 import FluxoReceitas from './pages/corporate/FluxoReceitas';
 import Cenarios from './pages/corporate/Cenarios';
+import VendaOperacao from './pages/corporate/VendaOperacao';
+import CreditoLance from './pages/corporate/CreditoLance';
+import ConsolidacaoCotas from './pages/corporate/ConsolidacaoCotas';
+import CustosAcessorios from './pages/corporate/CustosAcessorios';
+import CustoCombinado from './pages/corporate/CustoCombinado';
 
 // Seguros
 import RenovacoesAnuais from './pages/seguros/RenovacoesAnuais';
@@ -98,6 +107,11 @@ const PAGE_COMPONENTS: Record<string, Record<string, React.FC>> = {
     cenarios: Cenarios,
     'gerador-propostas': GeradorPropostas,
     'fluxo-receitas': FluxoReceitas,
+    'venda-operacao': VendaOperacao,
+    'credito-lance': CreditoLance,
+    'consolidacao': ConsolidacaoCotas,
+    'custos-acessorios': CustosAcessorios,
+    'custo-combinado': CustoCombinado,
   },
   seguros: {
     renovacoes: RenovacoesAnuais,
@@ -126,6 +140,10 @@ const ICON_MAP: Record<string, any> = {
   List,
   LineChart,
   Presentation,
+  BadgeDollarSign,
+  Landmark,
+  Receipt,
+  Combine,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

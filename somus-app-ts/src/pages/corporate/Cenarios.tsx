@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ArrowLeft,
   Layers,
@@ -21,6 +21,7 @@ import { Modal } from '@components/Modal';
 import { Select } from '@components/Select';
 import { ChartCard, CHART_COLORS } from '@components/ChartCard';
 import { useAppStore } from '@/stores/appStore';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { cn } from '@/utils/cn';
 import { calcularFluxoConsorcio } from '@engine/index';
 
@@ -39,19 +40,6 @@ interface SavedScenario {
   lanceLivreValor: number;
   lanceEmbutidoValor: number;
   timestamp: string;
-}
-
-// ── Persistence ─────────────────────────────────────────────────────────────
-
-function loadCenarios(): SavedScenario[] {
-  try {
-    const raw = localStorage.getItem('somus_cenarios');
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveCenarios(list: SavedScenario[]) {
-  localStorage.setItem('somus_cenarios', JSON.stringify(list));
 }
 
 // ── Format helpers ──────────────────────────────────────────────────────────
@@ -224,17 +212,14 @@ function ScenarioCard({ scenario, selected, onToggleSelect, onDelete }: {
 
 export default function Cenarios() {
   const setPage = useAppStore((s) => s.setPage);
-  const [cenarios, setCenarios] = useState<SavedScenario[]>([]);
+  const [cenarios, setCenarios] = usePersistedState<SavedScenario[]>('cenarios', []);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
 
-  useEffect(() => { setCenarios(loadCenarios()); }, []);
-
   const persist = useCallback((list: SavedScenario[]) => {
     setCenarios(list);
-    saveCenarios(list);
-  }, []);
+  }, [setCenarios]);
 
   function handleSave(nome: string, params: Record<string, any>) {
     if (cenarios.length >= 10) {

@@ -200,7 +200,7 @@ export default function Informativo() {
                   {sent ? 'Rascunhos Criados!' : 'Enviar'}
                 </Button>
                 {sent && (
-                  <span className="text-sm text-emerald-600 flex items-center gap-1">
+                  <span className="text-sm text-somus-green-400 flex items-center gap-1">
                     <Check className="h-4 w-4" /> {selecionados.length} rascunhos criados
                   </span>
                 )}

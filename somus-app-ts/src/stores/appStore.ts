@@ -42,6 +42,11 @@ export const MODULE_PAGES: Record<ModuleName, PageDef[]> = {
     { key: 'cenarios', label: 'Cenários', icon: 'FolderOpen' },
     { key: 'gerador-propostas', label: 'Propostas', icon: 'Presentation' },
     { key: 'fluxo-receitas', label: 'Fluxo Receitas', icon: 'DollarSign' },
+    { key: 'venda-operacao', label: 'Venda de Operação', icon: 'BadgeDollarSign' },
+    { key: 'credito-lance', label: 'Crédito p/ Lance', icon: 'Landmark' },
+    { key: 'consolidacao', label: 'Consolidação', icon: 'Layers' },
+    { key: 'custos-acessorios', label: 'Custos Acessórios', icon: 'Receipt' },
+    { key: 'custo-combinado', label: 'Custo Combinado', icon: 'Combine' },
   ],
   seguros: [
     { key: 'renovacoes', label: 'Renovacoes Anuais', icon: 'ShieldCheck' },

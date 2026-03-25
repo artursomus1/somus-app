@@ -265,10 +265,10 @@ export default function FluxoRF() {
                       className={cn(
                         'inline-block px-2 py-0.5 text-xs rounded-full font-medium',
                         evt.tipoEvento === 'Vencimento'
-                          ? 'bg-red-50 text-red-700'
+                          ? 'bg-red-500/10 text-red-400'
                           : evt.tipoEvento === 'Cupom'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-blue-50 text-blue-700'
+                          ? 'bg-amber-500/10 text-amber-400'
+                          : 'bg-blue-500/10 text-blue-400'
                       )}
                     >
                       {evt.tipoEvento}

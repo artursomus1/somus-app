@@ -59,20 +59,20 @@ const MESES_FILTRO = [
 
 const STATUS_CONFIG: Record<RenovacaoStatus, { bg: string; text: string; label: string; icon: React.ReactNode }> = {
   proxima: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
     label: 'Proxima',
     icon: <Clock className="h-3.5 w-3.5" />,
   },
   vencida: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
+    bg: 'bg-red-500/10',
+    text: 'text-red-400',
     label: 'Vencida',
     icon: <AlertTriangle className="h-3.5 w-3.5" />,
   },
   renovada: {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
+    bg: 'bg-somus-green-500/10',
+    text: 'text-somus-green-400',
     label: 'Renovada',
     icon: <Check className="h-3.5 w-3.5" />,
   },
@@ -267,26 +267,26 @@ export default function RenovacoesAnuais() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="h-5 w-5 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Total Renovacoes</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{totalRenovacoes}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-somus-green" />
             <span className="text-sm text-somus-gray-500">Total Premios</span>
           </div>
           <div className="text-2xl font-bold text-somus-gray-900">{formatCurrency(totalPremios)}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-5 w-5 text-amber-500" />
+            <Calendar className="h-5 w-5 text-amber-400" />
             <span className="text-sm text-somus-gray-500">Vencendo Este Mes</span>
           </div>
-          <div className="text-2xl font-bold text-amber-600">{vencendoEsteMes}</div>
+          <div className="text-2xl font-bold text-amber-400">{vencendoEsteMes}</div>
         </div>
       </div>
 
@@ -362,7 +362,7 @@ export default function RenovacoesAnuais() {
                     key={r.id}
                     className={cn(
                       'border-b border-somus-gray-100 transition-colors',
-                      r.status === 'vencida' ? 'bg-red-50/30 hover:bg-red-50/50' : 'hover:bg-somus-gray-50'
+                      r.status === 'vencida' ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-somus-gray-50'
                     )}
                   >
                     <td className="py-3 px-4 font-medium text-somus-gray-900">{r.cliente}</td>

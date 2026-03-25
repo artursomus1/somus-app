@@ -187,26 +187,26 @@ export default function InfoAgio() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
+            <TrendingUp className="h-4 w-4 text-somus-green-400" />
             <span className="text-sm text-somus-gray-500">Com Agio</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-600">{totalAgio}</div>
+          <div className="text-2xl font-bold text-somus-green-400">{totalAgio}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingDown className="h-4 w-4 text-red-500" />
+            <TrendingDown className="h-4 w-4 text-red-400" />
             <span className="text-sm text-somus-gray-500">Com Desagio</span>
           </div>
-          <div className="text-2xl font-bold text-red-500">{totalDesagio}</div>
+          <div className="text-2xl font-bold text-red-400">{totalDesagio}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-4">
+        <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4">
           <div className="flex items-center gap-2 mb-2">
             <ArrowUpDown className="h-4 w-4 text-somus-gray-400" />
             <span className="text-sm text-somus-gray-500">Media Agio</span>
           </div>
-          <div className={cn('text-2xl font-bold', avgAgio >= 0 ? 'text-emerald-600' : 'text-red-500')}>
+          <div className={cn('text-2xl font-bold', avgAgio >= 0 ? 'text-somus-green-400' : 'text-red-400')}>
             {formatPercent(avgAgio)}
           </div>
         </div>
@@ -282,9 +282,9 @@ export default function InfoAgio() {
                       className={cn(
                         'inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full font-semibold',
                         item.agioPct > 0
-                          ? 'bg-emerald-50 text-emerald-700'
+                          ? 'bg-somus-green-500/10 text-somus-green-400'
                           : item.agioPct < 0
-                          ? 'bg-red-50 text-red-700'
+                          ? 'bg-red-500/10 text-red-400'
                           : 'bg-somus-gray-100 text-somus-gray-600'
                       )}
                     >

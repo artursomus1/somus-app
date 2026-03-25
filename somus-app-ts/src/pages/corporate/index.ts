@@ -9,3 +9,8 @@ export { default as ResumoCliente } from './ResumoCliente';
 export { default as GeradorPropostas } from './GeradorPropostas';
 export { default as FluxoReceitas } from './FluxoReceitas';
 export { default as Cenarios } from './Cenarios';
+export { default as VendaOperacao } from './VendaOperacao';
+export { default as CreditoLance } from './CreditoLance';
+export { default as ConsolidacaoCotas } from './ConsolidacaoCotas';
+export { default as CustosAcessorios } from './CustosAcessorios';
+export { default as CustoCombinado } from './CustoCombinado';

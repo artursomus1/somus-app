@@ -53,15 +53,15 @@ const DEFAULT_TASKS: Task[] = [
 
 const COLUMNS: { key: Status; label: string; icon: React.ReactNode; color: string }[] = [
   { key: 'todo', label: 'A Fazer', icon: <Clock className="h-4 w-4" />, color: 'text-somus-gray-500' },
-  { key: 'inprogress', label: 'Em Progresso', icon: <AlertCircle className="h-4 w-4" />, color: 'text-blue-500' },
-  { key: 'done', label: 'Concluido', icon: <CheckCircle2 className="h-4 w-4" />, color: 'text-emerald-500' },
+  { key: 'inprogress', label: 'Em Progresso', icon: <AlertCircle className="h-4 w-4" />, color: 'text-blue-400' },
+  { key: 'done', label: 'Concluido', icon: <CheckCircle2 className="h-4 w-4" />, color: 'text-somus-green-400' },
 ];
 
 const PRIORITY_STYLES: Record<Priority, { bg: string; text: string; label: string }> = {
   baixa: { bg: 'bg-somus-gray-100', text: 'text-somus-gray-600', label: 'Baixa' },
-  media: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Media' },
-  alta: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Alta' },
-  urgente: { bg: 'bg-red-50', text: 'text-red-700', label: 'Urgente' },
+  media: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Media' },
+  alta: { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Alta' },
+  urgente: { bg: 'bg-red-500/10', text: 'text-red-400', label: 'Urgente' },
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -266,7 +266,7 @@ export default function Tarefas() {
                     draggable
                     onDragStart={() => handleDragStart(task.id)}
                     className={cn(
-                      'bg-white rounded-lg border border-somus-gray-200 p-4 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
+                      'bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-4 cursor-grab active:cursor-grabbing hover:border-somus-gray-300 transition-colors',
                       draggedTaskId === task.id && 'opacity-50'
                     )}
                   >
@@ -284,7 +284,7 @@ export default function Tarefas() {
                         </button>
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="text-somus-gray-400 hover:text-red-500 transition-colors p-0.5"
+                          className="text-somus-gray-400 hover:text-red-400 transition-colors p-0.5"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -315,7 +315,7 @@ export default function Tarefas() {
                             className={cn(
                               'text-xs flex items-center gap-1',
                               isOverdue(task.dueDate) && task.status !== 'done'
-                                ? 'text-red-500 font-medium'
+                                ? 'text-red-400 font-medium'
                                 : 'text-somus-gray-400'
                             )}
                           >
@@ -350,7 +350,7 @@ export default function Tarefas() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="bg-somus-bg-secondary rounded-xl shadow-xl border border-somus-gray-200 w-full max-w-md mx-4">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-somus-gray-200">
               <h3 className="text-lg font-semibold text-somus-gray-900">

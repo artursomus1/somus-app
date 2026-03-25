@@ -213,18 +213,20 @@ export default function Dashboard() {
           <div className="h-72 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={receitaByEquipe}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="equipe" fontSize={12} tick={{ fill: '#6B7280' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" />
+                <XAxis dataKey="equipe" fontSize={12} tick={{ fill: '#8B95A5' }} />
                 <YAxis
                   fontSize={12}
-                  tick={{ fill: '#6B7280' }}
+                  tick={{ fill: '#8B95A5' }}
                   tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
                 />
                 <Tooltip
                   formatter={(value: number) => [formatCurrency(value), 'Receita']}
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #E5E7EB',
+                    backgroundColor: '#0F1419',
+                    border: '1px solid #1E2A3A',
+                    color: '#E8ECF0',
                     fontSize: '12px',
                   }}
                 />
@@ -257,14 +259,16 @@ export default function Dashboard() {
                   formatter={(value: number) => [formatCurrency(value), 'Receita']}
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #E5E7EB',
+                    backgroundColor: '#0F1419',
+                    border: '1px solid #1E2A3A',
+                    color: '#E8ECF0',
                     fontSize: '12px',
                   }}
                 />
                 <Legend
                   iconType="circle"
                   iconSize={8}
-                  wrapperStyle={{ fontSize: '11px' }}
+                  wrapperStyle={{ fontSize: '11px', color: '#8B95A5' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -277,22 +281,24 @@ export default function Dashboard() {
         <div className="h-72 mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={evolucaoMensal}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="mes" fontSize={12} tick={{ fill: '#6B7280' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" />
+              <XAxis dataKey="mes" fontSize={12} tick={{ fill: '#8B95A5' }} />
               <YAxis
                 fontSize={12}
-                tick={{ fill: '#6B7280' }}
+                tick={{ fill: '#8B95A5' }}
                 tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
               />
               <Tooltip
                 formatter={(value: number) => [formatCurrency(value)]}
                 contentStyle={{
                   borderRadius: '8px',
-                  border: '1px solid #E5E7EB',
+                  backgroundColor: '#0F1419',
+                  border: '1px solid #1E2A3A',
+                  color: '#E8ECF0',
                   fontSize: '12px',
                 }}
               />
-              <Legend iconType="line" wrapperStyle={{ fontSize: '12px' }} />
+              <Legend iconType="line" wrapperStyle={{ fontSize: '12px', color: '#8B95A5' }} />
               <Line
                 type="monotone"
                 dataKey="receita"
@@ -386,7 +392,7 @@ function KPICard({
   trendUp: boolean;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+    <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-somus-gray-500 font-medium">{title}</span>
         <div className="p-2 rounded-lg bg-somus-green/10 text-somus-green">
@@ -398,7 +404,7 @@ function KPICard({
         <span
           className={cn(
             'text-xs font-medium',
-            trendUp ? 'text-emerald-600' : 'text-red-500'
+            trendUp ? 'text-somus-green-400' : 'text-red-400'
           )}
         >
           {trendUp ? '\u2191' : '\u2193'} {trend}

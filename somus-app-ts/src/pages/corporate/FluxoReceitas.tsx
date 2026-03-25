@@ -19,21 +19,9 @@ import { KPICard } from '@components/KPICard';
 import { Modal } from '@components/Modal';
 import { Select } from '@components/Select';
 import { useAppStore } from '@/stores/appStore';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { cn } from '@/utils/cn';
 import type { Operacao, PagamentoOperacao } from '@/types';
-
-// ── Persistence ─────────────────────────────────────────────────────────────
-
-function loadOperacoes(): Operacao[] {
-  try {
-    const raw = localStorage.getItem('somus_operacoes');
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveOperacoes(ops: Operacao[]) {
-  localStorage.setItem('somus_operacoes', JSON.stringify(ops));
-}
 
 function generateId(): string {
   return `op_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -246,18 +234,15 @@ function OperacaoRow({ op, onEdit, onDelete, onTogglePagamento }: {
 
 export default function FluxoReceitas() {
   const setPage = useAppStore((s) => s.setPage);
-  const [operacoes, setOperacoes] = useState<Operacao[]>([]);
+  const [operacoes, setOperacoes] = usePersistedState<Operacao[]>('operacoes', []);
   const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingOp, setEditingOp] = useState<Operacao | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
 
-  useEffect(() => { setOperacoes(loadOperacoes()); }, []);
-
   const persist = useCallback((ops: Operacao[]) => {
     setOperacoes(ops);
-    saveOperacoes(ops);
-  }, []);
+  }, [setOperacoes]);
 
   function handleSave(op: Operacao) {
     const idx = operacoes.findIndex((o) => o.id === op.id);

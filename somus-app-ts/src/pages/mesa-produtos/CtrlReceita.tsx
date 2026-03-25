@@ -241,7 +241,7 @@ export default function CtrlReceita() {
       </Card>
 
       {/* Total KPI */}
-      <div className="bg-white rounded-lg shadow-sm border border-somus-gray-200 p-5">
+      <div className="bg-somus-bg-secondary rounded-lg border border-somus-gray-200 p-5">
         <div className="flex items-center gap-3 mb-1">
           <div className="p-2 rounded-lg bg-somus-green/10 text-somus-green">
             <DollarSign className="h-5 w-5" />
@@ -259,7 +259,7 @@ export default function CtrlReceita() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-somus-gray-200">
-                <th className="text-left py-3 px-3 font-semibold text-somus-gray-600 sticky left-0 bg-white min-w-[160px]">
+                <th className="text-left py-3 px-3 font-semibold text-somus-gray-600 sticky left-0 bg-somus-bg-secondary min-w-[160px]">
                   Assessor
                 </th>
                 <th className="text-left py-3 px-2 font-semibold text-somus-gray-600 min-w-[80px]">
@@ -284,7 +284,7 @@ export default function CtrlReceita() {
                   key={row.assessor}
                   className="border-b border-somus-gray-100 hover:bg-somus-gray-50 transition-colors"
                 >
-                  <td className="py-2.5 px-3 font-medium text-somus-gray-900 sticky left-0 bg-white">
+                  <td className="py-2.5 px-3 font-medium text-somus-gray-900 sticky left-0 bg-somus-bg-secondary">
                     {row.assessor}
                   </td>
                   <td className="py-2.5 px-2">

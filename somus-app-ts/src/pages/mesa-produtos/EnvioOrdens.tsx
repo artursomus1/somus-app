@@ -164,11 +164,11 @@ export default function EnvioOrdens() {
   const statusIcon = (status: Ordem['status']) => {
     switch (status) {
       case 'pendente':
-        return <Clock className="h-4 w-4 text-amber-500" />;
+        return <Clock className="h-4 w-4 text-amber-400" />;
       case 'enviada':
-        return <Send className="h-4 w-4 text-blue-500" />;
+        return <Send className="h-4 w-4 text-blue-400" />;
       case 'executada':
-        return <Check className="h-4 w-4 text-emerald-500" />;
+        return <Check className="h-4 w-4 text-somus-green-400" />;
     }
   };
 
@@ -179,9 +179,9 @@ export default function EnvioOrdens() {
   };
 
   const statusColor: Record<Ordem['status'], string> = {
-    pendente: 'bg-amber-50 text-amber-700',
-    enviada: 'bg-blue-50 text-blue-700',
-    executada: 'bg-emerald-50 text-emerald-700',
+    pendente: 'bg-amber-500/10 text-amber-400',
+    enviada: 'bg-blue-500/10 text-blue-400',
+    executada: 'bg-somus-green-500/10 text-somus-green-400',
   };
 
   return (
@@ -298,8 +298,8 @@ export default function EnvioOrdens() {
                       className={cn(
                         'inline-block px-2 py-0.5 text-xs rounded-full font-medium',
                         o.tipo === 'Compra'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-red-50 text-red-700'
+                          ? 'bg-somus-green-500/10 text-somus-green-400'
+                          : 'bg-red-500/10 text-red-400'
                       )}
                     >
                       {o.tipo}

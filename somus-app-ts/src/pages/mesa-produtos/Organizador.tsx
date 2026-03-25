@@ -255,7 +255,7 @@ export default function Organizador() {
                         </select>
                         <button
                           onClick={() => removeFile(f.id)}
-                          className="text-somus-gray-400 hover:text-red-500 transition-colors"
+                          className="text-somus-gray-400 hover:text-red-400 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -350,7 +350,7 @@ export default function Organizador() {
         >
           <div className="mt-4 overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white">
+              <thead className="sticky top-0 bg-somus-bg-secondary">
                 <tr className="border-b border-somus-gray-200">
                   {mergedData[0].map((header: string, i: number) => (
                     <th key={i} className="text-left py-3 px-3 font-semibold text-somus-gray-600 whitespace-nowrap">

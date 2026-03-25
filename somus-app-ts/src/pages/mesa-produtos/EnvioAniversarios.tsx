@@ -237,7 +237,7 @@ export default function EnvioAniversarios() {
                       calendarYear === currentYear &&
                       'bg-somus-green text-white font-bold',
                     d.hasAniversario && !(d.day === today.getDate() && calendarMonth === currentMonth) &&
-                      'bg-amber-100 text-amber-800 font-semibold',
+                      'bg-amber-500/15 text-amber-300 font-semibold',
                     !d.hasAniversario &&
                       !(d.day === today.getDate() && calendarMonth === currentMonth && calendarYear === currentYear) &&
                       'text-somus-gray-600 hover:bg-somus-gray-50'
@@ -247,7 +247,7 @@ export default function EnvioAniversarios() {
                     <span className="relative">
                       {d.day}
                       {d.hasAniversario && (
-                        <Cake className="absolute -top-2 -right-3 h-3 w-3 text-amber-600" />
+                        <Cake className="absolute -top-2 -right-3 h-3 w-3 text-amber-400" />
                       )}
                     </span>
                   )}
@@ -257,7 +257,7 @@ export default function EnvioAniversarios() {
 
             <div className="mt-4 flex items-center gap-4 text-xs text-somus-gray-500">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
+                <div className="w-3 h-3 rounded bg-amber-500/15 border border-amber-500/30" />
                 Aniversario
               </div>
               <div className="flex items-center gap-1">
@@ -308,12 +308,12 @@ export default function EnvioAniversarios() {
                         key={a.id}
                         className={cn(
                           'border-b border-somus-gray-100 transition-colors',
-                          isToday ? 'bg-amber-50' : 'hover:bg-somus-gray-50'
+                          isToday ? 'bg-amber-500/10' : 'hover:bg-somus-gray-50'
                         )}
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            {isToday && <Cake className="h-4 w-4 text-amber-500" />}
+                            {isToday && <Cake className="h-4 w-4 text-amber-400" />}
                             <span className="font-medium text-somus-gray-900">{a.cliente}</span>
                           </div>
                         </td>

@@ -221,7 +221,7 @@ export default function EnvioMesa() {
                       />
                       <button
                         onClick={() => removeRow(row.id)}
-                        className="text-somus-gray-400 hover:text-red-500 transition-colors p-1"
+                        className="text-somus-gray-400 hover:text-red-400 transition-colors p-1"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -254,7 +254,7 @@ export default function EnvioMesa() {
                   {sent ? 'Enviado!' : 'Enviar'}
                 </Button>
                 {sent && (
-                  <span className="text-sm text-emerald-600 flex items-center gap-1">
+                  <span className="text-sm text-somus-green-400 flex items-center gap-1">
                     <Check className="h-4 w-4" /> {selecionados.length} rascunhos criados
                   </span>
                 )}
