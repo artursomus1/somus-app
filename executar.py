@@ -14,6 +14,11 @@ from nasa_engine_hd import (NasaEngineHD, NasaConfig, goal_seek,
                             calcular_fluxo_consorcio, calcular_vpl_hd,
                             calcular_financiamento, comparar_consorcio_financiamento,
                             _annual_from_monthly, _monthly_from_annual, _npv, _irr)
+from gerar_pdf_nasa_hd import (OperacaoCompleta, gerar_relatorio_completo,
+                                gerar_pdf_resumo_executivo, gerar_pdf_fluxo_financeiro,
+                                gerar_pdf_analise_vpl, gerar_pdf_comparativo,
+                                gerar_pdf_venda_operacao, gerar_pdf_credito_lance,
+                                gerar_excel_completo)
 from collections import defaultdict
 
 import customtkinter as ctk
@@ -448,6 +453,19 @@ class App(ctk.CTk):
         self.pages = {}
         self._nasa_engine = NasaEngineHD()
         self._cenarios = []
+
+        # NASA HD report state
+        self._last_params = None
+        self._last_fluxo = None
+        self._last_vpl = None
+        self._last_resumo = None
+        self._last_parcelas = None
+        self._last_financiamento = None
+        self._last_comparativo = None
+        self._last_venda = None
+        self._last_credito_lance = None
+        self._last_custo_combinado = None
+        self._last_credito_equiv = None
 
         # Grid: sidebar | content
         self.grid_columnconfigure(1, weight=1)
@@ -7006,6 +7024,22 @@ class App(ctk.CTk):
         )
         self.cs_btn_email.pack(side="left", padx=(0, 10))
 
+        self.cs_btn_relatorio_hd = ctk.CTkButton(
+            btn_frame, text="  Relatorio NASA HD",
+            font=("Segoe UI", 13, "bold"), fg_color="#7c3aed",
+            hover_color="#6d28d9", height=44, corner_radius=10,
+            command=self._on_gerar_relatorio_completo, state="disabled",
+        )
+        self.cs_btn_relatorio_hd.pack(side="left", padx=(0, 10))
+
+        self.cs_btn_excel_hd = ctk.CTkButton(
+            btn_frame, text="  Exportar Excel",
+            font=("Segoe UI", 13, "bold"), fg_color=ACCENT_ORANGE,
+            hover_color="#c96f1f", height=44, corner_radius=10,
+            command=self._on_exportar_excel_nasa, state="disabled",
+        )
+        self.cs_btn_excel_hd.pack(side="left", padx=(0, 10))
+
         ctk.CTkButton(
             btn_frame, text="  Limpar",
             font=("Segoe UI", 12), fg_color="#6b7280",
@@ -7202,6 +7236,14 @@ class App(ctk.CTk):
         )
         self.vpl_btn_pdf.pack(side="left", padx=(10, 10))
 
+        self.vpl_btn_pdf_hd = ctk.CTkButton(
+            btn_frame, text="  PDF VPL Completo",
+            font=("Segoe UI", 13, "bold"), fg_color="#7c3aed",
+            hover_color="#6d28d9", height=44, corner_radius=10,
+            command=self._on_gerar_pdf_vpl_hd, state="disabled",
+        )
+        self.vpl_btn_pdf_hd.pack(side="left", padx=(0, 10))
+
         ctk.CTkButton(
             btn_frame, text="  Limpar",
             font=("Segoe UI", 12), fg_color="#6b7280",
@@ -7343,6 +7385,14 @@ class App(ctk.CTk):
             hover_color=self._darken(ACCENT_GREEN), height=44, corner_radius=10,
             command=self._on_comparar_consorcio_financ,
         ).pack(side="left", padx=(0, 10))
+
+        self.cf_btn_pdf_hd = ctk.CTkButton(
+            btn_frame, text="  PDF Comparativo",
+            font=("Segoe UI", 13, "bold"), fg_color="#7c3aed",
+            hover_color="#6d28d9", height=44, corner_radius=10,
+            command=self._on_gerar_pdf_comparativo_hd, state="disabled",
+        )
+        self.cf_btn_pdf_hd.pack(side="left", padx=(0, 10))
 
         ctk.CTkButton(
             btn_frame, text="  Limpar",
@@ -10329,6 +10379,19 @@ class App(ctk.CTk):
         self._cs_last_fluxo = fluxo_result
         self._cs_last_vpl = vpl_result
 
+        # Save for NASA HD reports
+        self._last_params = params
+        self._last_fluxo = fluxo_result
+        self._last_vpl = vpl_result
+        try:
+            self._last_resumo = self._nasa_engine.gerar_resumo_cliente(params, fluxo_result, vpl_result)
+        except Exception:
+            self._last_resumo = {}
+        try:
+            self._last_parcelas = self._nasa_engine.gerar_parcelas(fluxo_result)
+        except Exception:
+            self._last_parcelas = []
+
         # Backwards compat for PDF generator
         totais = fluxo_result.get("totais", {})
         metricas = fluxo_result.get("metricas", {})
@@ -10616,6 +10679,8 @@ class App(ctk.CTk):
         self.cs_btn_relatorio.configure(state="normal")
         self.cs_btn_email.configure(state="normal")
         self.cs_btn_salvar_cenario.configure(state="normal")
+        self.cs_btn_relatorio_hd.configure(state="normal")
+        self.cs_btn_excel_hd.configure(state="normal")
 
     def _on_gerar_pdf_consorcio(self):
         if not hasattr(self, '_consorcio_dados') or not self._consorcio_dados:
@@ -10904,9 +10969,16 @@ class App(ctk.CTk):
         self.cs_btn_relatorio.configure(state="disabled")
         self.cs_btn_email.configure(state="disabled")
         self.cs_btn_salvar_cenario.configure(state="disabled")
+        self.cs_btn_relatorio_hd.configure(state="disabled")
+        self.cs_btn_excel_hd.configure(state="disabled")
 
         if hasattr(self, '_consorcio_dados'):
             self._consorcio_dados = None
+        self._last_params = None
+        self._last_fluxo = None
+        self._last_vpl = None
+        self._last_resumo = None
+        self._last_parcelas = None
         self._cs_last_params = None
         self._cs_last_results = None
 
@@ -10947,6 +11019,11 @@ class App(ctk.CTk):
 
         # Salvar para PDF
         self._vpl_result = {**params, **vpl_r, **fluxo_r}
+
+        # Save for NASA HD VPL report
+        self._last_vpl_page_params = params
+        self._last_vpl_page_fluxo = fluxo_r
+        self._last_vpl_page_vpl = vpl_r
 
         # ======== Mostrar resultado ========
         for w in self.vpl_result_inner.winfo_children():
@@ -11237,6 +11314,7 @@ class App(ctk.CTk):
 
         # Habilitar PDF
         self.vpl_btn_pdf.configure(state="normal")
+        self.vpl_btn_pdf_hd.configure(state="normal")
 
     def _on_gerar_pdf_vpl(self):
         if not hasattr(self, '_vpl_result') or not self._vpl_result:
@@ -11344,7 +11422,11 @@ class App(ctk.CTk):
             font=("Segoe UI", 12), text_color=TEXT_TERTIARY
         ).pack(pady=20)
         self.vpl_btn_pdf.configure(state="disabled")
+        self.vpl_btn_pdf_hd.configure(state="disabled")
         self._vpl_result = None
+        self._last_vpl_page_params = None
+        self._last_vpl_page_fluxo = None
+        self._last_vpl_page_vpl = None
 
     # =================================================================
     #  HANDLERS: CONSÓRCIO VS FINANCIAMENTO
@@ -11380,6 +11462,11 @@ class App(ctk.CTk):
 
         # Calcular
         result = comparar_consorcio_financiamento(params_c, params_f)
+
+        # Save for NASA HD report
+        self._last_comparativo = result
+        self._last_comparativo_params_c = params_c
+        self._last_comparativo_params_f = params_f
 
         # ======== Mostrar resultado ========
         for w in self.cf_result_inner.winfo_children():
@@ -11687,6 +11774,9 @@ class App(ctk.CTk):
 
         _render_amort_rows(initial_amort_rows)
 
+        # Enable PDF button
+        self.cf_btn_pdf_hd.configure(state="normal")
+
     def _on_limpar_cf(self):
         defaults_c = {
             "cf_c_valor": "300000", "cf_c_prazo": "120", "cf_c_taxa": "18",
@@ -11709,6 +11799,8 @@ class App(ctk.CTk):
             text="Preencha ambos os lados e clique em 'Comparar'",
             font=("Segoe UI", 12), text_color=TEXT_TERTIARY
         ).pack(pady=20)
+        self.cf_btn_pdf_hd.configure(state="disabled")
+        self._last_comparativo = None
 
     # =================================================================
     #  PAGE: CORPORATE - VENDA DA OPERAÇÃO
@@ -11791,6 +11883,15 @@ class App(ctk.CTk):
         ctk.CTkButton(btn_frame, text="  Analisar Venda", font=("Segoe UI", 13, "bold"),
                       fg_color=ACCENT_GREEN, hover_color=self._darken(ACCENT_GREEN), height=44, corner_radius=10,
                       command=self._on_calcular_venda_operacao).pack(side="left", padx=(0, 10))
+
+        self.vo_btn_pdf_hd = ctk.CTkButton(
+            btn_frame, text="  PDF Venda",
+            font=("Segoe UI", 13, "bold"), fg_color="#7c3aed",
+            hover_color="#6d28d9", height=44, corner_radius=10,
+            command=self._on_gerar_pdf_venda_hd, state="disabled",
+        )
+        self.vo_btn_pdf_hd.pack(side="left", padx=(0, 10))
+
         ctk.CTkButton(btn_frame, text="  Limpar", font=("Segoe UI", 12), fg_color="#6b7280",
                       hover_color="#555d6a", height=44, corner_radius=10,
                       command=self._on_limpar_venda_operacao).pack(side="left", padx=(10, 0))
@@ -11839,6 +11940,12 @@ class App(ctk.CTk):
         fluxo = self._nasa_engine.calcular_fluxo_completo(params)
         params_venda = {"momento_venda": momento_venda, "valor_venda": valor_venda, "tma": tma_mensal}
         result = self._nasa_engine.calcular_venda_operacao(fluxo, params_venda)
+
+        # Save for NASA HD report
+        self._last_venda = result
+        self._last_venda_params = params
+        self._last_venda_fluxo = fluxo
+        self._last_venda_params_venda = params_venda
 
         for w in self.vo_result_inner.winfo_children():
             w.destroy()
@@ -11940,6 +12047,9 @@ class App(ctk.CTk):
                 ctk.CTkLabel(tbl_c, text=f"... mais {len(cf_c) - 50} meses",
                              font=("Segoe UI", 9), text_color=TEXT_TERTIARY).grid(row=max_show + 1, column=0, columnspan=2, padx=8, pady=4)
 
+        # Enable PDF button
+        self.vo_btn_pdf_hd.configure(state="normal")
+
     def _on_limpar_venda_operacao(self):
         defaults = {"vo_valor_carta": "3600000", "vo_prazo": "200", "vo_contemp": "11",
                     "vo_taxa_adm": "20", "vo_fundo_res": "3", "vo_seguro": "0",
@@ -11954,6 +12064,8 @@ class App(ctk.CTk):
             w.destroy()
         ctk.CTkLabel(self.vo_result_inner, text="Preencha os parâmetros e clique em 'Analisar Venda'",
                      font=("Segoe UI", 12), text_color=TEXT_TERTIARY).pack(pady=20)
+        self.vo_btn_pdf_hd.configure(state="disabled")
+        self._last_venda = None
 
     # =================================================================
     #  PAGE: CORPORATE - CRÉDITO PARA LANCE
@@ -12044,6 +12156,15 @@ class App(ctk.CTk):
         ctk.CTkButton(btn_frame, text="  Simular Crédito", font=("Segoe UI", 13, "bold"),
                       fg_color=ACCENT_GREEN, hover_color=self._darken(ACCENT_GREEN), height=44, corner_radius=10,
                       command=self._on_calcular_credito_lance).pack(side="left", padx=(0, 10))
+
+        self.cl_btn_pdf_hd = ctk.CTkButton(
+            btn_frame, text="  PDF Credito",
+            font=("Segoe UI", 13, "bold"), fg_color="#7c3aed",
+            hover_color="#6d28d9", height=44, corner_radius=10,
+            command=self._on_gerar_pdf_credito_hd, state="disabled",
+        )
+        self.cl_btn_pdf_hd.pack(side="left", padx=(0, 10))
+
         ctk.CTkButton(btn_frame, text="  Limpar", font=("Segoe UI", 12), fg_color="#6b7280",
                       hover_color="#555d6a", height=44, corner_radius=10,
                       command=self._on_limpar_credito_lance).pack(side="left", padx=(10, 0))
@@ -12082,6 +12203,10 @@ class App(ctk.CTk):
                   "avaliacao_garantia": aval, "comissao": comissao,
                   "calcular_iof": True, "antecipacao_mes": antecip_mes}
         result = self._nasa_engine.calcular_credito_lance(params)
+
+        # Save for NASA HD report
+        self._last_credito_lance = result
+        self._last_credito_lance_params = params
 
         for w in self.cl_result_inner.winfo_children():
             w.destroy()
@@ -12146,6 +12271,9 @@ class App(ctk.CTk):
                      text="O CET combinado (consórcio + crédito) pode ser calculado no Simulador principal.",
                      font=("Segoe UI", 10), text_color=TEXT_TERTIARY, anchor="w").pack(fill="x")
 
+        # Enable PDF button
+        self.cl_btn_pdf_hd.configure(state="normal")
+
     def _on_limpar_credito_lance(self):
         defaults = {"cl_valor": "100000", "cl_prazo": "60", "cl_taxa": "1.5",
                     "cl_carencia": "0", "cl_tac": "0", "cl_aval": "0",
@@ -12159,6 +12287,234 @@ class App(ctk.CTk):
             w.destroy()
         ctk.CTkLabel(self.cl_result_inner, text="Preencha os parâmetros e clique em 'Simular Crédito'",
                      font=("Segoe UI", 12), text_color=TEXT_TERTIARY).pack(pady=20)
+        self.cl_btn_pdf_hd.configure(state="disabled")
+        self._last_credito_lance = None
+
+    # =================================================================
+    #  NASA HD REPORT HELPERS & HANDLERS
+    # =================================================================
+    def _get_cliente_nome(self):
+        """Get client name from the Simulador page entries."""
+        try:
+            return self.cs_nome.get().strip() or "Cliente"
+        except Exception:
+            return "Cliente"
+
+    def _get_assessor(self):
+        """Get assessor name from the Simulador page entries."""
+        try:
+            return self.cs_assessor.get().strip() or ""
+        except Exception:
+            return ""
+
+    def _get_administradora(self):
+        """Get administradora from consorcio dados if available."""
+        try:
+            if hasattr(self, '_consorcio_dados') and self._consorcio_dados:
+                return self._consorcio_dados.get("administradora", "")
+            return ""
+        except Exception:
+            return ""
+
+    def _build_operacao_completa(self):
+        """Build OperacaoCompleta from the most recent calculations."""
+        op = OperacaoCompleta(
+            params=self._last_params or {},
+            config=self._nasa_engine.config.__dict__ if hasattr(self._nasa_engine, 'config') else {},
+            fluxo=self._last_fluxo or {},
+            vpl=self._last_vpl or {},
+            resumo=self._last_resumo or {},
+            parcelas=self._last_parcelas or [],
+            financiamento=getattr(self, '_last_financiamento', None),
+            comparativo=getattr(self, '_last_comparativo', None),
+            venda=getattr(self, '_last_venda', None),
+            credito_lance=getattr(self, '_last_credito_lance', None),
+            custo_combinado=getattr(self, '_last_custo_combinado', None),
+            credito_equivalente=getattr(self, '_last_credito_equiv', None),
+            cliente_nome=self._get_cliente_nome(),
+            assessor=self._get_assessor(),
+            administradora=self._get_administradora(),
+            data_geracao=datetime.now().strftime("%d/%m/%Y %H:%M"),
+        )
+        return op
+
+    def _on_gerar_relatorio_completo(self):
+        """Generate all PDF reports for the current operation."""
+        if not self._last_fluxo:
+            messagebox.showwarning("Aviso", "Calcule a simulacao primeiro antes de gerar o relatorio.")
+            return
+
+        try:
+            op = self._build_operacao_completa()
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            results = gerar_relatorio_completo(op, output_dir)
+
+            msg = "Relatorios gerados com sucesso:\n\n"
+            for name, path in results.items():
+                msg += f"  {name}: {os.path.basename(path)}\n"
+
+            messagebox.showinfo("Relatorio NASA HD", msg)
+
+            try:
+                os.startfile(output_dir)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar relatorio completo:\n{e}")
+
+    def _on_exportar_excel_nasa(self):
+        """Export complete Excel workbook."""
+        if not self._last_fluxo:
+            messagebox.showwarning("Aviso", "Calcule a simulacao primeiro antes de exportar.")
+            return
+
+        try:
+            op = self._build_operacao_completa()
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filepath = gerar_excel_completo(op, output_dir)
+            messagebox.showinfo("Excel Exportado",
+                                f"Planilha salva com sucesso!\n\n{os.path.basename(filepath)}")
+            try:
+                os.startfile(filepath)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao exportar Excel:\n{e}")
+
+    def _on_gerar_pdf_vpl_hd(self):
+        """Generate enhanced VPL PDF using NASA HD module."""
+        if not hasattr(self, '_last_vpl_page_vpl') or not self._last_vpl_page_vpl:
+            messagebox.showwarning("Aviso", "Execute a analise VPL primeiro.")
+            return
+
+        try:
+            op = OperacaoCompleta(
+                params=self._last_vpl_page_params or {},
+                config={},
+                fluxo=self._last_vpl_page_fluxo or {},
+                vpl=self._last_vpl_page_vpl or {},
+                resumo={},
+                parcelas=[],
+                cliente_nome=self._get_cliente_nome(),
+                assessor=self._get_assessor(),
+                administradora=self._get_administradora(),
+                data_geracao=datetime.now().strftime("%d/%m/%Y %H:%M"),
+            )
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filepath = gerar_pdf_analise_vpl(op, output_dir)
+            messagebox.showinfo("PDF VPL Gerado",
+                                f"PDF salvo com sucesso!\n\n{os.path.basename(filepath)}")
+            try:
+                os.startfile(filepath)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar PDF VPL:\n{e}")
+
+    def _on_gerar_pdf_comparativo_hd(self):
+        """Generate comparative PDF using NASA HD module."""
+        if not self._last_comparativo:
+            messagebox.showwarning("Aviso", "Execute a comparacao primeiro.")
+            return
+
+        try:
+            op = OperacaoCompleta(
+                params=getattr(self, '_last_comparativo_params_c', {}),
+                config={},
+                fluxo={},
+                vpl={},
+                resumo={},
+                parcelas=[],
+                comparativo=self._last_comparativo,
+                cliente_nome=self._get_cliente_nome(),
+                assessor=self._get_assessor(),
+                administradora=self._get_administradora(),
+                data_geracao=datetime.now().strftime("%d/%m/%Y %H:%M"),
+            )
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filepath = gerar_pdf_comparativo(op, output_dir)
+            messagebox.showinfo("PDF Comparativo Gerado",
+                                f"PDF salvo com sucesso!\n\n{os.path.basename(filepath)}")
+            try:
+                os.startfile(filepath)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar PDF comparativo:\n{e}")
+
+    def _on_gerar_pdf_venda_hd(self):
+        """Generate sale analysis PDF using NASA HD module."""
+        if not self._last_venda:
+            messagebox.showwarning("Aviso", "Execute a analise de venda primeiro.")
+            return
+
+        try:
+            op = OperacaoCompleta(
+                params=getattr(self, '_last_venda_params', {}),
+                config={},
+                fluxo=getattr(self, '_last_venda_fluxo', {}),
+                vpl={},
+                resumo={},
+                parcelas=[],
+                venda=self._last_venda,
+                cliente_nome=self._get_cliente_nome(),
+                assessor=self._get_assessor(),
+                administradora=self._get_administradora(),
+                data_geracao=datetime.now().strftime("%d/%m/%Y %H:%M"),
+            )
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filepath = gerar_pdf_venda_operacao(op, output_dir)
+            messagebox.showinfo("PDF Venda Gerado",
+                                f"PDF salvo com sucesso!\n\n{os.path.basename(filepath)}")
+            try:
+                os.startfile(filepath)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar PDF venda:\n{e}")
+
+    def _on_gerar_pdf_credito_hd(self):
+        """Generate credit/loan PDF using NASA HD module."""
+        if not self._last_credito_lance:
+            messagebox.showwarning("Aviso", "Execute a simulacao de credito primeiro.")
+            return
+
+        try:
+            op = OperacaoCompleta(
+                params=getattr(self, '_last_credito_lance_params', {}),
+                config={},
+                fluxo={},
+                vpl={},
+                resumo={},
+                parcelas=[],
+                credito_lance=self._last_credito_lance,
+                cliente_nome=self._get_cliente_nome(),
+                assessor=self._get_assessor(),
+                administradora=self._get_administradora(),
+                data_geracao=datetime.now().strftime("%d/%m/%Y %H:%M"),
+            )
+            output_dir = os.path.join(BASE_DIR, "Corporate", "Relatorios")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filepath = gerar_pdf_credito_lance(op, output_dir)
+            messagebox.showinfo("PDF Credito Gerado",
+                                f"PDF salvo com sucesso!\n\n{os.path.basename(filepath)}")
+            try:
+                os.startfile(filepath)
+            except Exception:
+                pass
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar PDF credito:\n{e}")
 
     # =================================================================
     #  PAGE: CORPORATE - CENÁRIOS
