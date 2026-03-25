@@ -1,99 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  ArrowLeft,
   Calculator,
+  ChevronDown,
+  ChevronUp,
   FileDown,
-  FileText,
-  Mail,
   RotateCcw,
-  Wallet,
-  Receipt,
-  Percent,
-  PiggyBank,
+  Eye,
+  Table,
+  BarChart3,
+  List,
 } from 'lucide-react';
-import { PageLayout } from '@components/PageLayout';
-import { Card } from '@components/Card';
-import { Button } from '@components/Button';
-import { FormField } from '@components/FormField';
-import { CurrencyInput } from '@components/CurrencyInput';
-import { PercentInput } from '@components/PercentInput';
-import { KPICard } from '@components/KPICard';
-import { Select } from '@components/Select';
 import { useAppStore } from '@/stores/appStore';
-import { cn } from '@/utils/cn';
-import { calcularFluxoConsorcio } from '@engine/nasa-engine';
-
-// ── Zod Schema ──────────────────────────────────────────────────────────────
-
-const simuladorSchema = z.object({
-  nomeCliente: z.string().min(1, 'Nome obrigatorio'),
-  assessor: z.string().min(1, 'Assessor obrigatorio'),
-  tipoBem: z.string().min(1, 'Selecione o tipo do bem'),
-  administradora: z.string().min(1, 'Selecione a administradora'),
-  prazoMeses: z.number().min(36).max(420),
-  valorCarta: z.number().min(1, 'Valor obrigatorio'),
-  taxaAdm: z.number().min(0).max(100),
-  fundoReserva: z.number().min(0).max(100),
-  seguro: z.number().min(0).max(100),
-  correcaoAnual: z.number().min(0).max(100),
-  tipoCorrecao: z.string(),
-  indiceCorrecao: z.string(),
-  prazoContemp: z.number().min(1).max(420),
-  parcelaRedPct: z.number(),
-  lanceLivrePct: z.number().min(0).max(100),
-  lanceEmbutidoPct: z.number().min(0).max(100),
-});
-
-type SimuladorFormData = z.infer<typeof simuladorSchema>;
-
-const PRAZO_OPTIONS = [36, 48, 60, 72, 84, 96, 108, 120, 144, 156, 168, 180, 200, 216, 240, 360, 420]
-  .map((p) => ({ value: String(p), label: `${p} meses` }));
-
-const TIPO_BEM_OPTIONS = ['Imovel', 'Automovel', 'Servico', 'Caminhao', 'Maquina Agricola', 'Outro']
-  .map((t) => ({ value: t, label: t }));
-
-const ADMINISTRADORAS = ['Embracon', 'Rodobens', 'Magalu', 'Porto Seguro', 'Itau', 'Bradesco', 'Outra']
-  .map((a) => ({ value: a, label: a }));
-
-const PARCELA_RED_OPTIONS = [
-  { value: '100', label: '100% (Integral)' },
-  { value: '70', label: '70% (Reduzida 30%)' },
-  { value: '50', label: '50% (Reduzida 50%)' },
-];
-
-const CORRECAO_OPTIONS = [
-  { value: 'Pre-fixado', label: 'Pre-fixado' },
-  { value: 'Pos-fixado', label: 'Pos-fixado' },
-];
-
-const INDICE_OPTIONS = [
-  { value: 'INCC', label: 'INCC' },
-  { value: 'IPCA', label: 'IPCA' },
-  { value: 'IGP-M', label: 'IGP-M' },
-  { value: 'Outro', label: 'Outro' },
-];
-
-const defaultValues: SimuladorFormData = {
-  nomeCliente: '',
-  assessor: '',
-  tipoBem: 'Imovel',
-  administradora: '',
-  prazoMeses: 200,
-  valorCarta: 500000,
-  taxaAdm: 20,
-  fundoReserva: 3,
-  seguro: 0.05,
-  correcaoAnual: 7,
-  tipoCorrecao: 'Pos-fixado',
-  indiceCorrecao: 'INCC',
-  prazoContemp: 3,
-  parcelaRedPct: 70,
-  lanceLivrePct: 20,
-  lanceEmbutidoPct: 10,
-};
+import { NasaEngine } from '@engine/index';
+import type { FluxoResult, VPLResult, FluxoMensal } from '@engine/nasa-engine';
 
 // ── Format helpers ──────────────────────────────────────────────────────────
 
@@ -101,416 +23,527 @@ function fmtBRL(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function fmtPct(v: number, decimals = 2): string {
-  return `${v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}%`;
+function fmtPct(v: number, d = 2): string {
+  return `${v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`;
 }
 
-// ── Result type (from engine compat layer) ──────────────────────────────────
+// ── Schema ──────────────────────────────────────────────────────────────────
 
-interface SimResult {
-  fluxo_mensal: Array<{
-    mes: number;
-    parcela: number;
-    fundo_comum: number;
-    taxa_adm: number;
-    fundo_reserva: number;
-    seguro: number;
-    lance: number;
-    credito: number;
-    fluxo_liquido: number;
-    fator_correcao: number;
-  }>;
-  cashflow_consorcio: number[];
-  total_pago: number;
-  carta_liquida: number;
-  lance_livre_valor: number;
-  lance_embutido_valor: number;
-  parcela_f1_base: number;
-  parcela_f2_base: number;
-  meses_restantes: number;
-  metricas?: {
-    tir_mensal: number;
-    tir_anual: number;
-    cet_anual: number;
-  };
+const schema = z.object({
+  valorCredito: z.number().min(1),
+  prazoMeses: z.number().min(36).max(420),
+  taxaAdmPct: z.number().min(0).max(100),
+  fundoReservaPct: z.number().min(0).max(100),
+  seguroVidaPct: z.number().min(0).max(100),
+  periodoInicio: z.number().min(1),
+  // Period distribution
+  p1Start: z.number().min(1),
+  p1End: z.number().min(1),
+  p1FcPct: z.number(),
+  p1TaPct: z.number(),
+  p1FrPct: z.number(),
+  p2Start: z.number().optional(),
+  p2End: z.number().optional(),
+  p2FcPct: z.number().optional(),
+  p2TaPct: z.number().optional(),
+  p2FrPct: z.number().optional(),
+  // Contemplação
+  momentoContemplacao: z.number().min(1),
+  lanceEmbutidoPct: z.number().min(0).max(100),
+  lanceLivrePct: z.number().min(0).max(100),
+  // Reajuste
+  reajustePrePct: z.number().min(0),
+  reajustePosPct: z.number().min(0),
+  reajustePreFreq: z.string(),
+  reajustePosFreq: z.string(),
+  // VPL
+  almAnual: z.number().min(0),
+  hurdleAnual: z.number().min(0),
+  tma: z.number().min(0),
+  // Inspection moments
+  insp1: z.number(),
+  insp2: z.number(),
+  insp3: z.number(),
+  insp4: z.number(),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const FREQ_OPTIONS = ['Mensal', 'Bimestral', 'Trimestral', 'Semestral', 'Anual']
+  .map((f) => ({ value: f, label: f }));
+
+const defaults: FormData = {
+  valorCredito: 500000,
+  prazoMeses: 200,
+  taxaAdmPct: 20,
+  fundoReservaPct: 3,
+  seguroVidaPct: 0.05,
+  periodoInicio: 1,
+  p1Start: 1,
+  p1End: 200,
+  p1FcPct: 1.0,
+  p1TaPct: 100,
+  p1FrPct: 100,
+  momentoContemplacao: 36,
+  lanceEmbutidoPct: 10,
+  lanceLivrePct: 20,
+  reajustePrePct: 7,
+  reajustePosPct: 7,
+  reajustePreFreq: 'Anual',
+  reajustePosFreq: 'Anual',
+  almAnual: 12,
+  hurdleAnual: 12,
+  tma: 1,
+  insp1: 1,
+  insp2: 13,
+  insp3: 25,
+  insp4: 37,
+};
+
+// ── Collapsible Section ─────────────────────────────────────────────────────
+
+function Section({ title, tag, children, defaultOpen = true }: {
+  title: string;
+  tag: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-somus-bg-secondary border border-somus-border rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-somus-bg-hover transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold bg-somus-green/20 text-somus-green px-1.5 py-0.5 rounded">{tag}</span>
+          <span className="text-sm font-semibold text-somus-text-primary">{title}</span>
+        </div>
+        {open ? <ChevronUp size={16} className="text-somus-text-tertiary" /> : <ChevronDown size={16} className="text-somus-text-tertiary" />}
+      </button>
+      {open && <div className="px-4 pb-4 pt-2">{children}</div>}
+    </div>
+  );
 }
+
+// ── Compact Input ───────────────────────────────────────────────────────────
+
+function DInput({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <label className="block text-[10px] font-medium text-somus-text-secondary uppercase tracking-wider mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = 'w-full px-2.5 py-1.5 text-sm bg-somus-bg-input border border-somus-border rounded-md text-somus-text-primary focus:ring-1 focus:ring-somus-green/50 focus:border-somus-green outline-none';
+const selectCls = inputCls;
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function Simulador() {
   const setPage = useAppStore((s) => s.setPage);
-  const [result, setResult] = useState<SimResult | null>(null);
+  const [result, setResult] = useState<FluxoResult | null>(null);
+  const [vplResult, setVplResult] = useState<VPLResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'results' | 'fluxo' | 'parcelas' | 'vpl'>('results');
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<SimuladorFormData>({
-    resolver: zodResolver(simuladorSchema),
-    defaultValues,
+  const engine = useMemo(() => new NasaEngine(), []);
+
+  const { register, control, handleSubmit, reset, watch, setValue } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
   });
 
-  function onCalculate(data: SimuladorFormData) {
+  const watchedContemp = watch('momentoContemplacao');
+  const watchedPrazo = watch('prazoMeses');
+
+  function onCalculate(data: FormData) {
     setLoading(true);
     try {
-      const engineParams: Record<string, any> = {
-        valor_carta: data.valorCarta,
+      const periodos: any[] = [
+        { start: data.p1Start, end: data.p1End, fc_pct: data.p1FcPct, ta_pct: data.p1TaPct / 100, fr_pct: data.p1FrPct / 100 },
+      ];
+      if (data.p2Start && data.p2End) {
+        periodos.push({
+          start: data.p2Start,
+          end: data.p2End,
+          fc_pct: data.p2FcPct ?? 1.0,
+          ta_pct: (data.p2TaPct ?? 100) / 100,
+          fr_pct: (data.p2FrPct ?? 100) / 100,
+        });
+      }
+
+      const params: Record<string, any> = {
+        valor_credito: data.valorCredito,
         prazo_meses: data.prazoMeses,
-        taxa_adm: data.taxaAdm,
-        fundo_reserva: data.fundoReserva,
-        seguro: data.seguro,
-        prazo_contemp: data.prazoContemp,
-        parcela_red_pct: data.parcelaRedPct,
-        lance_livre_pct: data.lanceLivrePct,
+        taxa_adm_pct: data.taxaAdmPct,
+        fundo_reserva_pct: data.fundoReservaPct,
+        seguro_vida_pct: data.seguroVidaPct,
+        momento_contemplacao: data.momentoContemplacao,
         lance_embutido_pct: data.lanceEmbutidoPct,
-        correcao_anual: data.correcaoAnual,
+        lance_livre_pct: data.lanceLivrePct,
+        reajuste_pre_pct: data.reajustePrePct,
+        reajuste_pos_pct: data.reajustePosPct,
+        reajuste_pre_freq: data.reajustePreFreq,
+        reajuste_pos_freq: data.reajustePosFreq,
+        alm_anual: data.almAnual,
+        hurdle_anual: data.hurdleAnual,
+        tma: data.tma / 100,
+        periodos,
       };
-      const res = calcularFluxoConsorcio(engineParams) as unknown as SimResult;
-      setResult(res);
+
+      const fr = engine.calcularFluxoCompleto(params);
+      setResult(fr);
+      const vr = engine.calcularVPLHD(params, fr);
+      setVplResult(vr);
+      setActiveTab('results');
     } finally {
       setLoading(false);
     }
   }
 
   function handleClear() {
-    reset(defaultValues);
+    reset(defaults);
     setResult(null);
+    setVplResult(null);
   }
 
-  // Composition breakdown from first payment
-  const composicao = result?.fluxo_mensal?.[1]
-    ? (() => {
-        const f = result.fluxo_mensal[1];
-        const total = f.parcela;
-        return {
-          fc: f.fundo_comum,
-          ta: f.taxa_adm,
-          fr: f.fundo_reserva,
-          sg: f.seguro,
-          total,
-        };
-      })()
-    : null;
+  const fluxo = result?.fluxo ?? [];
+  const totais = result?.totais;
+  const metricas = result?.metricas;
 
-  const tirMensal = result?.metricas?.tir_mensal ?? 0;
-  const cetAnual = result?.metricas?.cet_anual ?? 0;
+  // Inspection moments
+  const inspMeses = [watch('insp1'), watch('insp2'), watch('insp3'), watch('insp4')];
+  const inspData = inspMeses.map((m) => {
+    const f = fluxo.find((r: FluxoMensal) => r.mes === m);
+    return f ? {
+      mes: m,
+      parcela: f.parcela_apos_reajuste,
+      saldo: f.saldo_devedor_reajustado,
+      carta: f.carta_credito_reajustada,
+    } : { mes: m, parcela: 0, saldo: 0, carta: 0 };
+  });
 
-  const inputClass =
-    'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
+  const lanceEmbValor = (watch('valorCredito') * watch('lanceEmbutidoPct')) / 100;
+  const lanceLivreValor = (watch('valorCredito') * watch('lanceLivrePct')) / 100;
+  const creditoLiquido = watch('valorCredito') - lanceEmbValor;
 
   return (
-    <PageLayout title="Simulador de Consorcio" subtitle="Simule operacoes de consorcio com calculo de CET e fluxo de caixa">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-4">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao Dashboard
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit(onCalculate)}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ─── Left Column: Inputs ─────────────────────────────── */}
-            <div className="lg:col-span-1 space-y-5">
-              {/* Dados do Cliente */}
-              <Card title="Dados do Cliente" padding="md">
-                <div className="space-y-4 mt-4">
-                  <FormField label="Nome do Cliente" required error={errors.nomeCliente?.message}>
-                    <input {...register('nomeCliente')} className={inputClass} placeholder="Nome completo" />
-                  </FormField>
-                  <FormField label="Assessor" required error={errors.assessor?.message}>
-                    <input {...register('assessor')} className={inputClass} placeholder="Nome do assessor" />
-                  </FormField>
-                </div>
-              </Card>
-
-              {/* Parametros do Consorcio */}
-              <Card title="Parametros do Consorcio" padding="md">
-                <div className="space-y-4 mt-4">
-                  <FormField label="Tipo do Bem" required>
-                    <Controller name="tipoBem" control={control} render={({ field }) => (
-                      <Select options={TIPO_BEM_OPTIONS} value={field.value} onChange={(e) => field.onChange(e.target.value)} />
-                    )} />
-                  </FormField>
-
-                  <FormField label="Administradora" required error={errors.administradora?.message}>
-                    <Controller name="administradora" control={control} render={({ field }) => (
-                      <Select options={ADMINISTRADORAS} placeholder="Selecione..." value={field.value} onChange={(e) => field.onChange(e.target.value)} />
-                    )} />
-                  </FormField>
-
-                  <FormField label="Prazo (meses)" required>
-                    <Controller name="prazoMeses" control={control} render={({ field }) => (
-                      <Select options={PRAZO_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                    )} />
-                  </FormField>
-
-                  <FormField label="Valor da Carta" required>
-                    <Controller name="valorCarta" control={control} render={({ field }) => (
-                      <CurrencyInput value={field.value} onChange={field.onChange} />
-                    )} />
-                  </FormField>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Taxa de Adm (%)" required>
-                      <Controller name="taxaAdm" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} />
-                      )} />
-                    </FormField>
-                    <FormField label="Fundo de Reserva (%)">
-                      <Controller name="fundoReserva" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} />
-                      )} />
-                    </FormField>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Seguro (%)">
-                      <Controller name="seguro" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} decimals={4} />
-                      )} />
-                    </FormField>
-                    <FormField label="Correcao Anual (%)">
-                      <Controller name="correcaoAnual" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} />
-                      )} />
-                    </FormField>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Tipo Correcao">
-                      <Controller name="tipoCorrecao" control={control} render={({ field }) => (
-                        <Select options={CORRECAO_OPTIONS} value={field.value} onChange={(e) => field.onChange(e.target.value)} />
-                      )} />
-                    </FormField>
-                    <FormField label="Indice">
-                      <Controller name="indiceCorrecao" control={control} render={({ field }) => (
-                        <Select options={INDICE_OPTIONS} value={field.value} onChange={(e) => field.onChange(e.target.value)} />
-                      )} />
-                    </FormField>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Contemplacao e Lances */}
-              <Card title="Contemplacao e Lances" padding="md">
-                <div className="space-y-4 mt-4">
-                  <FormField label="Prazo de Contemplacao (meses)" required>
-                    <Controller name="prazoContemp" control={control} render={({ field }) => (
-                      <input type="number" min={1} max={420} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputClass} />
-                    )} />
-                  </FormField>
-
-                  <FormField label="Parcela Reduzida (%)" tooltip="100% = integral, 70% = parcela reduzida">
-                    <Controller name="parcelaRedPct" control={control} render={({ field }) => (
-                      <Select options={PARCELA_RED_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                    )} />
-                  </FormField>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Lance Livre (%)">
-                      <Controller name="lanceLivrePct" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} />
-                      )} />
-                    </FormField>
-                    <FormField label="Lance Embutido (%)">
-                      <Controller name="lanceEmbutidoPct" control={control} render={({ field }) => (
-                        <PercentInput value={field.value} onChange={field.onChange} />
-                      )} />
-                    </FormField>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <Button type="submit" variant="success" loading={loading} icon={<Calculator className="h-4 w-4" />} className="flex-1">
-                  Calcular Simulacao
-                </Button>
-                <Button type="button" variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={handleClear}>
-                  Limpar
-                </Button>
-              </div>
-              {result && (
-                <div className="flex flex-wrap gap-3">
-                  <Button type="button" variant="primary" icon={<FileDown className="h-4 w-4" />} className="flex-1">
-                    Gerar PDF
-                  </Button>
-                  <Button type="button" variant="secondary" icon={<FileText className="h-4 w-4" />} className="flex-1">
-                    Gerar PPTX
-                  </Button>
-                  <Button type="button" variant="secondary" icon={<Mail className="h-4 w-4" />} className="flex-1">
-                    Enviar Email
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* ─── Right Column: Results ────────────────────────────── */}
-            <div className="lg:col-span-2 space-y-5">
-              {!result ? (
-                <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed border-somus-gray-200 bg-white">
-                  <div className="text-center">
-                    <Calculator className="h-10 w-10 text-somus-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-somus-gray-400">
-                      Preencha os parametros e clique em "Calcular Simulacao"
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Phase Summary Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-emerald-200 text-emerald-700 text-xs font-bold">F1</span>
-                        <span className="text-sm font-semibold text-emerald-800">Fase 1 (Pre-Contemplacao)</span>
-                      </div>
-                      <p className="text-2xl font-bold text-emerald-700">{fmtBRL(result.parcela_f1_base)}</p>
-                      <p className="text-xs text-emerald-600 mt-1">Parcela base mensal</p>
-                    </div>
-                    <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-blue-200 text-blue-700 text-xs font-bold">F2</span>
-                        <span className="text-sm font-semibold text-blue-800">Fase 2 (Pos-Contemplacao)</span>
-                      </div>
-                      <p className="text-2xl font-bold text-blue-700">{fmtBRL(result.parcela_f2_base)}</p>
-                      <p className="text-xs text-blue-600 mt-1">Parcela base mensal</p>
-                    </div>
-                  </div>
-
-                  {/* KPI Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <KPICard
-                      title="Carta Liquida"
-                      value={fmtBRL(result.carta_liquida)}
-                      icon={<Wallet className="h-5 w-5" />}
-                      variant="green"
-                    />
-                    <KPICard
-                      title="Total Desembolsado"
-                      value={fmtBRL(result.total_pago)}
-                      icon={<Receipt className="h-5 w-5" />}
-                    />
-                    <KPICard
-                      title="CET a.m."
-                      value={fmtPct(tirMensal * 100, 4)}
-                      icon={<Percent className="h-5 w-5" />}
-                      variant={tirMensal > 0 ? 'red' : 'green'}
-                    />
-                    <KPICard
-                      title="CET a.a."
-                      value={fmtPct(cetAnual * 100, 2)}
-                      variant={cetAnual > 0 ? 'red' : 'green'}
-                    />
-                    <KPICard
-                      title="Lance Livre"
-                      value={fmtBRL(result.lance_livre_valor)}
-                      icon={<PiggyBank className="h-5 w-5" />}
-                      variant="blue"
-                    />
-                    <KPICard
-                      title="Lance Embutido"
-                      value={fmtBRL(result.lance_embutido_valor)}
-                      variant="orange"
-                    />
-                  </div>
-
-                  {/* Composition Breakdown */}
-                  {composicao && (
-                    <Card title="Composicao da Parcela" padding="md">
-                      <div className="mt-4 space-y-3">
-                        {[
-                          { label: 'Fundo Comum', value: composicao.fc, color: 'bg-emerald-500' },
-                          { label: 'Taxa Administracao', value: composicao.ta, color: 'bg-blue-500' },
-                          { label: 'Fundo Reserva', value: composicao.fr, color: 'bg-amber-500' },
-                          { label: 'Seguro', value: composicao.sg, color: 'bg-red-400' },
-                        ].map((item) => {
-                          const pct = composicao.total > 0 ? (item.value / composicao.total) * 100 : 0;
-                          return (
-                            <div key={item.label}>
-                              <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-somus-gray-600">{item.label}</span>
-                                <span className="font-medium text-somus-gray-900">
-                                  {fmtBRL(item.value)} ({fmtPct(pct, 1)})
-                                </span>
-                              </div>
-                              <div className="h-2 bg-somus-gray-100 rounded-full overflow-hidden">
-                                <div className={`h-full ${item.color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  )}
-
-                  {/* Payment Schedule Table */}
-                  <Card title="Cronograma de Pagamentos" padding="none">
-                    <div className="overflow-x-auto max-h-[500px]">
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 z-10">
-                          <tr className="bg-somus-gray-50 border-b border-somus-gray-200">
-                            <th className="text-left px-4 py-3 font-medium text-somus-gray-600">Mes</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Fundo Comum</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Tx Adm</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Fdo Reserva</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Seguro</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Parcela</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Lance</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Credito</th>
-                            <th className="text-right px-4 py-3 font-medium text-somus-gray-600">Fluxo</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {result.fluxo_mensal
-                            .filter((f) => f.mes > 0)
-                            .map((f) => {
-                              const hasCredito = f.credito > 0;
-                              return (
-                                <tr
-                                  key={f.mes}
-                                  className={cn(
-                                    'border-b border-somus-gray-100 hover:bg-somus-gray-50',
-                                    hasCredito && 'bg-emerald-50',
-                                  )}
-                                >
-                                  <td className="px-4 py-2.5 font-medium text-somus-gray-900">
-                                    {f.mes}
-                                    {hasCredito && (
-                                      <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
-                                        CONTEMP
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="text-right px-4 py-2.5">{fmtBRL(f.fundo_comum)}</td>
-                                  <td className="text-right px-4 py-2.5">{fmtBRL(f.taxa_adm)}</td>
-                                  <td className="text-right px-4 py-2.5">{fmtBRL(f.fundo_reserva)}</td>
-                                  <td className="text-right px-4 py-2.5">{fmtBRL(f.seguro)}</td>
-                                  <td className="text-right px-4 py-2.5 font-medium">{fmtBRL(f.parcela)}</td>
-                                  <td className="text-right px-4 py-2.5">{f.lance > 0 ? fmtBRL(f.lance) : '-'}</td>
-                                  <td className="text-right px-4 py-2.5 text-emerald-600">
-                                    {f.credito > 0 ? fmtBRL(f.credito) : '-'}
-                                  </td>
-                                  <td className={cn('text-right px-4 py-2.5 font-medium', f.fluxo_liquido >= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                                    {fmtBRL(f.fluxo_liquido)}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Card>
-                </>
-              )}
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <header className="sticky top-0 z-20 bg-somus-bg-primary/90 backdrop-blur-md border-b border-somus-border px-6 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Calculator size={20} className="text-somus-green" />
+            <div>
+              <h1 className="text-lg font-semibold text-somus-text-primary">Dados do Consórcio</h1>
+              <p className="text-xs text-somus-text-tertiary">Simulador completo - espelha a aba "Dados do Consórcio" da NASA HD</p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleClear} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-somus-bg-secondary border border-somus-border text-somus-text-secondary rounded-lg hover:bg-somus-bg-hover transition-colors">
+              <RotateCcw size={12} /> Limpar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto bg-somus-bg-primary p-5">
+        <form onSubmit={handleSubmit(onCalculate)} className="max-w-[1400px] mx-auto space-y-4">
+
+          {/* SECTION A: Main Inputs */}
+          <Section title="Parâmetros Principais" tag="A" defaultOpen={true}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <DInput label="Valor do Crédito">
+                <Controller name="valorCredito" control={control} render={({ field }) => (
+                  <input type="number" step={1000} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Prazo (meses)">
+                <Controller name="prazoMeses" control={control} render={({ field }) => (
+                  <input type="number" min={36} max={420} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Taxa Adm (%)">
+                <Controller name="taxaAdmPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Fundo Reserva (%)">
+                <Controller name="fundoReservaPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Seguro Vida (%)">
+                <Controller name="seguroVidaPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.01} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Período Início">
+                <Controller name="periodoInicio" control={control} render={({ field }) => (
+                  <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+            </div>
+          </Section>
+
+          {/* SECTION B: Composição das Parcelas */}
+          <Section title="Composição das Parcelas Mensais" tag="B" defaultOpen={false}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-somus-border">
+                    <th className="px-2 py-2 text-left text-somus-text-secondary font-medium">Período</th>
+                    <th className="px-2 py-2 text-center text-somus-text-secondary font-medium">Início</th>
+                    <th className="px-2 py-2 text-center text-somus-text-secondary font-medium">Fim</th>
+                    <th className="px-2 py-2 text-center text-somus-text-secondary font-medium">FC Peso</th>
+                    <th className="px-2 py-2 text-center text-somus-text-secondary font-medium">TA (%)</th>
+                    <th className="px-2 py-2 text-center text-somus-text-secondary font-medium">FR (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-somus-border/50">
+                    <td className="px-2 py-2 text-somus-text-primary font-medium">Período 1</td>
+                    <td className="px-2 py-1"><Controller name="p1Start" control={control} render={({ field }) => (
+                      <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p1End" control={control} render={({ field }) => (
+                      <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p1FcPct" control={control} render={({ field }) => (
+                      <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p1TaPct" control={control} render={({ field }) => (
+                      <input type="number" step={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p1FrPct" control={control} render={({ field }) => (
+                      <input type="number" step={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={`${inputCls} text-center`} />
+                    )} /></td>
+                  </tr>
+                  <tr className="border-b border-somus-border/50">
+                    <td className="px-2 py-2 text-somus-text-primary font-medium">Período 2</td>
+                    <td className="px-2 py-1"><Controller name="p2Start" control={control} render={({ field }) => (
+                      <input type="number" min={1} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p2End" control={control} render={({ field }) => (
+                      <input type="number" min={1} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p2FcPct" control={control} render={({ field }) => (
+                      <input type="number" step={0.1} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p2TaPct" control={control} render={({ field }) => (
+                      <input type="number" step={1} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${inputCls} text-center`} />
+                    )} /></td>
+                    <td className="px-2 py-1"><Controller name="p2FrPct" control={control} render={({ field }) => (
+                      <input type="number" step={1} value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${inputCls} text-center`} />
+                    )} /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* SECTION C: Contemplação e Lances */}
+          <Section title="Contemplação e Lances" tag="C">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <DInput label="Mês Contemplação">
+                <Controller name="momentoContemplacao" control={control} render={({ field }) => (
+                  <input type="number" min={1} max={420} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Lance Embutido (%)">
+                <Controller name="lanceEmbutidoPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} min={0} max={100} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Lance Emb. (R$)">
+                <input type="text" readOnly value={fmtBRL(lanceEmbValor)} className={`${inputCls} bg-somus-bg-tertiary`} />
+              </DInput>
+              <DInput label="Lance Livre (%)">
+                <Controller name="lanceLivrePct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} min={0} max={100} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Lance Livre (R$)">
+                <input type="text" readOnly value={fmtBRL(lanceLivreValor)} className={`${inputCls} bg-somus-bg-tertiary`} />
+              </DInput>
+              <DInput label="Crédito Líquido">
+                <input type="text" readOnly value={fmtBRL(creditoLiquido)} className={`${inputCls} bg-somus-bg-tertiary text-somus-green font-bold`} />
+              </DInput>
+            </div>
+          </Section>
+
+          {/* SECTION E: Reajuste */}
+          <Section title="Reajuste" tag="E" defaultOpen={false}>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <DInput label="Pré-T Percentual (% a.a.)">
+                <Controller name="reajustePrePct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Pré-T Frequência">
+                <Controller name="reajustePreFreq" control={control} render={({ field }) => (
+                  <select value={field.value} onChange={(e) => field.onChange(e.target.value)} className={selectCls}>
+                    {FREQ_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                )} />
+              </DInput>
+              <DInput label="Pós-T Percentual (% a.a.)">
+                <Controller name="reajustePosPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Pós-T Frequência">
+                <Controller name="reajustePosFreq" control={control} render={({ field }) => (
+                  <select value={field.value} onChange={(e) => field.onChange(e.target.value)} className={selectCls}>
+                    {FREQ_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                )} />
+              </DInput>
+            </div>
+          </Section>
+
+          {/* SECTION F: VPL Parameters */}
+          <Section title="Parâmetros VPL" tag="F" defaultOpen={false}>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <DInput label="ALM / CDI Anual (%)">
+                <Controller name="almAnual" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="Hurdle Rate Anual (%)">
+                <Controller name="hurdleAnual" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+              <DInput label="TMA (% a.m.)">
+                <Controller name="tma" control={control} render={({ field }) => (
+                  <input type="number" step={0.01} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} />
+              </DInput>
+            </div>
+          </Section>
+
+          {/* Calculate Button */}
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-somus-green text-white rounded-lg hover:bg-somus-green-light transition-colors disabled:opacity-50"
+            >
+              <Calculator size={16} />
+              {loading ? 'Calculando...' : 'Calcular Simulação'}
+            </button>
+            {result && (
+              <>
+                <button type="button" onClick={() => setPage('fluxo-financeiro')} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium bg-somus-bg-secondary border border-somus-border text-somus-text-secondary rounded-lg hover:bg-somus-bg-hover transition-colors">
+                  <Table size={14} /> Ver Fluxo Financeiro
+                </button>
+                <button type="button" onClick={() => setPage('parcelas')} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium bg-somus-bg-secondary border border-somus-border text-somus-text-secondary rounded-lg hover:bg-somus-bg-hover transition-colors">
+                  <List size={14} /> Ver Parcelas
+                </button>
+                <button type="button" onClick={() => setPage('comparativo-vpl')} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium bg-somus-bg-secondary border border-somus-border text-somus-text-secondary rounded-lg hover:bg-somus-bg-hover transition-colors">
+                  <BarChart3 size={14} /> Ver VPL
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* ─── RESULTS ─────────────────────────────────────────────── */}
+          {result && (
+            <div className="space-y-4">
+              {/* SECTION D: Análise Operacional */}
+              <Section title="Análise Operacional" tag="D">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                  {inspMeses.map((m, i) => (
+                    <DInput key={i} label={`Mês Inspeção ${i + 1}`}>
+                      <Controller name={`insp${i + 1}` as any} control={control} render={({ field }) => (
+                        <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                      )} />
+                    </DInput>
+                  ))}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-somus-border">
+                        <th className="px-3 py-2 text-left text-somus-text-secondary font-medium">Mês</th>
+                        <th className="px-3 py-2 text-right text-somus-text-secondary font-medium">Parcela Reajustada</th>
+                        <th className="px-3 py-2 text-right text-somus-text-secondary font-medium">Saldo Devedor Reaj.</th>
+                        <th className="px-3 py-2 text-right text-somus-text-secondary font-medium">Carta Crédito Reaj.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inspData.map((d) => (
+                        <tr key={d.mes} className="border-b border-somus-border/50">
+                          <td className="px-3 py-2 text-somus-text-primary font-medium">{d.mes}</td>
+                          <td className="px-3 py-2 text-right text-somus-text-primary">{fmtBRL(d.parcela)}</td>
+                          <td className="px-3 py-2 text-right" style={{ color: '#C00000' }}>{fmtBRL(d.saldo)}</td>
+                          <td className="px-3 py-2 text-right text-somus-green">{fmtBRL(d.carta)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Section>
+
+              {/* Results KPIs */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Total Pago</span>
+                  <p className="text-sm font-bold text-somus-text-primary mt-1">{fmtBRL(totais?.total_pago ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Carta Líquida</span>
+                  <p className="text-sm font-bold text-somus-green mt-1">{fmtBRL(totais?.carta_liquida ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">TIR Mensal</span>
+                  <p className="text-sm font-bold text-somus-gold mt-1">{fmtPct((metricas?.tir_mensal ?? 0) * 100, 4)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">CET Anual</span>
+                  <p className="text-sm font-bold text-somus-gold mt-1">{fmtPct((metricas?.cet_anual ?? 0) * 100, 2)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">VPL do Fluxo</span>
+                  <p className={`text-sm font-bold mt-1 ${(vplResult?.vpl_total ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(vplResult?.vpl_total ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Delta VPL</span>
+                  <p className={`text-sm font-bold mt-1 ${(vplResult?.delta_vpl ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(vplResult?.delta_vpl ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Custo Efetivo (TIR)</span>
+                  <p className="text-sm font-bold text-somus-gold mt-1">{fmtPct((metricas?.tir_anual ?? 0) * 100, 2)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-3">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Custo Total %</span>
+                  <p className="text-sm font-bold text-somus-text-primary mt-1">{fmtPct(metricas?.custo_total_pct ?? 0, 2)}</p>
+                </div>
+              </div>
+
+              {/* Parcela Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Parcela Média</span>
+                  <p className="text-lg font-bold text-somus-text-primary mt-1">{fmtBRL(metricas?.parcela_media ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Parcela Máxima</span>
+                  <p className="text-lg font-bold text-somus-text-primary mt-1">{fmtBRL(metricas?.parcela_maxima ?? 0)}</p>
+                </div>
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                  <span className="text-[10px] text-somus-text-secondary uppercase">Parcela Mínima</span>
+                  <p className="text-lg font-bold text-somus-text-primary mt-1">{fmtBRL(metricas?.parcela_minima ?? 0)}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
-      </div>
-    </PageLayout>
+      </main>
+    </div>
   );
 }

@@ -21,13 +21,13 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <label className="flex items-center gap-1.5 text-sm font-medium text-somus-gray-700">
+      <label className="flex items-center gap-1.5 text-sm font-medium text-somus-text-secondary">
         {label}
-        {required && <span className="text-red-500">*</span>}
+        {required && <span className="text-red-400">*</span>}
         {tooltip && (
           <span className="group relative">
-            <HelpCircle className="h-3.5 w-3.5 text-somus-gray-400 cursor-help" />
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-somus-gray-800 text-white text-xs rounded-md px-2.5 py-1.5 whitespace-nowrap shadow-lg z-50">
+            <HelpCircle className="h-3.5 w-3.5 text-somus-text-tertiary cursor-help" />
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-somus-bg-tertiary text-somus-text-primary text-xs rounded-md px-2.5 py-1.5 whitespace-nowrap shadow-lg border border-somus-border z-50">
               {tooltip}
             </span>
           </span>
@@ -35,7 +35,7 @@ export function FormField({
       </label>
       {children}
       {error && (
-        <p className="text-xs text-red-600 mt-0.5">{error}</p>
+        <p className="text-xs text-red-400 mt-0.5">{error}</p>
       )}
     </div>
   );

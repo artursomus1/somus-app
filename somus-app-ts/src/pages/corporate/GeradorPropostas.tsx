@@ -349,7 +349,7 @@ export default function GeradorPropostas() {
     }
   }
 
-  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
+  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary';
 
   // Fields for cenario card in comparativa
   const cenarioFields = [
@@ -392,7 +392,7 @@ export default function GeradorPropostas() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
                   subtipo === s.value
                     ? 'bg-somus-green text-white border-somus-green'
-                    : 'bg-white text-somus-gray-600 border-somus-gray-300 hover:bg-somus-gray-50'
+                    : 'bg-somus-bg-secondary text-somus-text-secondary border-somus-border hover:bg-somus-bg-hover'
                 }`}
               >
                 {s.label}

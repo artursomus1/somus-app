@@ -55,12 +55,12 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
     return (
       <div className={cn('flex flex-col gap-1.5', className)}>
         {label && (
-          <label className="text-sm font-medium text-somus-gray-700">
+          <label className="text-sm font-medium text-somus-text-secondary">
             {label}
           </label>
         )}
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-somus-gray-500 select-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-somus-text-tertiary select-none">
             R$
           </span>
           <input
@@ -73,16 +73,16 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-              'w-full rounded-lg border bg-white py-2 pl-10 pr-3 text-sm text-right font-medium transition-colors duration-150',
-              'focus:outline-none focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green',
+              'w-full rounded-lg border bg-somus-bg-input py-2 pl-10 pr-3 text-sm text-right font-medium transition-colors duration-150',
+              'focus:outline-none focus:ring-2 focus:ring-somus-green-500/30 focus:border-somus-green-500/50',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               error
-                ? 'border-red-300 text-red-900'
-                : 'border-somus-gray-300 text-somus-gray-900'
+                ? 'border-red-500/50 text-red-400'
+                : 'border-somus-border text-somus-text-primary'
             )}
           />
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-red-400">{error}</p>}
       </div>
     );
   }

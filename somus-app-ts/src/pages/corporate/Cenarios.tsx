@@ -94,7 +94,7 @@ function SaveModal({ open, onClose, onSave }: {
   const [lanceLivrePct, setLanceLivrePct] = useState(20);
   const [lanceEmbutidoPct, setLanceEmbutidoPct] = useState(10);
 
-  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
+  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary';
 
   return (
     <Modal

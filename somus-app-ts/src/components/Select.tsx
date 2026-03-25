@@ -28,29 +28,29 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            'w-full appearance-none rounded-lg border bg-white font-medium transition-colors duration-150',
-            'focus:outline-none focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green',
+            'w-full appearance-none rounded-lg border bg-somus-bg-input font-medium transition-colors duration-150',
+            'focus:outline-none focus:ring-2 focus:ring-somus-green-500/30 focus:border-somus-green-500/50',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             error
-              ? 'border-red-300 text-red-900'
-              : 'border-somus-gray-300 text-somus-gray-800',
+              ? 'border-red-500/50 text-red-400'
+              : 'border-somus-border text-somus-text-primary',
             sizeStyles[size],
             className
           )}
           {...props}
         >
           {placeholder && (
-            <option value="" disabled>
+            <option value="" disabled className="bg-somus-bg-secondary text-somus-text-tertiary">
               {placeholder}
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+            <option key={opt.value} value={opt.value} disabled={opt.disabled} className="bg-somus-bg-secondary text-somus-text-primary">
               {opt.label}
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
       </div>
     );
   }

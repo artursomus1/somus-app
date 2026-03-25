@@ -39,7 +39,7 @@ export function Tabs({
   return (
     <div className={cn('w-full', className)}>
       {/* Tab Headers */}
-      <div className="flex border-b border-somus-gray-200">
+      <div className="flex border-b border-somus-border">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -49,8 +49,8 @@ export function Tabs({
               'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 border-b-2 -mb-px',
               'focus:outline-none',
               activeTab === tab.id
-                ? 'border-somus-green text-somus-green'
-                : 'border-transparent text-somus-gray-500 hover:text-somus-gray-700 hover:border-somus-gray-300',
+                ? 'border-somus-green-500 text-somus-text-accent'
+                : 'border-transparent text-somus-text-tertiary hover:text-somus-text-secondary hover:border-somus-border-light',
               tab.disabled && 'opacity-40 cursor-not-allowed'
             )}
           >

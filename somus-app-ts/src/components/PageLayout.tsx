@@ -22,7 +22,7 @@ export function PageLayout({
       <TopBar title={title} subtitle={subtitle} />
       <main
         className={cn(
-          'flex-1 overflow-y-auto bg-somus-gray-50',
+          'flex-1 overflow-y-auto bg-somus-bg-primary',
           !noPadding && 'p-6',
           className
         )}

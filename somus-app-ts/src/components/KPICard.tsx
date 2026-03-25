@@ -8,36 +8,53 @@ export interface KPICardProps {
   subtitle?: string;
   icon?: React.ReactNode;
   trend?: { value: number; isPositive: boolean };
-  variant?: 'default' | 'green' | 'blue' | 'orange' | 'red';
+  variant?: 'default' | 'green' | 'purple' | 'navy' | 'gold' | 'orange' | 'red';
   onClick?: () => void;
   className?: string;
 }
 
-const variantStyles = {
+const variantConfig: Record<NonNullable<KPICardProps['variant']>, { borderColor: string; iconBg: string; iconText: string; glowColor: string }> = {
   default: {
-    bg: 'bg-white',
-    iconBg: 'bg-somus-gray-100',
-    iconText: 'text-somus-gray-600',
+    borderColor: '#1E2A3A',
+    iconBg: 'bg-somus-bg-tertiary',
+    iconText: 'text-somus-text-secondary',
+    glowColor: 'rgba(26, 122, 62, 0.08)',
   },
   green: {
-    bg: 'bg-white',
-    iconBg: 'bg-emerald-50',
-    iconText: 'text-emerald-600',
+    borderColor: '#1A7A3E',
+    iconBg: 'bg-somus-green-700/20',
+    iconText: 'text-somus-text-accent',
+    glowColor: 'rgba(26, 122, 62, 0.12)',
   },
-  blue: {
-    bg: 'bg-white',
-    iconBg: 'bg-blue-50',
-    iconText: 'text-blue-600',
+  purple: {
+    borderColor: '#7030A0',
+    iconBg: 'bg-purple-900/20',
+    iconText: 'text-purple-400',
+    glowColor: 'rgba(112, 48, 160, 0.12)',
+  },
+  navy: {
+    borderColor: '#002060',
+    iconBg: 'bg-blue-900/20',
+    iconText: 'text-blue-400',
+    glowColor: 'rgba(0, 32, 96, 0.12)',
+  },
+  gold: {
+    borderColor: '#D4A017',
+    iconBg: 'bg-yellow-900/20',
+    iconText: 'text-yellow-400',
+    glowColor: 'rgba(212, 160, 23, 0.12)',
   },
   orange: {
-    bg: 'bg-white',
-    iconBg: 'bg-orange-50',
-    iconText: 'text-orange-600',
+    borderColor: '#ED7D31',
+    iconBg: 'bg-orange-900/20',
+    iconText: 'text-orange-400',
+    glowColor: 'rgba(237, 125, 49, 0.12)',
   },
   red: {
-    bg: 'bg-white',
-    iconBg: 'bg-red-50',
-    iconText: 'text-red-600',
+    borderColor: '#C00000',
+    iconBg: 'bg-red-900/20',
+    iconText: 'text-red-400',
+    glowColor: 'rgba(192, 0, 0, 0.12)',
   },
 };
 
@@ -51,24 +68,42 @@ export function KPICard({
   onClick,
   className,
 }: KPICardProps) {
-  const styles = variantStyles[variant];
+  const config = variantConfig[variant];
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        'rounded-lg border border-somus-gray-200 shadow-sm p-5 transition-all duration-150',
-        styles.bg,
-        onClick && 'cursor-pointer hover:shadow-md hover:border-somus-gray-300',
+        'relative overflow-hidden rounded-xl p-5 transition-all duration-200',
+        'bg-somus-bg-secondary/80 backdrop-blur-xl border border-somus-border/50',
+        onClick && 'cursor-pointer hover:border-somus-border-light',
         className
       )}
+      style={{
+        borderLeftWidth: '3px',
+        borderLeftColor: config.borderColor,
+      }}
+      onMouseEnter={(e) => {
+        if (onClick) {
+          (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${config.glowColor}`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+      }}
     >
+      {/* Subtle top gradient line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${config.borderColor}40, transparent)` }}
+      />
+
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-somus-gray-500 truncate">
+          <p className="text-xs font-medium text-somus-text-tertiary uppercase tracking-wider truncate">
             {title}
           </p>
-          <p className="mt-2 text-2xl font-bold text-somus-gray-900 tracking-tight">
+          <p className="mt-2 text-2xl font-bold text-somus-text-primary tracking-tight">
             {value}
           </p>
           <div className="mt-2 flex items-center gap-2">
@@ -76,7 +111,7 @@ export function KPICard({
               <span
                 className={cn(
                   'inline-flex items-center gap-0.5 text-xs font-semibold',
-                  trend.isPositive ? 'text-emerald-600' : 'text-red-600'
+                  trend.isPositive ? 'text-somus-text-accent' : 'text-somus-text-danger'
                 )}
               >
                 {trend.isPositive ? (
@@ -88,7 +123,7 @@ export function KPICard({
               </span>
             )}
             {subtitle && (
-              <span className="text-xs text-somus-gray-400">{subtitle}</span>
+              <span className="text-xs text-somus-text-tertiary">{subtitle}</span>
             )}
           </div>
         </div>
@@ -97,8 +132,8 @@ export function KPICard({
           <div
             className={cn(
               'shrink-0 p-2.5 rounded-lg',
-              styles.iconBg,
-              styles.iconText
+              config.iconBg,
+              config.iconText
             )}
           >
             {icon}

@@ -11,27 +11,27 @@ export interface StatusBadgeProps {
 
 const statusConfig: Record<StatusVariant, { bg: string; text: string; dot: string; defaultLabel: string }> = {
   ativa: {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    dot: 'bg-emerald-500',
+    bg: 'bg-emerald-900/30',
+    text: 'text-emerald-400',
+    dot: 'bg-emerald-400',
     defaultLabel: 'Ativa',
   },
   pendente: {
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-700',
-    dot: 'bg-yellow-500',
+    bg: 'bg-yellow-900/30',
+    text: 'text-yellow-400',
+    dot: 'bg-yellow-400',
     defaultLabel: 'Pendente',
   },
   encerrada: {
-    bg: 'bg-somus-gray-100',
-    text: 'text-somus-gray-600',
-    dot: 'bg-somus-gray-400',
+    bg: 'bg-somus-bg-tertiary',
+    text: 'text-somus-text-tertiary',
+    dot: 'bg-somus-text-tertiary',
     defaultLabel: 'Encerrada',
   },
   atrasado: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    dot: 'bg-red-500',
+    bg: 'bg-red-900/30',
+    text: 'text-red-400',
+    dot: 'bg-red-400',
     defaultLabel: 'Atrasado',
   },
 };

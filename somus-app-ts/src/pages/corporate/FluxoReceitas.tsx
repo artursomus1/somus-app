@@ -104,7 +104,7 @@ function OperacaoModal({
     }
   }, [editingOp, open]);
 
-  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
+  const inputClass = 'w-full px-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary';
 
   function handleSave() {
     const pagamentos: PagamentoOperacao[] = editingOp
@@ -316,7 +316,7 @@ export default function FluxoReceitas() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <KPICard title="Total em Cartas" value={fmtBRL(totalCartas)} icon={<DollarSign className="h-5 w-5" />} />
           <KPICard title="Total Recebido" value={fmtBRL(totalRecebido)} icon={<DollarSign className="h-5 w-5" />} variant="green" />
-          <KPICard title="Operacoes Ativas" value={String(ativas)} variant="blue" />
+          <KPICard title="Operacoes Ativas" value={String(ativas)} variant="navy" />
         </div>
 
         {/* Filters */}
@@ -328,7 +328,7 @@ export default function FluxoReceitas() {
               placeholder="Buscar cliente ou assessor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-somus-border rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-somus-bg-input text-somus-text-primary"
             />
           </div>
           <div className="w-48">

@@ -18,16 +18,16 @@ import {
 } from 'recharts';
 import { cn } from '@/utils/cn';
 
-// ─── Somus branding colors for charts ────────────────────────────────
+// ─── NASA-inspired chart colors for dark theme ──────────────────────
 export const CHART_COLORS = [
-  '#004D33', // somus green
-  '#005C3D', // somus green light
-  '#0EA5E9', // sky-500
-  '#F59E0B', // amber-500
-  '#EF4444', // red-500
-  '#8B5CF6', // violet-500
-  '#EC4899', // pink-500
-  '#14B8A6', // teal-500
+  '#1A7A3E', // somus green (primary)
+  '#7030A0', // purple (core data)
+  '#D4A017', // gold (highlights)
+  '#002060', // navy (comparisons)
+  '#00B0F0', // sky blue (consolidation)
+  '#ED7D31', // orange (alerts)
+  '#1B6B5F', // teal (VPL)
+  '#C00000', // red (negative)
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ export interface ChartCardProps {
   valueFormatter?: (value: number) => string;
 }
 
-// ─── Custom Tooltip ──────────────────────────────────────────────────
+// ─── Custom Tooltip - Dark theme ────────────────────────────────────
 
 function SomusTooltip({
   active,
@@ -67,9 +67,9 @@ function SomusTooltip({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-somus-gray-200 px-3 py-2">
+    <div className="rounded-lg shadow-lg px-3 py-2 border" style={{ background: '#0F1419', borderColor: '#1A7A3E40' }}>
       {label && (
-        <p className="text-xs font-medium text-somus-gray-500 mb-1">{label}</p>
+        <p className="text-xs font-medium mb-1" style={{ color: '#8B95A5' }}>{label}</p>
       )}
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-sm">
@@ -77,8 +77,8 @@ function SomusTooltip({
             className="h-2.5 w-2.5 rounded-full shrink-0"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-somus-gray-600">{entry.name}:</span>
-          <span className="font-semibold text-somus-gray-900">
+          <span style={{ color: '#8B95A5' }}>{entry.name}:</span>
+          <span className="font-semibold" style={{ color: '#E8ECF0' }}>
             {valueFormatter
               ? valueFormatter(entry.value)
               : typeof entry.value === 'number'
@@ -113,21 +113,21 @@ export function ChartCard({
     );
 
     const commonGrid = (
-      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+      <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" vertical={false} />
     );
 
     const commonXAxis = (
       <XAxis
         dataKey={xAxisKey}
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: '#8B95A5' }}
         tickLine={false}
-        axisLine={{ stroke: '#E5E7EB' }}
+        axisLine={{ stroke: '#1E2A3A' }}
       />
     );
 
     const commonYAxis = (
       <YAxis
-        tick={{ fontSize: 12, fill: '#6B7280' }}
+        tick={{ fontSize: 12, fill: '#8B95A5' }}
         tickLine={false}
         axisLine={false}
         tickFormatter={(v: number) =>
@@ -147,7 +147,7 @@ export function ChartCard({
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 8, color: '#8B95A5' }}
             />
             {series.map((s, i) => (
               <Line
@@ -174,7 +174,7 @@ export function ChartCard({
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 8, color: '#8B95A5' }}
             />
             {series.map((s, i) => (
               <Bar
@@ -199,7 +199,7 @@ export function ChartCard({
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 8, color: '#8B95A5' }}
             />
             {series.map((s, i) => {
               const color = s.color ?? CHART_COLORS[i % CHART_COLORS.length];
@@ -236,7 +236,7 @@ export function ChartCard({
               label={({ name, percent }: any) =>
                 `${name} ${(percent * 100).toFixed(1)}%`
               }
-              labelLine={{ stroke: '#9CA3AF' }}
+              labelLine={{ stroke: '#5A6577' }}
             >
               {data.map((_, i) => (
                 <Cell
@@ -251,7 +251,7 @@ export function ChartCard({
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12 }}
+              wrapperStyle={{ fontSize: 12, color: '#8B95A5' }}
             />
           </PieChart>
         );
@@ -265,18 +265,19 @@ export function ChartCard({
   return (
     <div
       className={cn(
-        'bg-white rounded-lg shadow-sm border border-somus-gray-200',
+        'bg-somus-bg-secondary/80 backdrop-blur-xl rounded-xl border border-somus-border/50',
+        'transition-all duration-200',
         className
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-2">
         <div>
-          <h3 className="text-base font-semibold text-somus-gray-900">
+          <h3 className="text-base font-semibold text-somus-text-primary">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-sm text-somus-gray-500 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-somus-text-secondary mt-0.5">{subtitle}</p>
           )}
         </div>
         {headerRight && <div>{headerRight}</div>}

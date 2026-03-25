@@ -1,76 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Calculator, Award } from 'lucide-react';
-import { PageLayout } from '@components/PageLayout';
-import { Card } from '@components/Card';
-import { Button } from '@components/Button';
-import { FormField } from '@components/FormField';
-import { CurrencyInput } from '@components/CurrencyInput';
-import { PercentInput } from '@components/PercentInput';
-import { KPICard } from '@components/KPICard';
-import { Select } from '@components/Select';
-import { ChartCard, CHART_COLORS } from '@components/ChartCard';
+import { Calculator, Award, Layers } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 import { useAppStore } from '@/stores/appStore';
-import { cn } from '@/utils/cn';
-import { compararConsorcioFinanciamentoStandalone, calcularFluxoConsorcio } from '@engine/index';
+import { NasaEngine } from '@engine/index';
+import type { FluxoResult, FinanciamentoResult } from '@engine/nasa-engine';
 
-// ── Schemas ─────────────────────────────────────────────────────────────────
-
-const formSchema = z.object({
-  // Consorcio
-  valorCarta: z.number().min(1),
-  prazoMesesC: z.number().min(36).max(420),
-  taxaAdm: z.number().min(0).max(100),
-  fundoReserva: z.number().min(0).max(100),
-  seguro: z.number().min(0).max(100),
-  correcaoAnual: z.number().min(0).max(100),
-  prazoContemp: z.number().min(1).max(420),
-  parcelaRedPct: z.number(),
-  lanceLivrePct: z.number().min(0).max(100),
-  lanceEmbutidoPct: z.number().min(0).max(100),
-  almAnual: z.number().min(0).max(100),
-  // Financiamento
-  valorFinanc: z.number().min(1),
-  prazoMesesF: z.number().min(1).max(600),
-  taxaMensalPct: z.number().min(0).max(100),
-  metodo: z.enum(['price', 'sac']),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-const PRAZO_OPTIONS = [36, 48, 60, 72, 84, 96, 108, 120, 144, 156, 168, 180, 200, 216, 240, 360, 420]
-  .map((p) => ({ value: String(p), label: `${p} meses` }));
-
-const PARCELA_RED_OPTIONS = [
-  { value: '100', label: '100%' },
-  { value: '70', label: '70%' },
-  { value: '50', label: '50%' },
-];
-
-const METODO_OPTIONS = [
-  { value: 'price', label: 'Price (parcela fixa)' },
-  { value: 'sac', label: 'SAC (amortizacao fixa)' },
-];
-
-const defaultValues: FormData = {
-  valorCarta: 500000,
-  prazoMesesC: 200,
-  taxaAdm: 20,
-  fundoReserva: 3,
-  seguro: 0.05,
-  correcaoAnual: 7,
-  prazoContemp: 3,
-  parcelaRedPct: 70,
-  lanceLivrePct: 20,
-  lanceEmbutidoPct: 10,
-  almAnual: 12,
-  valorFinanc: 500000,
-  prazoMesesF: 360,
-  taxaMensalPct: 0.85,
-  metodo: 'price',
-};
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtBRL(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -78,6 +30,71 @@ function fmtBRL(v: number): string {
 
 function fmtPct(v: number, d = 2): string {
   return `${v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`;
+}
+
+function DarkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-somus-bg-secondary border border-somus-border rounded-lg px-3 py-2 shadow-lg">
+      {label != null && <p className="text-xs text-somus-text-secondary mb-1">{label}</p>}
+      {payload.map((e: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: e.color }} />
+          <span className="text-somus-text-secondary">{e.name}:</span>
+          <span className="font-semibold text-somus-text-primary">{typeof e.value === 'number' ? fmtBRL(e.value) : e.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Schema ──────────────────────────────────────────────────────────────────
+
+const formSchema = z.object({
+  valorCredito: z.number().min(1),
+  prazoMesesC: z.number().min(36).max(420),
+  taxaAdmPct: z.number().min(0),
+  fundoReservaPct: z.number().min(0),
+  seguroVidaPct: z.number().min(0),
+  momentoContemplacao: z.number().min(1),
+  lanceEmbutidoPct: z.number().min(0),
+  lanceLivrePct: z.number().min(0),
+  reajustePrePct: z.number().min(0),
+  almAnual: z.number().min(0),
+  valorFinanc: z.number().min(1),
+  prazoMesesF: z.number().min(1).max(600),
+  taxaMensalPct: z.number().min(0),
+  metodo: z.enum(['price', 'sac']),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+const defaults: FormData = {
+  valorCredito: 500000,
+  prazoMesesC: 200,
+  taxaAdmPct: 20,
+  fundoReservaPct: 3,
+  seguroVidaPct: 0.05,
+  momentoContemplacao: 36,
+  lanceEmbutidoPct: 10,
+  lanceLivrePct: 20,
+  reajustePrePct: 7,
+  almAnual: 12,
+  valorFinanc: 500000,
+  prazoMesesF: 360,
+  taxaMensalPct: 0.85,
+  metodo: 'price',
+};
+
+const inputCls = 'w-full px-2.5 py-1.5 text-sm bg-somus-bg-input border border-somus-border rounded-md text-somus-text-primary focus:ring-1 focus:ring-somus-green/50 focus:border-somus-green outline-none';
+
+function DInput({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-medium text-somus-text-secondary uppercase tracking-wider mb-1">{label}</label>
+      {children}
+    </div>
+  );
 }
 
 // ── Result type ─────────────────────────────────────────────────────────────
@@ -93,32 +110,8 @@ interface CompResult {
   tir_consorcio_anual: number;
   tir_financ_mensal: number;
   tir_financ_anual: number;
-  pv_consorcio?: number[];
-  pv_financiamento?: number[];
   consorcio?: any;
   financiamento?: any;
-}
-
-// ── Build chart data ────────────────────────────────────────────────────────
-
-function buildCumulativeChart(result: CompResult): Array<{ mes: number; consorcio: number; financiamento: number }> {
-  const cCf = result.consorcio?.cashflow_consorcio ?? result.consorcio?.cashflow ?? [];
-  const fCf = result.financiamento?.cashflow ?? [];
-  const maxLen = Math.max(cCf.length, fCf.length);
-  const points: Array<{ mes: number; consorcio: number; financiamento: number }> = [];
-  let acumC = 0;
-  let acumF = 0;
-
-  for (let t = 0; t < maxLen; t++) {
-    const cfC = t < cCf.length ? cCf[t] : 0;
-    const cfF = t < fCf.length ? fCf[t] : 0;
-    acumC += cfC < 0 ? Math.abs(cfC) : 0;
-    acumF += cfF < 0 ? Math.abs(cfF) : 0;
-    if (t % 6 === 0 || t === maxLen - 1) {
-      points.push({ mes: t, consorcio: Math.round(acumC), financiamento: Math.round(acumF) });
-    }
-  }
-  return points;
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -126,32 +119,33 @@ function buildCumulativeChart(result: CompResult): Array<{ mes: number; consorci
 export default function ConsorcioVsFinanc() {
   const setPage = useAppStore((s) => s.setPage);
   const [result, setResult] = useState<CompResult | null>(null);
-  const [chartData, setChartData] = useState<Array<{ mes: number; consorcio: number; financiamento: number }>>([]);
   const [loading, setLoading] = useState(false);
+
+  const engine = useMemo(() => new NasaEngine(), []);
 
   const { control, handleSubmit } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: defaults,
   });
-
-  const inputClass =
-    'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
 
   function onCalculate(data: FormData) {
     setLoading(true);
     try {
       const paramsC: Record<string, any> = {
-        valor_carta: data.valorCarta,
+        valor_credito: data.valorCredito,
         prazo_meses: data.prazoMesesC,
-        taxa_adm: data.taxaAdm,
-        fundo_reserva: data.fundoReserva,
-        seguro: data.seguro,
-        prazo_contemp: data.prazoContemp,
-        parcela_red_pct: data.parcelaRedPct,
-        lance_livre_pct: data.lanceLivrePct,
+        taxa_adm_pct: data.taxaAdmPct,
+        fundo_reserva_pct: data.fundoReservaPct,
+        seguro_vida_pct: data.seguroVidaPct,
+        momento_contemplacao: data.momentoContemplacao,
         lance_embutido_pct: data.lanceEmbutidoPct,
-        correcao_anual: data.correcaoAnual,
+        lance_livre_pct: data.lanceLivrePct,
+        reajuste_pre_pct: data.reajustePrePct,
+        reajuste_pos_pct: data.reajustePrePct,
+        reajuste_pre_freq: 'Anual',
+        reajuste_pos_freq: 'Anual',
         alm_anual: data.almAnual,
+        hurdle_anual: data.almAnual,
       };
 
       const paramsF: Record<string, any> = {
@@ -159,179 +153,242 @@ export default function ConsorcioVsFinanc() {
         prazo_meses: data.prazoMesesF,
         taxa_mensal_pct: data.taxaMensalPct,
         metodo: data.metodo,
+        calcular_iof: false,
       };
 
-      const res = compararConsorcioFinanciamentoStandalone(paramsC, paramsF) as unknown as CompResult;
+      const res = engine.compararConsorcioFinanciamento(paramsC, paramsF) as unknown as CompResult;
       setResult(res);
-      setChartData(buildCumulativeChart(res));
     } finally {
       setLoading(false);
     }
   }
 
-  const econLabel =
-    result && result.economia_vpl >= 0
-      ? 'Consorcio mais barato (VPL)'
-      : 'Financiamento mais barato (VPL)';
+  // Chart data
+  const cumulativeData = useMemo(() => {
+    if (!result) return [];
+    const cCf = result.consorcio?.cashflow ?? [];
+    const fCf = result.financiamento?.cashflow ?? [];
+    const maxLen = Math.max(cCf.length, fCf.length);
+    const points: Array<{ mes: number; consorcio: number; financiamento: number }> = [];
+    let acumC = 0, acumF = 0;
+    for (let t = 0; t < maxLen; t++) {
+      if (t < cCf.length) acumC += cCf[t] < 0 ? Math.abs(cCf[t]) : 0;
+      if (t < fCf.length) acumF += fCf[t] < 0 ? Math.abs(fCf[t]) : 0;
+      if (t % 6 === 0 || t === maxLen - 1) {
+        points.push({ mes: t, consorcio: Math.round(acumC), financiamento: Math.round(acumF) });
+      }
+    }
+    return points;
+  }, [result]);
+
+  const vplPieConsorcio = result ? [
+    { name: 'Fundo Comum', value: Math.abs(result.vpl_consorcio * 0.6) },
+    { name: 'Custos', value: Math.abs(result.vpl_consorcio * 0.4) },
+  ] : [];
+
+  const vplPieFinanc = result ? [
+    { name: 'Amortização', value: Math.abs(result.vpl_financiamento * 0.5) },
+    { name: 'Juros', value: Math.abs(result.vpl_financiamento * 0.5) },
+  ] : [];
+
+  const taxaBarData = result ? [
+    { name: 'Consórcio', taxa: result.tir_consorcio_mensal * 100 },
+    { name: 'Financiamento', taxa: result.tir_financ_mensal * 100 },
+  ] : [];
+
+  const econLabel = result && result.economia_vpl >= 0
+    ? 'Consórcio mais barato (VPL)'
+    : 'Financiamento mais barato (VPL)';
+
+  // Comparison table metrics
+  const compRows = result ? [
+    { metrica: 'Total Pago (Nominal)', cons: fmtBRL(result.total_pago_consorcio), fin: fmtBRL(result.total_pago_financiamento), diff: result.total_pago_financiamento - result.total_pago_consorcio },
+    { metrica: 'VPL', cons: fmtBRL(result.vpl_consorcio), fin: fmtBRL(result.vpl_financiamento), diff: Math.abs(result.vpl_financiamento) - Math.abs(result.vpl_consorcio) },
+    { metrica: 'TIR Mensal', cons: fmtPct(result.tir_consorcio_mensal * 100, 4), fin: fmtPct(result.tir_financ_mensal * 100, 4), diff: result.tir_financ_mensal - result.tir_consorcio_mensal },
+    { metrica: 'TIR Anual', cons: fmtPct(result.tir_consorcio_anual * 100, 2), fin: fmtPct(result.tir_financ_anual * 100, 2), diff: result.tir_financ_anual - result.tir_consorcio_anual },
+    { metrica: 'Economia Nominal', cons: fmtBRL(result.economia_nominal), fin: '—', diff: result.economia_nominal },
+    { metrica: 'Economia VPL', cons: fmtBRL(result.economia_vpl), fin: '—', diff: result.economia_vpl },
+  ] : [];
 
   return (
-    <PageLayout title="Consorcio vs Financiamento" subtitle="Compare lado a lado as duas modalidades">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-4">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit(onCalculate)}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Consorcio */}
-            <Card title="Consorcio" padding="md" className="border-l-4 border-l-emerald-500">
-              <div className="space-y-4 mt-4">
-                <FormField label="Valor da Carta" required>
-                  <Controller name="valorCarta" control={control} render={({ field }) => <CurrencyInput value={field.value} onChange={field.onChange} />} />
-                </FormField>
-                <FormField label="Prazo (meses)">
-                  <Controller name="prazoMesesC" control={control} render={({ field }) => (
-                    <Select options={PRAZO_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                  )} />
-                </FormField>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Taxa Adm (%)">
-                    <Controller name="taxaAdm" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                  <FormField label="Fdo Reserva (%)">
-                    <Controller name="fundoReserva" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Seguro (%)">
-                    <Controller name="seguro" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} decimals={4} />} />
-                  </FormField>
-                  <FormField label="Correcao (%)">
-                    <Controller name="correcaoAnual" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                </div>
-                <FormField label="Prazo Contemplacao (meses)">
-                  <Controller name="prazoContemp" control={control} render={({ field }) => (
-                    <input type="number" min={1} max={420} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputClass} />
-                  )} />
-                </FormField>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Lance Livre (%)">
-                    <Controller name="lanceLivrePct" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                  <FormField label="Lance Embutido (%)">
-                    <Controller name="lanceEmbutidoPct" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                </div>
-                <FormField label="Parcela Reduzida">
-                  <Controller name="parcelaRedPct" control={control} render={({ field }) => (
-                    <Select options={PARCELA_RED_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                  )} />
-                </FormField>
-                <FormField label="ALM/CDI Anual (%)">
-                  <Controller name="almAnual" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                </FormField>
-              </div>
-            </Card>
-
-            {/* Financiamento */}
-            <Card title="Financiamento" padding="md" className="border-l-4 border-l-blue-500">
-              <div className="space-y-4 mt-4">
-                <FormField label="Valor Financiado" required>
-                  <Controller name="valorFinanc" control={control} render={({ field }) => <CurrencyInput value={field.value} onChange={field.onChange} />} />
-                </FormField>
-                <FormField label="Prazo (meses)">
-                  <Controller name="prazoMesesF" control={control} render={({ field }) => (
-                    <input type="number" min={1} max={600} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputClass} />
-                  )} />
-                </FormField>
-                <FormField label="Taxa Mensal (%)">
-                  <Controller name="taxaMensalPct" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} decimals={4} />} />
-                </FormField>
-                <FormField label="Metodo">
-                  <Controller name="metodo" control={control} render={({ field }) => (
-                    <Select options={METODO_OPTIONS} value={field.value} onChange={(e) => field.onChange(e.target.value)} />
-                  )} />
-                </FormField>
-              </div>
-            </Card>
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <header className="sticky top-0 z-20 bg-somus-bg-primary/90 backdrop-blur-md border-b border-somus-border px-6 py-3">
+        <div className="flex items-center gap-3">
+          <Layers size={20} className="text-somus-purple" />
+          <div>
+            <h1 className="text-lg font-semibold text-somus-text-primary">Consórcio vs Financiamento</h1>
+            <p className="text-xs text-somus-text-tertiary">Comparação lado a lado - espelha aba "Consórcio X Financ."</p>
           </div>
+        </div>
+      </header>
 
-          <Button type="submit" variant="success" fullWidth loading={loading} icon={<Calculator className="h-4 w-4" />} size="lg">
-            Comparar
-          </Button>
-        </form>
-
-        {/* ─── Results ─────────────────────────────────────────────── */}
-        {result && (
-          <div className="mt-8 space-y-6">
-            {/* Economia Highlight */}
-            <div className={`rounded-lg p-6 text-center ${result.economia_vpl >= 0 ? 'bg-emerald-50 border-2 border-emerald-300' : 'bg-blue-50 border-2 border-blue-300'}`}>
-              <Award className={`h-8 w-8 mx-auto mb-2 ${result.economia_vpl >= 0 ? 'text-emerald-600' : 'text-blue-600'}`} />
-              <p className={`text-lg font-bold ${result.economia_vpl >= 0 ? 'text-emerald-700' : 'text-blue-700'}`}>
-                {econLabel}
-              </p>
-              <p className="text-sm text-somus-gray-600 mt-1">
-                Economia VPL: {fmtBRL(Math.abs(result.economia_vpl))}
-              </p>
+      <main className="flex-1 overflow-y-auto bg-somus-bg-primary p-5 space-y-5">
+        <form onSubmit={handleSubmit(onCalculate)}>
+          {/* Two input columns */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-4">
+            {/* Consórcio */}
+            <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4" style={{ borderLeftColor: '#1A7A3E', borderLeftWidth: 3 }}>
+              <h3 className="text-sm font-semibold text-somus-green mb-3">Consórcio</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DInput label="Valor Crédito"><Controller name="valorCredito" control={control} render={({ field }) => (
+                  <input type="number" step={1000} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Prazo (meses)"><Controller name="prazoMesesC" control={control} render={({ field }) => (
+                  <input type="number" min={36} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Taxa Adm (%)"><Controller name="taxaAdmPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Fdo Reserva (%)"><Controller name="fundoReservaPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Contemplação (mês)"><Controller name="momentoContemplacao" control={control} render={({ field }) => (
+                  <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Correção (% a.a.)"><Controller name="reajustePrePct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Lance Livre (%)"><Controller name="lanceLivrePct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Lance Embutido (%)"><Controller name="lanceEmbutidoPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+              </div>
             </div>
 
-            {/* KPIs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <KPICard title="Total Consorcio" value={fmtBRL(result.total_pago_consorcio)} variant="green" />
-              <KPICard title="Total Financ." value={fmtBRL(result.total_pago_financiamento)} variant="blue" />
-              <KPICard title="VPL Consorcio" value={fmtBRL(result.vpl_consorcio)} />
-              <KPICard title="VPL Financ." value={fmtBRL(result.vpl_financiamento)} />
+            {/* Financiamento */}
+            <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4" style={{ borderLeftColor: '#0EA5E9', borderLeftWidth: 3 }}>
+              <h3 className="text-sm font-semibold text-somus-skyblue mb-3">Financiamento</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DInput label="Valor Financiado"><Controller name="valorFinanc" control={control} render={({ field }) => (
+                  <input type="number" step={1000} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Prazo (meses)"><Controller name="prazoMesesF" control={control} render={({ field }) => (
+                  <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Taxa Mensal (%)"><Controller name="taxaMensalPct" control={control} render={({ field }) => (
+                  <input type="number" step={0.01} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+                )} /></DInput>
+                <DInput label="Método"><Controller name="metodo" control={control} render={({ field }) => (
+                  <select value={field.value} onChange={(e) => field.onChange(e.target.value)} className={inputCls}>
+                    <option value="price">Price (parcela fixa)</option>
+                    <option value="sac">SAC (amortização fixa)</option>
+                  </select>
+                )} /></DInput>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-somus-green text-white rounded-lg hover:bg-somus-green-light transition-colors disabled:opacity-50">
+            <Calculator size={16} /> {loading ? 'Comparando...' : 'Comparar'}
+          </button>
+        </form>
+
+        {result && (
+          <div className="space-y-5">
+            {/* Economy highlight */}
+            <div className={`rounded-lg p-4 text-center ${result.economia_vpl >= 0 ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-sky-500/10 border border-sky-500/30'}`}>
+              <Award size={24} className={`mx-auto mb-1 ${result.economia_vpl >= 0 ? 'text-emerald-400' : 'text-sky-400'}`} />
+              <p className={`text-lg font-bold ${result.economia_vpl >= 0 ? 'text-emerald-400' : 'text-sky-400'}`}>{econLabel}</p>
+              <p className="text-sm text-somus-text-secondary mt-1">Economia VPL: {fmtBRL(Math.abs(result.economia_vpl))}</p>
+            </div>
+
+            {/* 3 Chart Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* VPL Consórcio Doughnut */}
+              <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                <h4 className="text-xs font-semibold text-somus-text-primary mb-3">VPL Consórcio</h4>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={vplPieConsorcio} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={40} paddingAngle={2}>
+                      <Cell fill="#1A7A3E" />
+                      <Cell fill="#369A5D" />
+                    </Pie>
+                    <Tooltip content={<DarkTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <p className="text-center text-xs text-somus-text-secondary mt-1">{fmtBRL(result.vpl_consorcio)}</p>
+              </div>
+
+              {/* VPL Financiamento Doughnut */}
+              <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                <h4 className="text-xs font-semibold text-somus-text-primary mb-3">VPL Financiamento</h4>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={vplPieFinanc} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={40} paddingAngle={2}>
+                      <Cell fill="#0EA5E9" />
+                      <Cell fill="#38BDF8" />
+                    </Pie>
+                    <Tooltip content={<DarkTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <p className="text-center text-xs text-somus-text-secondary mt-1">{fmtBRL(result.vpl_financiamento)}</p>
+              </div>
+
+              {/* Taxa Custo Efetivo Bar */}
+              <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4">
+                <h4 className="text-xs font-semibold text-somus-text-primary mb-3">Taxa Custo Efetivo Mensal</h4>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={taxaBarData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#8B95A5' }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toFixed(2)}%`} />
+                    <Tooltip content={<DarkTooltip />} />
+                    <Bar dataKey="taxa" name="Taxa Mensal (%)" fill="#D4A017" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Comparison Table */}
-            <Card title="Comparativo" padding="none">
-              <table className="w-full text-sm">
+            <div className="bg-somus-bg-secondary border border-somus-border rounded-lg overflow-hidden">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-somus-gray-50 border-b border-somus-gray-200">
-                    <th className="text-left px-5 py-3 font-medium text-somus-gray-600">Metrica</th>
-                    <th className="text-right px-5 py-3 font-medium text-emerald-700">Consorcio</th>
-                    <th className="text-right px-5 py-3 font-medium text-blue-700">Financiamento</th>
+                  <tr className="border-b border-somus-border" style={{ backgroundColor: 'rgba(0, 32, 96, 0.3)' }}>
+                    <th className="px-4 py-2.5 text-left text-somus-text-secondary font-medium">Métrica</th>
+                    <th className="px-4 py-2.5 text-right font-medium" style={{ color: '#1A7A3E' }}>Consórcio</th>
+                    <th className="px-4 py-2.5 text-right font-medium" style={{ color: '#0EA5E9' }}>Financiamento</th>
+                    <th className="px-4 py-2.5 text-right text-somus-text-secondary font-medium">Diferença</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    ['Total Pago', fmtBRL(result.total_pago_consorcio), fmtBRL(result.total_pago_financiamento)],
-                    ['VPL', fmtBRL(result.vpl_consorcio), fmtBRL(result.vpl_financiamento)],
-                    ['TIR Mensal', fmtPct(result.tir_consorcio_mensal * 100, 4), fmtPct(result.tir_financ_mensal * 100, 4)],
-                    ['TIR Anual', fmtPct(result.tir_consorcio_anual * 100, 2), fmtPct(result.tir_financ_anual * 100, 2)],
-                    ['Economia Nominal', fmtBRL(result.economia_nominal), '-'],
-                  ].map(([label, c, f]) => (
-                    <tr key={label} className="border-b border-somus-gray-100">
-                      <td className="px-5 py-3 text-somus-gray-700">{label}</td>
-                      <td className="text-right px-5 py-3 font-medium">{c}</td>
-                      <td className="text-right px-5 py-3 font-medium">{f}</td>
+                  {compRows.map((r) => (
+                    <tr key={r.metrica} className="border-b border-somus-border/30">
+                      <td className="px-4 py-2 text-somus-text-secondary">{r.metrica}</td>
+                      <td className="px-4 py-2 text-right font-medium text-somus-text-primary">{r.cons}</td>
+                      <td className="px-4 py-2 text-right font-medium text-somus-text-primary">{r.fin}</td>
+                      <td className={`px-4 py-2 text-right font-medium ${r.diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {typeof r.diff === 'number' && r.metrica.includes('TIR')
+                          ? fmtPct(r.diff * 100, 4)
+                          : fmtBRL(r.diff)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </div>
 
-            {/* Cumulative Chart */}
-            {chartData.length > 0 && (
-              <ChartCard
-                title="Pagamentos Acumulados"
-                type="line"
-                data={chartData}
-                series={[
-                  { dataKey: 'consorcio', name: 'Consorcio', color: '#059669' },
-                  { dataKey: 'financiamento', name: 'Financiamento', color: '#2563EB' },
-                ]}
-                xAxisKey="mes"
-                height={300}
-                valueFormatter={(v) => fmtBRL(v)}
-              />
+            {/* Cumulative payments chart */}
+            {cumulativeData.length > 0 && (
+              <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-somus-text-primary mb-4">Pagamentos Acumulados</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={cumulativeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={{ stroke: '#1E2A3A' }} />
+                    <YAxis tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip content={<DarkTooltip />} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#8B95A5' }} />
+                    <Line type="monotone" dataKey="consorcio" name="Consórcio" stroke="#1A7A3E" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="financiamento" name="Financiamento" stroke="#0EA5E9" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         )}
-      </div>
-    </PageLayout>
+      </main>
+    </div>
   );
 }

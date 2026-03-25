@@ -34,6 +34,8 @@ export interface DataTableProps<T> {
   exportFilename?: string;
   className?: string;
   emptyMessage?: string;
+  compact?: boolean;
+  stickyFirstColumn?: boolean;
 }
 
 function exportToCSV<T>(data: T[], columns: ColumnDef<T, any>[], filename: string) {
@@ -80,6 +82,8 @@ export function DataTable<T>({
   exportFilename,
   className,
   emptyMessage = 'Nenhum registro encontrado.',
+  compact = false,
+  stickyFirstColumn = false,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -96,7 +100,7 @@ export function DataTable<T>({
           type="checkbox"
           checked={table.getIsAllPageRowsSelected()}
           onChange={table.getToggleAllPageRowsSelectedHandler()}
-          className="rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+          className="rounded border-somus-border-strong bg-somus-bg-input text-somus-green-500 focus:ring-somus-green-500/30"
         />
       ),
       cell: ({ row }) => (
@@ -104,7 +108,7 @@ export function DataTable<T>({
           type="checkbox"
           checked={row.getIsSelected()}
           onChange={row.getToggleSelectedHandler()}
-          className="rounded border-somus-gray-300 text-somus-green focus:ring-somus-green/40"
+          className="rounded border-somus-border-strong bg-somus-bg-input text-somus-green-500 focus:ring-somus-green-500/30"
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -139,6 +143,9 @@ export function DataTable<T>({
   const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
   const totalRows = table.getFilteredRowModel().rows.length;
 
+  const cellPadding = compact ? 'px-3 py-1.5' : 'px-4 py-3';
+  const headerPadding = compact ? 'px-3 py-2' : 'px-4 py-3';
+
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       {/* ── Toolbar ── */}
@@ -146,13 +153,13 @@ export function DataTable<T>({
         <div className="flex items-center justify-between gap-3">
           {searchable && (
             <div className="relative max-w-xs w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-somus-text-tertiary" />
               <input
                 type="text"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Pesquisar..."
-                className="w-full rounded-lg border border-somus-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-somus-gray-900 placeholder:text-somus-gray-400 focus:outline-none focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green transition-colors"
+                className="w-full rounded-lg border border-somus-border bg-somus-bg-input py-2 pl-9 pr-3 text-sm text-somus-text-primary placeholder:text-somus-text-tertiary focus:outline-none focus:ring-2 focus:ring-somus-green-500/30 focus:border-somus-green-500/50 transition-colors"
               />
             </div>
           )}
@@ -160,7 +167,7 @@ export function DataTable<T>({
           {exportFilename && (
             <button
               onClick={() => exportToCSV(data, columns, exportFilename)}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-somus-gray-600 bg-white border border-somus-gray-300 rounded-lg hover:bg-somus-gray-50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-somus-text-secondary bg-somus-bg-secondary border border-somus-border rounded-lg hover:bg-somus-bg-hover hover:text-somus-text-primary transition-colors"
             >
               <Download className="h-4 w-4" />
               Exportar CSV
@@ -170,18 +177,20 @@ export function DataTable<T>({
       )}
 
       {/* ── Table ── */}
-      <div className="overflow-x-auto rounded-lg border border-somus-gray-200 bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-somus-border bg-somus-bg-secondary/50">
+        <table className={cn('w-full text-sm', stickyFirstColumn && 'relative')}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-somus-gray-200 bg-somus-gray-50">
-                {headerGroup.headers.map((header) => (
+              <tr key={headerGroup.id} className="border-b-2 border-somus-green-700/30" style={{ background: 'linear-gradient(180deg, #0F1419 0%, #0A0F14 100%)' }}>
+                {headerGroup.headers.map((header, colIdx) => (
                   <th
                     key={header.id}
                     onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                     className={cn(
-                      'px-4 py-3 text-left text-xs font-semibold text-somus-gray-600 uppercase tracking-wider whitespace-nowrap',
-                      header.column.getCanSort() && 'cursor-pointer select-none hover:text-somus-gray-900'
+                      headerPadding,
+                      'text-left text-xs font-semibold text-somus-text-secondary uppercase tracking-wider whitespace-nowrap',
+                      header.column.getCanSort() && 'cursor-pointer select-none hover:text-somus-text-primary',
+                      stickyFirstColumn && colIdx === 0 && 'sticky left-0 z-20 bg-somus-bg-primary'
                     )}
                     style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
                   >
@@ -196,7 +205,7 @@ export function DataTable<T>({
                           ) : header.column.getIsSorted() === 'desc' ? (
                             <ChevronDown className="h-3.5 w-3.5" />
                           ) : (
-                            <ChevronsUpDown className="h-3.5 w-3.5 text-somus-gray-300" />
+                            <ChevronsUpDown className="h-3.5 w-3.5 text-somus-text-tertiary" />
                           )}
                         </span>
                       )}
@@ -206,33 +215,40 @@ export function DataTable<T>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-somus-gray-100">
+          <tbody>
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={finalColumns.length}
-                  className="px-4 py-12 text-center text-somus-gray-400"
+                  className="px-4 py-12 text-center text-somus-text-tertiary"
                 >
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, rowIdx) => (
                 <tr
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
                   className={cn(
-                    'transition-colors',
+                    'transition-colors border-b border-somus-border/30',
                     onRowClick && 'cursor-pointer',
                     row.getIsSelected()
-                      ? 'bg-somus-green-bg'
-                      : 'hover:bg-somus-gray-50'
+                      ? 'bg-somus-green-700/10'
+                      : rowIdx % 2 === 1
+                        ? 'bg-somus-bg-secondary/40'
+                        : 'bg-transparent',
+                    'hover:bg-somus-bg-hover/60'
                   )}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map((cell, colIdx) => (
                     <td
                       key={cell.id}
-                      className="px-4 py-3 text-somus-gray-700 whitespace-nowrap"
+                      className={cn(
+                        cellPadding,
+                        'text-somus-text-primary whitespace-nowrap',
+                        stickyFirstColumn && colIdx === 0 && 'sticky left-0 z-10 bg-somus-bg-secondary border-r border-somus-border/30'
+                      )}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
@@ -246,7 +262,7 @@ export function DataTable<T>({
 
       {/* ── Pagination ── */}
       {paginated && totalRows > currentPageSize && (
-        <div className="flex items-center justify-between text-sm text-somus-gray-500">
+        <div className="flex items-center justify-between text-sm text-somus-text-secondary">
           <span>
             Mostrando {pageIndex * currentPageSize + 1} a{' '}
             {Math.min((pageIndex + 1) * currentPageSize, totalRows)} de {totalRows}{' '}
@@ -257,33 +273,33 @@ export function DataTable<T>({
             <button
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
-              className="p-1.5 rounded hover:bg-somus-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-somus-bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="p-1.5 rounded hover:bg-somus-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-somus-bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <span className="px-3 py-1 text-sm font-medium">
+            <span className="px-3 py-1 text-sm font-medium text-somus-text-primary">
               {pageIndex + 1} / {table.getPageCount()}
             </span>
 
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="p-1.5 rounded hover:bg-somus-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-somus-bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
-              className="p-1.5 rounded hover:bg-somus-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-somus-bg-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronsRight className="h-4 w-4" />
             </button>

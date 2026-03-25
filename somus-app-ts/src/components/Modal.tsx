@@ -52,29 +52,29 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
+      {/* Overlay - dark */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
         onClick={closeOnOverlay ? onClose : undefined}
       />
 
-      {/* Dialog */}
+      {/* Dialog - dark theme */}
       <div
         className={cn(
-          'relative w-full mx-4 bg-white rounded-xl shadow-xl animate-in fade-in zoom-in-95',
+          'relative w-full mx-4 bg-somus-bg-secondary rounded-xl shadow-xl border border-somus-border/50 animate-in fade-in zoom-in-95',
           sizeStyles[size],
           className
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-somus-gray-200">
-            <h2 className="text-lg font-semibold text-somus-gray-900">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-somus-border">
+            <h2 className="text-lg font-semibold text-somus-text-primary">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-somus-gray-400 hover:text-somus-gray-600 hover:bg-somus-gray-100 transition-colors"
+              className="p-1.5 rounded-lg text-somus-text-tertiary hover:text-somus-text-primary hover:bg-somus-bg-hover transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -86,7 +86,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-somus-gray-200">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-somus-border">
             {footer}
           </div>
         )}

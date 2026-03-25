@@ -22,6 +22,10 @@ import {
   Building2,
   Briefcase,
   Shield,
+  Table,
+  List,
+  LineChart,
+  Presentation,
 } from 'lucide-react';
 import {
   useAppStore,
@@ -54,6 +58,10 @@ import CorpDashboard from './pages/corporate/Dashboard';
 import Simulador from './pages/corporate/Simulador';
 import ComparativoVPL from './pages/corporate/ComparativoVPL';
 import ConsorcioVsFinanc from './pages/corporate/ConsorcioVsFinanc';
+import FluxoFinanceiro from './pages/corporate/FluxoFinanceiro';
+import Parcelas from './pages/corporate/Parcelas';
+import GraficoView from './pages/corporate/GraficoView';
+import ResumoCliente from './pages/corporate/ResumoCliente';
 import GeradorPropostas from './pages/corporate/GeradorPropostas';
 import FluxoReceitas from './pages/corporate/FluxoReceitas';
 import Cenarios from './pages/corporate/Cenarios';
@@ -81,11 +89,15 @@ const PAGE_COMPONENTS: Record<string, Record<string, React.FC>> = {
   corporate: {
     dashboard: CorpDashboard,
     simulador: Simulador,
+    'fluxo-financeiro': FluxoFinanceiro,
+    parcelas: Parcelas,
     'comparativo-vpl': ComparativoVPL,
     'consorcio-vs-financ': ConsorcioVsFinanc,
+    grafico: GraficoView,
+    'resumo-cliente': ResumoCliente,
+    cenarios: Cenarios,
     'gerador-propostas': GeradorPropostas,
     'fluxo-receitas': FluxoReceitas,
-    cenarios: Cenarios,
   },
   seguros: {
     renovacoes: RenovacoesAnuais,
@@ -110,6 +122,10 @@ const ICON_MAP: Record<string, any> = {
   CheckSquare,
   Calculator,
   ShieldCheck,
+  Table,
+  List,
+  LineChart,
+  Presentation,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,21 +143,23 @@ function Titlebar() {
   const handleClose = () => window.electron?.app.close();
 
   return (
-    <div className="titlebar-drag flex items-center justify-between h-9 bg-neutral-950 border-b border-neutral-800 px-4 shrink-0">
+    <div className="titlebar-drag relative flex items-center justify-between h-9 bg-somus-bg-primary border-b border-somus-border px-4 shrink-0">
       <div className="flex items-center gap-2">
         <span className="somus-gradient-text text-sm font-bold tracking-wide">SOMUS CAPITAL</span>
       </div>
       <div className="titlebar-no-drag flex items-center">
-        <button onClick={handleMinimize} className="flex items-center justify-center w-11 h-9 hover:bg-neutral-800 transition-colors" aria-label="Minimizar">
-          <Minus size={14} className="text-neutral-400" />
+        <button onClick={handleMinimize} className="flex items-center justify-center w-11 h-9 hover:bg-somus-bg-hover transition-colors" aria-label="Minimizar">
+          <Minus size={14} className="text-somus-text-tertiary" />
         </button>
-        <button onClick={handleMaximize} className="flex items-center justify-center w-11 h-9 hover:bg-neutral-800 transition-colors" aria-label="Maximizar">
-          <Square size={12} className="text-neutral-400" />
+        <button onClick={handleMaximize} className="flex items-center justify-center w-11 h-9 hover:bg-somus-bg-hover transition-colors" aria-label="Maximizar">
+          <Square size={12} className="text-somus-text-tertiary" />
         </button>
-        <button onClick={handleClose} className="flex items-center justify-center w-11 h-9 hover:bg-red-600 transition-colors" aria-label="Fechar">
-          <X size={14} className="text-neutral-400" />
+        <button onClick={handleClose} className="flex items-center justify-center w-11 h-9 hover:bg-red-600/80 transition-colors" aria-label="Fechar">
+          <X size={14} className="text-somus-text-tertiary" />
         </button>
       </div>
+      {/* Subtle green gradient line at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #1A7A3E, transparent)' }} />
     </div>
   );
 }
@@ -164,9 +182,10 @@ function ModuleSelector() {
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-150',
               isActive
-                ? 'bg-emerald-600/15 text-emerald-400 border border-emerald-500/30'
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/60 border border-transparent',
+                ? 'text-somus-text-accent border border-somus-green-500/30'
+                : 'text-somus-text-tertiary hover:text-somus-text-secondary hover:bg-somus-bg-hover border border-transparent',
             )}
+            style={isActive ? { background: 'linear-gradient(135deg, rgba(26,122,62,0.15) 0%, rgba(13,92,44,0.05) 100%)' } : undefined}
             title={MODULE_LABELS[mod]}
           >
             <Icon size={14} />
@@ -188,12 +207,12 @@ function AppSidebar() {
   return (
     <aside
       className={cn(
-        'flex flex-col bg-neutral-950 border-r border-neutral-800 transition-all duration-200 shrink-0',
+        'flex flex-col bg-somus-bg-primary border-r border-somus-border transition-all duration-200 shrink-0',
         sidebarCollapsed ? 'w-16' : 'w-60',
       )}
     >
       {!sidebarCollapsed && <ModuleSelector />}
-      <div className="h-px bg-neutral-800 mx-3" />
+      <div className="h-px bg-somus-border mx-3" />
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
         {pages.map((page: PageDef) => {
           const Icon = ICON_MAP[page.icon];
@@ -215,22 +234,33 @@ function AppSidebar() {
           );
         })}
       </nav>
-      <div className="h-px bg-neutral-800 mx-3" />
+      <div className="h-px bg-somus-border mx-3" />
       <div className="p-3 flex items-center gap-2">
         {!sidebarCollapsed && (
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-neutral-300 truncate">{userName}</p>
-            <p className="text-[10px] text-neutral-600">Somus Capital</p>
-          </div>
+          <>
+            <div className="h-7 w-7 rounded-full bg-somus-bg-tertiary border border-somus-border flex items-center justify-center text-xs font-bold text-somus-text-accent shrink-0">
+              {userName?.charAt(0)?.toUpperCase() ?? 'U'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-somus-text-primary truncate">{userName}</p>
+              <p className="text-[10px] text-somus-text-tertiary">Somus Capital</p>
+            </div>
+          </>
         )}
         <button
           onClick={toggleSidebar}
-          className="p-1.5 rounded-md hover:bg-neutral-800 text-neutral-500 hover:text-neutral-300 transition-colors"
+          className="p-1.5 rounded-md hover:bg-somus-bg-hover text-somus-text-tertiary hover:text-somus-text-secondary transition-colors"
           aria-label={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
+      {/* Version badge */}
+      {!sidebarCollapsed && (
+        <div className="px-3 pb-2">
+          <span className="text-[10px] font-mono text-somus-text-tertiary">v2.0.0</span>
+        </div>
+      )}
     </aside>
   );
 }
@@ -245,7 +275,7 @@ function PageContent() {
 
   if (PageComponent) {
     return (
-      <div className="flex-1 overflow-auto bg-somus-gray-50 animate-fade-in">
+      <div className="flex-1 overflow-auto bg-somus-bg-primary animate-fade-in">
         <PageComponent />
       </div>
     );
@@ -258,20 +288,20 @@ function PageContent() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <header className="sticky top-0 z-20 bg-neutral-950/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
+      <header className="sticky top-0 z-20 bg-somus-bg-primary/80 backdrop-blur-md border-b border-somus-border px-6 py-4">
         <div className="flex items-center gap-3">
-          {Icon && <Icon size={22} className="text-emerald-500" />}
+          {Icon && <Icon size={22} className="text-somus-green-500" />}
           <div>
-            <h1 className="text-lg font-semibold text-neutral-100">{pageDef?.label ?? currentPage}</h1>
-            <p className="text-xs text-neutral-500">{MODULE_LABELS[currentModule]}</p>
+            <h1 className="text-lg font-semibold text-somus-text-primary">{pageDef?.label ?? currentPage}</h1>
+            <p className="text-xs text-somus-text-tertiary">{MODULE_LABELS[currentModule]}</p>
           </div>
         </div>
       </header>
       <main className="p-6 animate-fade-in">
         <div className="glass p-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
-          {Icon && <Icon size={48} className="text-neutral-700" />}
-          <h2 className="text-xl font-semibold text-neutral-400">{pageDef?.label ?? currentPage}</h2>
-          <p className="text-sm text-neutral-600 max-w-md text-center">Pagina em desenvolvimento.</p>
+          {Icon && <Icon size={48} className="text-somus-text-tertiary" />}
+          <h2 className="text-xl font-semibold text-somus-text-secondary">{pageDef?.label ?? currentPage}</h2>
+          <p className="text-sm text-somus-text-tertiary max-w-md text-center">Pagina em desenvolvimento.</p>
         </div>
       </main>
     </div>
@@ -282,7 +312,7 @@ function PageContent() {
 
 export default function App() {
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-950">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-somus-bg-primary">
       <Titlebar />
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar />

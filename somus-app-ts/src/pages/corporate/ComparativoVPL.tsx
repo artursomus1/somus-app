@@ -1,74 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  ArrowLeft,
   Calculator,
   CheckCircle2,
   XCircle,
   Target,
+  TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
-import { PageLayout } from '@components/PageLayout';
-import { Card } from '@components/Card';
-import { Button } from '@components/Button';
-import { FormField } from '@components/FormField';
-import { CurrencyInput } from '@components/CurrencyInput';
-import { PercentInput } from '@components/PercentInput';
-import { KPICard } from '@components/KPICard';
-import { Select } from '@components/Select';
-import { ChartCard, CHART_COLORS } from '@components/ChartCard';
-import { useAppStore } from '@/stores/appStore';
 import {
-  calcularFluxoConsorcio,
-  calcularVplHd,
-  npv,
-  monthlyFromAnnual,
-} from '@engine/index';
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceLine,
+} from 'recharts';
+import { useAppStore } from '@/stores/appStore';
+import { NasaEngine, monthlyFromAnnual } from '@engine/index';
 import type { FluxoResult, VPLResult } from '@engine/nasa-engine';
 
-// ── Schema ──────────────────────────────────────────────────────────────────
-
-const vplSchema = z.object({
-  valorCarta: z.number().min(1),
-  prazoMeses: z.number().min(36).max(420),
-  taxaAdm: z.number().min(0).max(100),
-  fundoReserva: z.number().min(0).max(100),
-  seguro: z.number().min(0).max(100),
-  correcaoAnual: z.number().min(0).max(100),
-  prazoContemp: z.number().min(1).max(420),
-  parcelaRedPct: z.number(),
-  lanceLivrePct: z.number().min(0).max(100),
-  lanceEmbutidoPct: z.number().min(0).max(100),
-  almAnual: z.number().min(0).max(100),
-  hurdleAnual: z.number().min(0).max(100),
-});
-
-type VPLFormData = z.infer<typeof vplSchema>;
-
-const PRAZO_OPTIONS = [36, 48, 60, 72, 84, 96, 108, 120, 144, 156, 168, 180, 200, 216, 240, 360, 420]
-  .map((p) => ({ value: String(p), label: `${p} meses` }));
-
-const PARCELA_RED_OPTIONS = [
-  { value: '100', label: '100% (Integral)' },
-  { value: '70', label: '70% (Reduzida)' },
-  { value: '50', label: '50% (Reduzida)' },
-];
-
-const defaultValues: VPLFormData = {
-  valorCarta: 500000,
-  prazoMeses: 200,
-  taxaAdm: 20,
-  fundoReserva: 3,
-  seguro: 0.05,
-  correcaoAnual: 7,
-  prazoContemp: 3,
-  parcelaRedPct: 70,
-  lanceLivrePct: 20,
-  lanceEmbutidoPct: 10,
-  almAnual: 12,
-  hurdleAnual: 12,
-};
+// ── Format helpers ──────────────────────────────────────────────────────────
 
 function fmtBRL(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -78,20 +35,67 @@ function fmtPct(v: number, d = 2): string {
   return `${v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`;
 }
 
-// ── Build chart data ────────────────────────────────────────────────────────
+function DarkTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-somus-bg-secondary border border-somus-border rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-xs font-medium text-somus-text-secondary mb-1">Mês {label}</p>
+      {payload.map((entry: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+          <span className="text-somus-text-secondary">{entry.name}:</span>
+          <span className="font-semibold text-somus-text-primary">{fmtBRL(entry.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-function buildChartData(cashflow: number[], almAnual: number) {
-  const almM = monthlyFromAnnual(almAnual / 100);
-  const points: Array<{ mes: number; pvAcumulado: number }> = [];
-  let acum = 0;
-  for (let t = 0; t < cashflow.length; t++) {
-    const pv = cashflow[t] / Math.pow(1 + almM, t);
-    acum += pv;
-    if (t % 3 === 0 || t === cashflow.length - 1) {
-      points.push({ mes: t, pvAcumulado: Math.round(acum * 100) / 100 });
-    }
-  }
-  return points;
+// ── Schema ──────────────────────────────────────────────────────────────────
+
+const vplSchema = z.object({
+  valorCredito: z.number().min(1),
+  prazoMeses: z.number().min(36).max(420),
+  taxaAdmPct: z.number().min(0).max(100),
+  fundoReservaPct: z.number().min(0).max(100),
+  seguroVidaPct: z.number().min(0).max(100),
+  momentoContemplacao: z.number().min(1),
+  lanceEmbutidoPct: z.number().min(0).max(100),
+  lanceLivrePct: z.number().min(0).max(100),
+  reajustePrePct: z.number().min(0),
+  reajustePosPct: z.number().min(0),
+  almAnual: z.number().min(0),
+  hurdleAnual: z.number().min(0),
+  periodoInicio: z.number().min(1),
+});
+
+type VPLFormData = z.infer<typeof vplSchema>;
+
+const defaults: VPLFormData = {
+  valorCredito: 500000,
+  prazoMeses: 200,
+  taxaAdmPct: 20,
+  fundoReservaPct: 3,
+  seguroVidaPct: 0.05,
+  momentoContemplacao: 36,
+  lanceEmbutidoPct: 10,
+  lanceLivrePct: 20,
+  reajustePrePct: 7,
+  reajustePosPct: 7,
+  almAnual: 12,
+  hurdleAnual: 12,
+  periodoInicio: 1,
+};
+
+const inputCls = 'w-full px-2.5 py-1.5 text-sm bg-somus-bg-input border border-somus-border rounded-md text-somus-text-primary focus:ring-1 focus:ring-somus-green/50 focus:border-somus-green outline-none';
+
+function DInput({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-medium text-somus-text-secondary uppercase tracking-wider mb-1">{label}</label>
+      {children}
+    </div>
+  );
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -99,183 +103,273 @@ function buildChartData(cashflow: number[], almAnual: number) {
 export default function ComparativoVPL() {
   const setPage = useAppStore((s) => s.setPage);
   const [result, setResult] = useState<VPLResult | null>(null);
-  const [chartData, setChartData] = useState<Array<{ mes: number; pvAcumulado: number }>>([]);
+  const [fluxoResult, setFluxoResult] = useState<FluxoResult | null>(null);
+  const [chartData, setChartData] = useState<Array<{ mes: number; vpPreT: number; vpPosT: number }>>([]);
   const [loading, setLoading] = useState(false);
+  const [contemp, setContemp] = useState(36);
+
+  const engine = useMemo(() => new NasaEngine(), []);
 
   const { control, handleSubmit } = useForm<VPLFormData>({
     resolver: zodResolver(vplSchema),
-    defaultValues,
+    defaultValues: defaults,
   });
-
-  const inputClass =
-    'w-full px-3 py-2 text-sm border border-somus-gray-300 rounded-lg focus:ring-2 focus:ring-somus-green/40 focus:border-somus-green outline-none bg-white';
 
   function onCalculate(data: VPLFormData) {
     setLoading(true);
     try {
-      const engineParams: Record<string, any> = {
-        valor_carta: data.valorCarta,
+      const params: Record<string, any> = {
+        valor_credito: data.valorCredito,
         prazo_meses: data.prazoMeses,
-        taxa_adm: data.taxaAdm,
-        fundo_reserva: data.fundoReserva,
-        seguro: data.seguro,
-        prazo_contemp: data.prazoContemp,
-        parcela_red_pct: data.parcelaRedPct,
-        lance_livre_pct: data.lanceLivrePct,
+        taxa_adm_pct: data.taxaAdmPct,
+        fundo_reserva_pct: data.fundoReservaPct,
+        seguro_vida_pct: data.seguroVidaPct,
+        momento_contemplacao: data.momentoContemplacao,
         lance_embutido_pct: data.lanceEmbutidoPct,
-        correcao_anual: data.correcaoAnual,
+        lance_livre_pct: data.lanceLivrePct,
+        reajuste_pre_pct: data.reajustePrePct,
+        reajuste_pos_pct: data.reajustePosPct,
+        reajuste_pre_freq: 'Anual',
+        reajuste_pos_freq: 'Anual',
         alm_anual: data.almAnual,
         hurdle_anual: data.hurdleAnual,
       };
 
-      const fluxoResult = calcularFluxoConsorcio(engineParams) as unknown as FluxoResult;
-      const vplResult = calcularVplHd(engineParams, fluxoResult);
+      setContemp(data.momentoContemplacao);
+      const fr = engine.calcularFluxoCompleto(params);
+      setFluxoResult(fr);
+      const vr = engine.calcularVPLHD(params, fr);
+      setResult(vr);
 
-      setResult(vplResult);
-      setChartData(buildChartData(fluxoResult.cashflow ?? fluxoResult.cashflow_consorcio, data.almAnual));
+      // Build chart
+      const almM = monthlyFromAnnual(data.almAnual / 100);
+      const points: Array<{ mes: number; vpPreT: number; vpPosT: number }> = [];
+      let acumPre = 0;
+      let acumPos = 0;
+      for (const d of vr.pv_pre_t_detail) {
+        acumPre += d.pv;
+        points.push({ mes: d.mes, vpPreT: Math.round(acumPre), vpPosT: 0 });
+      }
+      for (const d of vr.pv_pos_t_detail) {
+        acumPos += d.pv;
+        if (d.mes % 3 === 0) {
+          points.push({ mes: d.mes, vpPreT: Math.round(acumPre), vpPosT: Math.round(acumPos) });
+        }
+      }
+      setChartData(points);
     } finally {
       setLoading(false);
     }
   }
 
+  // Per-month VP table
+  const allVPRows = useMemo(() => {
+    if (!result) return [];
+    const rows: Array<{ mes: number; pagamento: number; vpPreT: number; vpPosT: number; vpTotal: number }> = [];
+    for (const d of result.pv_pre_t_detail) {
+      rows.push({ mes: d.mes, pagamento: d.valor, vpPreT: d.pv, vpPosT: 0, vpTotal: d.pv });
+    }
+    for (const d of result.pv_pos_t_detail) {
+      rows.push({ mes: d.mes, pagamento: d.valor, vpPreT: 0, vpPosT: d.pv, vpTotal: d.pv });
+    }
+    return rows;
+  }, [result]);
+
+  const parcelaMediaPos = useMemo(() => {
+    if (!result || !result.pv_pos_t_detail.length) return 0;
+    return result.pv_pos_t_detail.reduce((s, d) => s + d.valor, 0) / result.pv_pos_t_detail.length;
+  }, [result]);
+
   return (
-    <PageLayout title="Comparativo de VPL" subtitle="Analise VPL Goal-Based (NASA HD)">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-4">
-          <button onClick={() => setPage('dashboard')} className="inline-flex items-center gap-1.5 text-sm text-somus-gray-500 hover:text-somus-gray-700 transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
-          </button>
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <header className="sticky top-0 z-20 bg-somus-bg-primary/90 backdrop-blur-md border-b border-somus-border px-6 py-3">
+        <div className="flex items-center gap-3">
+          <TrendingUp size={20} className="text-somus-skyblue" />
+          <div>
+            <h1 className="text-lg font-semibold text-somus-text-primary">Comparativo de VPL</h1>
+            <p className="text-xs text-somus-text-tertiary">Análise VPL Goal-Based (NASA HD) - espelha aba "COMPARATIVO DE VPL"</p>
+          </div>
         </div>
+      </header>
 
+      <main className="flex-1 overflow-y-auto bg-somus-bg-primary p-5 space-y-5">
         <form onSubmit={handleSubmit(onCalculate)}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ─── Left: Inputs ─────────────────────────────────────── */}
-            <div className="lg:col-span-1 space-y-5">
-              <Card title="Parametros do Consorcio" padding="md">
-                <div className="space-y-4 mt-4">
-                  <FormField label="Valor da Carta" required>
-                    <Controller name="valorCarta" control={control} render={({ field }) => <CurrencyInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                  <FormField label="Prazo (meses)">
-                    <Controller name="prazoMeses" control={control} render={({ field }) => (
-                      <Select options={PRAZO_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                    )} />
-                  </FormField>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Taxa Adm (%)">
-                      <Controller name="taxaAdm" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                    </FormField>
-                    <FormField label="Fdo Reserva (%)">
-                      <Controller name="fundoReserva" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                    </FormField>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Seguro (%)">
-                      <Controller name="seguro" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} decimals={4} />} />
-                    </FormField>
-                    <FormField label="Correcao (%)">
-                      <Controller name="correcaoAnual" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                    </FormField>
-                  </div>
-                  <FormField label="Prazo Contemplacao (meses)">
-                    <Controller name="prazoContemp" control={control} render={({ field }) => (
-                      <input type="number" min={1} max={420} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputClass} />
-                    )} />
-                  </FormField>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Lance Livre (%)">
-                      <Controller name="lanceLivrePct" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                    </FormField>
-                    <FormField label="Lance Embutido (%)">
-                      <Controller name="lanceEmbutidoPct" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                    </FormField>
-                  </div>
-                  <FormField label="Parcela Reduzida (%)">
-                    <Controller name="parcelaRedPct" control={control} render={({ field }) => (
-                      <Select options={PARCELA_RED_OPTIONS} value={String(field.value)} onChange={(e) => field.onChange(Number(e.target.value))} />
-                    )} />
-                  </FormField>
-                </div>
-              </Card>
-
-              <Card title="Taxas de Desconto" padding="md">
-                <div className="space-y-4 mt-4">
-                  <FormField label="CDI/ALM Anual (%)" tooltip="Custo de oportunidade para desconto pre-contemplacao">
-                    <Controller name="almAnual" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                  <FormField label="Hurdle Rate Anual (%)" tooltip="Taxa hurdle para desconto pos-contemplacao">
-                    <Controller name="hurdleAnual" control={control} render={({ field }) => <PercentInput value={field.value} onChange={field.onChange} />} />
-                  </FormField>
-                </div>
-              </Card>
-
-              <Button type="submit" variant="success" fullWidth loading={loading} icon={<Calculator className="h-4 w-4" />}>
-                Calcular VPL HD
-              </Button>
+          {/* TOP: Input parameters */}
+          <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-4 mb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+              <DInput label="Valor Crédito"><Controller name="valorCredito" control={control} render={({ field }) => (
+                <input type="number" step={1000} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="T (Contemplação)"><Controller name="momentoContemplacao" control={control} render={({ field }) => (
+                <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Lance Emb. (%)"><Controller name="lanceEmbutidoPct" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Lance Livre (%)"><Controller name="lanceLivrePct" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="ALM / CDI (% a.a.)"><Controller name="almAnual" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Hurdle (% a.a.)"><Controller name="hurdleAnual" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Pgto Início"><Controller name="periodoInicio" control={control} render={({ field }) => (
+                <input type="number" min={1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
             </div>
-
-            {/* ─── Right: Results ───────────────────────────────────── */}
-            <div className="lg:col-span-2 space-y-5">
-              {!result ? (
-                <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed border-somus-gray-200 bg-white">
-                  <div className="text-center">
-                    <Target className="h-10 w-10 text-somus-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-somus-gray-400">Preencha os parametros e clique em "Calcular VPL HD"</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Value Badge */}
-                  <div className={`rounded-lg p-6 text-center ${result.cria_valor ? 'bg-emerald-50 border-2 border-emerald-300' : 'bg-red-50 border-2 border-red-300'}`}>
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      {result.cria_valor
-                        ? <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-                        : <XCircle className="h-8 w-8 text-red-600" />
-                      }
-                      <span className={`text-2xl font-bold ${result.cria_valor ? 'text-emerald-700' : 'text-red-700'}`}>
-                        {result.cria_valor ? 'CRIA VALOR' : 'DESTROI VALOR'}
-                      </span>
-                    </div>
-                    <p className={`text-lg font-semibold ${result.cria_valor ? 'text-emerald-600' : 'text-red-600'}`}>
-                      Delta VPL: {fmtBRL(result.delta_vpl)}
-                    </p>
-                  </div>
-
-                  {/* KPI Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <KPICard title="B0 (PV Credito)" value={fmtBRL(result.b0)} variant="green" />
-                    <KPICard title="H0 (PV Pgtos)" value={fmtBRL(result.h0)} variant="blue" />
-                    <KPICard title="D0 (B0 - H0)" value={fmtBRL(result.d0)} variant={result.d0 >= 0 ? 'green' : 'red'} />
-                    <KPICard title="PV pos-T" value={fmtBRL(result.pv_pos_t)} variant="orange" />
-                    <KPICard title="Delta VPL" value={fmtBRL(result.delta_vpl)} variant={result.delta_vpl >= 0 ? 'green' : 'red'} />
-                  </div>
-
-                  {/* Break-even & TIR */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <KPICard title="Break-even Lance" value={fmtPct(result.break_even_lance, 2)} icon={<Target className="h-5 w-5" />} variant="blue" />
-                    <KPICard title="TIR Mensal" value={fmtPct(result.tir_mensal * 100, 4)} />
-                    <KPICard title="TIR Anual" value={fmtPct(result.tir_anual * 100, 2)} />
-                    <KPICard title="CET Anual" value={fmtPct(result.cet_anual * 100, 2)} variant={result.cet_anual > 0 ? 'red' : 'green'} />
-                  </div>
-
-                  {/* PV Breakdown Chart */}
-                  {chartData.length > 0 && (
-                    <ChartCard
-                      title="PV Acumulado por Mes"
-                      type="area"
-                      data={chartData}
-                      series={[{ dataKey: 'pvAcumulado', name: 'PV Acumulado', color: CHART_COLORS[0] }]}
-                      xAxisKey="mes"
-                      height={280}
-                      valueFormatter={(v) => fmtBRL(v)}
-                    />
-                  )}
-                </>
-              )}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
+              <DInput label="Prazo (meses)"><Controller name="prazoMeses" control={control} render={({ field }) => (
+                <input type="number" min={36} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Taxa Adm (%)"><Controller name="taxaAdmPct" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Fdo Reserva (%)"><Controller name="fundoReservaPct" control={control} render={({ field }) => (
+                <input type="number" step={0.1} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <DInput label="Seguro (%)"><Controller name="seguroVidaPct" control={control} render={({ field }) => (
+                <input type="number" step={0.01} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} className={inputCls} />
+              )} /></DInput>
+              <button type="submit" disabled={loading} className="self-end inline-flex items-center justify-center gap-2 px-4 py-1.5 text-sm font-semibold bg-somus-green text-white rounded-lg hover:bg-somus-green-light transition-colors disabled:opacity-50">
+                <Calculator size={14} /> {loading ? 'Calculando...' : 'Calcular VPL HD'}
+              </button>
             </div>
           </div>
         </form>
-      </div>
-    </PageLayout>
+
+        {result && (
+          <div className="space-y-5">
+            {/* Status Badge + Panels Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Left: Resumo Econômico */}
+              <div className="lg:col-span-2 bg-somus-bg-secondary border border-somus-border rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-somus-text-primary mb-4">Resumo Econômico (Rota A)</h3>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                  {[
+                    { label: 'Cheque líquido em T', value: fmtBRL(result.b0 * Math.pow(1 + monthlyFromAnnual(0.12), contemp)), color: '' },
+                    { label: 'Carta em T', value: fmtBRL(fluxoResult?.fluxo?.[contemp]?.carta_credito_reajustada ?? 0), color: '' },
+                    { label: 'Lance próprio em T', value: fmtBRL(fluxoResult?.totais?.lance_livre_valor ?? 0), color: '' },
+                    { label: 'ALM mensal', value: fmtPct(monthlyFromAnnual(0.12) * 100, 4), color: '' },
+                    { label: 'Hurdle mensal', value: fmtPct(monthlyFromAnnual(0.12) * 100, 4), color: '' },
+                    { label: 'B0 (PV Crédito)', value: fmtBRL(result.b0), color: 'text-somus-green' },
+                    { label: 'PV parcelas pré-T', value: fmtBRL(result.h0), color: 'text-somus-skyblue' },
+                    { label: 'Parcela média pós-T', value: fmtBRL(parcelaMediaPos), color: '' },
+                    { label: 'PV parcelas pós-T', value: fmtBRL(result.pv_pos_t), color: 'text-somus-orange' },
+                    { label: 'D0 (B0 - H0)', value: fmtBRL(result.d0), color: result.d0 >= 0 ? 'text-emerald-400' : 'text-red-400' },
+                    { label: 'Delta-VPL', value: fmtBRL(result.delta_vpl), color: result.delta_vpl >= 0 ? 'text-emerald-400' : 'text-red-400' },
+                    { label: 'Break-even Lance', value: fmtPct(result.break_even_lance, 2), color: 'text-somus-skyblue' },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-somus-border/30">
+                      <span className="text-somus-text-secondary">{r.label}</span>
+                      <span className={`font-semibold ${r.color || 'text-somus-text-primary'}`}>{r.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Status Badge */}
+                <div className={`mt-4 rounded-lg p-3 text-center ${result.cria_valor ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                  <div className="flex items-center justify-center gap-2">
+                    {result.cria_valor ? <CheckCircle2 size={20} className="text-emerald-400" /> : <XCircle size={20} className="text-red-400" />}
+                    <span className={`text-lg font-bold ${result.cria_valor ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {result.cria_valor ? 'CRIA VALOR' : 'NÃO CRIA VALOR'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Guidance + Note */}
+              <div className="space-y-4">
+                <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-5">
+                  <h3 className="text-sm font-semibold text-somus-text-primary mb-3">Break-even</h3>
+                  <p className="text-xs text-somus-text-secondary leading-relaxed">
+                    O lance livre de <span className="text-somus-skyblue font-semibold">{fmtPct(result.break_even_lance, 2)}</span> é o ponto
+                    em que o Delta-VPL zera. Acima deste lance, a operação passa a destruir valor.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-somus-bg-tertiary rounded-md p-2">
+                      <span className="text-somus-text-tertiary">TIR Mensal</span>
+                      <p className="font-bold text-somus-gold">{fmtPct(result.tir_mensal * 100, 4)}</p>
+                    </div>
+                    <div className="bg-somus-bg-tertiary rounded-md p-2">
+                      <span className="text-somus-text-tertiary">TIR Anual</span>
+                      <p className="font-bold text-somus-gold">{fmtPct(result.tir_anual * 100, 2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-somus-gold/5 border border-somus-gold/20 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-somus-gold shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-semibold text-somus-gold mb-1">IMPORTANTE</h4>
+                      <p className="text-[10px] text-somus-text-secondary leading-relaxed">
+                        A análise de VPL utiliza taxas duais: ALM/CDI para desconto pré-contemplação (custo de oportunidade) e
+                        Hurdle Rate para pós-contemplação (retorno mínimo exigido). O resultado é sensível a estas premissas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Chart: Cumulative VP */}
+            {chartData.length > 0 && (
+              <div className="bg-somus-bg-secondary border border-somus-border rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-somus-text-primary mb-4">VP Acumulado por Mês</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1E2A3A" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={{ stroke: '#1E2A3A' }} />
+                    <YAxis tick={{ fontSize: 10, fill: '#5A6577' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip content={<DarkTooltip />} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#8B95A5' }} />
+                    <ReferenceLine x={contemp} stroke="#D4A017" strokeDasharray="5 5" label={{ value: `T=${contemp}`, fill: '#D4A017', fontSize: 10 }} />
+                    <Area type="monotone" dataKey="vpPreT" name="VP Pré-T @ ALM" stroke="#1A7A3E" fill="#1A7A3E" fillOpacity={0.2} strokeWidth={2} />
+                    <Area type="monotone" dataKey="vpPosT" name="VP Pós-T @ Hurdle" stroke="#EF4444" fill="#EF4444" fillOpacity={0.15} strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Per-month VP Table */}
+            <div className="bg-somus-bg-secondary border border-somus-border rounded-lg overflow-hidden">
+              <div className="px-4 py-3 border-b border-somus-border flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-somus-text-primary">Tabela de VP por Mês</h3>
+                <span className="text-[10px] text-somus-text-tertiary">{allVPRows.length} registros</span>
+              </div>
+              <div className="overflow-x-auto max-h-[400px]">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-somus-bg-tertiary">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-somus-text-secondary font-medium">Mês</th>
+                      <th className="px-3 py-2 text-right text-somus-text-secondary font-medium">Pagamento</th>
+                      <th className="px-3 py-2 text-right font-medium" style={{ color: '#1A7A3E' }}>VP Pré-T @ ALM</th>
+                      <th className="px-3 py-2 text-right font-medium" style={{ color: '#EF4444' }}>VP Pós-T @ Hurdle</th>
+                      <th className="px-3 py-2 text-right text-somus-text-secondary font-medium">VP Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allVPRows.map((r) => (
+                      <tr key={r.mes} className={`border-b border-somus-border/30 ${r.mes === contemp ? 'bg-somus-gold/5' : ''}`}>
+                        <td className="px-3 py-1.5 text-somus-text-primary font-medium">
+                          {r.mes}
+                          {r.mes === contemp && <span className="ml-1 text-[9px] text-somus-gold">T</span>}
+                        </td>
+                        <td className="px-3 py-1.5 text-right text-somus-text-primary">{fmtBRL(r.pagamento)}</td>
+                        <td className="px-3 py-1.5 text-right" style={{ color: r.vpPreT > 0 ? '#1A7A3E' : '#5A6577' }}>{r.vpPreT > 0 ? fmtBRL(r.vpPreT) : '—'}</td>
+                        <td className="px-3 py-1.5 text-right" style={{ color: r.vpPosT > 0 ? '#EF4444' : '#5A6577' }}>{r.vpPosT > 0 ? fmtBRL(r.vpPosT) : '—'}</td>
+                        <td className="px-3 py-1.5 text-right text-somus-text-primary font-medium">{fmtBRL(r.vpTotal)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
