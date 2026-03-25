@@ -12,6 +12,9 @@ win:
       arch:
         - x64
   icon: public/icon_somus.ico
+  signingHashAlgorithms: []
+  sign: null
+forceCodeSigning: false
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
